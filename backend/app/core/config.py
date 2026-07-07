@@ -33,6 +33,7 @@ CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
+    "https://steelopsai.vercel.app",
 ]
 
 DEFAULT_RECIPE: dict[str, float | str | int] = {
