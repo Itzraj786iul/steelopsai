@@ -80,8 +80,7 @@ export function guestMe(): User | null {
   if (!sessionEmail) return null;
   const match = users.find((u) => u.email === sessionEmail);
   if (!match) return null;
-  const { password: _, ...user } = match;
-  return user;
+  return toPublicUser(match);
 }
 
 export function setGuestSession(email: string): void {
