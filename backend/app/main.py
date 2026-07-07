@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.config import APP_NAME, APP_VERSION, CORS_ORIGINS, LOGS_DIR, get_settings
+from app.core.config import APP_NAME, APP_VERSION, CORS_ORIGINS, LOGS_DIR
 from app.routers.api import router
 
 logging.basicConfig(level=logging.INFO)
@@ -23,17 +23,22 @@ async def lifespan(app: FastAPI):
 
     from app.services.ml_service import get_historical_stats, get_prediction_engine
 
-    settings = get_settings()
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     logger.info("Starting %s v%s", APP_NAME, APP_VERSION)
 
-    loop = asyncio.get_running_loop()
-    start = time.perf_counter()
-    await loop.run_in_executor(
-        None,
-        lambda: (get_prediction_engine(), get_historical_stats()),
-    )
-    logger.info("ML engines warmed in %.1fs", time.perf_counter() - start)
+    async def _warm_ml() -> None:
+        loop = asyncio.get_running_loop()
+        start = time.perf_counter()
+        try:
+            await loop.run_in_executor(
+                None,
+                lambda: (get_prediction_engine(), get_historical_stats()),
+            )
+            logger.info("ML engines warmed in %.1fs", time.perf_counter() - start)
+        except Exception:
+            logger.exception("ML warmup failed — API will retry on first request")
+
+    asyncio.create_task(_warm_ml())
 
     yield
     logger.info("Shutting down %s", APP_NAME)

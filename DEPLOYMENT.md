@@ -17,9 +17,11 @@ Streamlit (`research/phase_21_streamlit_app`) is **prototype only** — not used
 
 ## Prerequisites
 
-- Python 3.10+
+- Python **3.10** (required — model pickles trained with scikit-learn 1.5.2)
 - Node.js 18+
 - Frozen artifacts in `research/phase_19_model_development/exports/`
+
+> **Render:** Set root directory to `backend`. `runtime.txt` pins Python 3.10.13.
 
 ## Backend
 
