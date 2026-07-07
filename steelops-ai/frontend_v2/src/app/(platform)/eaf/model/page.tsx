@@ -13,7 +13,7 @@ export default function EafModelPage() {
     eafApi.modelInfo().then(({ data }) => setInfo(data));
   }, []);
 
-  if (!info) return <PageContainer title="Model Information" description="Loading…" />;
+  if (!info) return <PageContainer title="Model Information" description="Loading…">{null}</PageContainer>;
 
   return (
     <PageContainer title="Model Information" description="Frozen Phase 19 production model">

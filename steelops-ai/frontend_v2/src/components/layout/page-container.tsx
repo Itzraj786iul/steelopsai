@@ -4,9 +4,17 @@ interface PageContainerProps {
   children: React.ReactNode;
   className?: string;
   size?: "default" | "executive" | "full";
+  title?: string;
+  description?: string;
 }
 
-export function PageContainer({ children, className, size = "default" }: PageContainerProps) {
+export function PageContainer({
+  children,
+  className,
+  size = "default",
+  title,
+  description,
+}: PageContainerProps) {
   return (
     <div
       className={cn(
@@ -17,6 +25,14 @@ export function PageContainer({ children, className, size = "default" }: PageCon
         className
       )}
     >
+      {title ? (
+        <div className="space-y-2">
+          <h1 className="text-display-md">{title}</h1>
+          {description ? (
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+      ) : null}
       {children}
     </div>
   );
