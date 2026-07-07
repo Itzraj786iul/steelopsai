@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { clearAuthTokens, setAuthTokens } from "@/services/api-client";
+import { clearGuestSession } from "@/lib/auth/guest-auth";
 import type { User } from "@/types";
 
 interface AuthState {
@@ -28,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
       },
       clearAuth: () => {
         clearAuthTokens();
+        clearGuestSession();
         set({ user: null, isAuthenticated: false });
       },
     }),

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authApi } from "@/lib/api/auth";
 import { DEFAULT_TENANT_SLUG } from "@/lib/constants";
-import { getApiErrorMessage } from "@/services/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 
 const registerSchema = z.object({
   full_name: z.string().min(2, "Full name is required"),
@@ -26,6 +26,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
+  const { setTokens, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -43,10 +44,14 @@ export function RegisterForm() {
     setSuccess(null);
     try {
       await authApi.register(values);
-      setSuccess("Account created. You can now sign in.");
-      router.push("/login");
+      setSuccess("Account created. Redirecting to EAF dashboard…");
+      const login = await authApi.login({ email: values.email, password: values.password });
+      setTokens(login.data.access_token, login.data.refresh_token, login.data.expires_in);
+      const user = await authApi.me();
+      setUser(user.data);
+      router.push("/eaf/dashboard");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Registration failed"));
+      setError(err instanceof Error ? err.message : "Registration failed");
     }
   };
 
@@ -54,7 +59,7 @@ export function RegisterForm() {
     <Card className="w-full max-w-md border-border/80 bg-card/95 shadow-elevation-md">
       <CardHeader>
         <CardTitle>Create account</CardTitle>
-        <CardDescription>Register for SteelOps AI enterprise access</CardDescription>
+        <CardDescription>Register for JSPL EAF Tap-to-Tap decision support</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

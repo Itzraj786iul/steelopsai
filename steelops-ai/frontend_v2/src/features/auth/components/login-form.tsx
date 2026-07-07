@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authApi } from "@/lib/api/auth";
+import { isGuestAuthMode } from "@/lib/auth/guest-auth";
 import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useAuthStore } from "@/stores/auth-store";
@@ -52,6 +53,8 @@ export function LoginForm() {
         router.replace("/onboarding");
       } else if (next && next.startsWith("/")) {
         router.replace(next);
+      } else if (isGuestAuthMode()) {
+        router.replace("/eaf/dashboard");
       } else {
         router.replace(getDefaultRouteForRole(userResponse.data.role));
       }
@@ -66,8 +69,8 @@ export function LoginForm() {
         <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
           <Flame className="h-6 w-6 text-primary" />
         </div>
-        <CardTitle className="text-2xl">Sign in to SteelOps</CardTitle>
-        <CardDescription>Enterprise operating system for EAF steel production</CardDescription>
+        <CardTitle className="text-2xl">Sign in to JSPL EAF</CardTitle>
+        <CardDescription>Tap-to-Tap prediction and optimization platform</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

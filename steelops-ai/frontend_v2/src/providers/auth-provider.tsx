@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect } from "react";
 
 import { authApi } from "@/lib/api/auth";
+import { isGuestAuthMode } from "@/lib/auth/guest-auth";
 import { queryKeys } from "@/lib/query-keys";
 import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 import { getAccessToken } from "@/services/api-client";
@@ -31,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.data);
       return response.data;
     },
-    enabled: isHydrated && !!getAccessToken(),
+    enabled: isHydrated && !!getAccessToken() && !isGuestAuthMode(),
     retry: false,
   });
 
