@@ -16,25 +16,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "SteelOps AI",
-    template: "%s · SteelOps AI",
+    default: "JSPL EAF TTT",
+    template: "%s · JSPL EAF TTT",
   },
-  description: "Enterprise operating system for EAF steel production — AI-powered mission control, digital twin, and executive command center.",
-  applicationName: "SteelOps AI",
+  description:
+    "AI-powered Electric Arc Furnace Tap-to-Tap prediction, physics-guided optimization, and industrial decision support.",
+  applicationName: "JSPL EAF TTT",
   icons: {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
   },
   openGraph: {
-    title: "SteelOps AI",
-    description: "Enterprise AI operating system for steel plants",
+    title: "JSPL EAF TTT",
+    description: "JSPL Electric Arc Furnace Tap-to-Tap Time prediction system",
     type: "website",
-    siteName: "SteelOps AI",
+    siteName: "JSPL EAF TTT",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SteelOps AI",
-    description: "Enterprise AI operating system for steel plants",
+    title: "JSPL EAF TTT",
+    description: "JSPL Electric Arc Furnace Tap-to-Tap Time prediction system",
   },
 };
 

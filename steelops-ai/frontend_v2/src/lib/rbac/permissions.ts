@@ -1,14 +1,14 @@
 import { UserRole } from "@/lib/enums";
 
 const ROLE_DEFAULT_ROUTES: Record<UserRole, string> = {
-  [UserRole.Operator]: "/copilot",
-  [UserRole.ProcessEngineer]: "/copilot",
-  [UserRole.ShiftIncharge]: "/copilot",
-  [UserRole.ProductionManager]: "/planning/schedule",
-  [UserRole.PlantHead]: "/insights/control-tower",
-  [UserRole.CorporateManagement]: "/executive",
-  [UserRole.Administrator]: "/settings",
-  [UserRole.Developer]: "/settings/developer",
+  [UserRole.Operator]: "/eaf/prediction",
+  [UserRole.ProcessEngineer]: "/eaf/prediction",
+  [UserRole.ShiftIncharge]: "/eaf/dashboard",
+  [UserRole.ProductionManager]: "/eaf/optimizer",
+  [UserRole.PlantHead]: "/eaf/dashboard",
+  [UserRole.CorporateManagement]: "/eaf/reports",
+  [UserRole.Administrator]: "/eaf/model",
+  [UserRole.Developer]: "/eaf/model",
 };
 
 const ROUTE_ROLE_ACCESS: Record<string, UserRole[]> = {
@@ -30,10 +30,11 @@ export function normalizeRole(role: string): UserRole {
 }
 
 export function getDefaultRouteForRole(role: string): string {
-  return ROLE_DEFAULT_ROUTES[normalizeRole(role)] ?? "/copilot";
+  return ROLE_DEFAULT_ROUTES[normalizeRole(role)] ?? "/eaf/dashboard";
 }
 
 export function canAccessRoute(role: string, path: string): boolean {
+  if (path.startsWith("/eaf") || path === "/") return true;
   const normalizedRole = normalizeRole(role);
   const restricted = Object.entries(ROUTE_ROLE_ACCESS).find(([route]) =>
     path === route || path.startsWith(`${route}/`)

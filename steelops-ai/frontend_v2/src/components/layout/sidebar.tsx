@@ -14,10 +14,8 @@ import { usePlantContext } from "@/hooks/use-plant-context";
 import { APP_NAME } from "@/lib/constants";
 import {
   ALL_NAV_ITEMS,
-  INSIGHTS_NAV,
-  PRIMARY_NAV,
-  SECONDARY_NAV,
   PLATFORM_NAV,
+  PRIMARY_NAV,
   type NavDefinition,
 } from "@/lib/navigation";
 import { industrialEase } from "@/lib/motion";
@@ -156,7 +154,7 @@ export function Sidebar({ badges }: SidebarProps) {
 
       <ScrollArea className="flex-1 px-3 pb-3">
         <div className="space-y-4">
-          <NavSection items={PRIMARY_NAV} collapsed={collapsed} pathname={pathname} badges={badges} canAccess={canAccessRoute} />
+          <NavSection items={PRIMARY_NAV} collapsed={collapsed} pathname={pathname} badges={badges} canAccess={() => true} />
 
           {!collapsed && pinnedItems.length > 0 ? (
             <>
@@ -202,16 +200,12 @@ export function Sidebar({ badges }: SidebarProps) {
 
           <Separator />
           <NavSection
-            title="Insights"
-            items={INSIGHTS_NAV}
+            title="Platform"
+            items={PLATFORM_NAV}
             collapsed={collapsed}
             pathname={pathname}
-            canAccess={canAccessRoute}
+            canAccess={() => true}
           />
-          <Separator />
-          <NavSection items={SECONDARY_NAV} collapsed={collapsed} pathname={pathname} canAccess={canAccessRoute} />
-          <Separator />
-          <NavSection items={PLATFORM_NAV} collapsed={collapsed} pathname={pathname} canAccess={canAccessRoute} />
         </div>
       </ScrollArea>
     </motion.aside>

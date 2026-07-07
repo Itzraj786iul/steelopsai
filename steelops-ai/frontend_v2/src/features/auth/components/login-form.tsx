@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { authApi } from "@/lib/api/auth";
 import { isGuestAuthMode } from "@/lib/auth/guest-auth";
 import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
+import { resolveLegacyRedirect } from "@/lib/navigation/legacy-redirects";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -49,10 +50,11 @@ export function LoginForm() {
       const userResponse = await authApi.me();
       setUser(userResponse.data);
       const next = searchParams.get("next");
-      if (needsWelcome()) {
+      const nextPath = next && next.startsWith("/") ? resolveLegacyRedirect(next) ?? next : null;
+      if (needsWelcome() && !isGuestAuthMode()) {
         router.replace("/onboarding");
-      } else if (next && next.startsWith("/")) {
-        router.replace(next);
+      } else if (nextPath) {
+        router.replace(nextPath);
       } else if (isGuestAuthMode()) {
         router.replace("/eaf/dashboard");
       } else {

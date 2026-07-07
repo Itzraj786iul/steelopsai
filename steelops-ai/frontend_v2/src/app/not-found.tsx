@@ -9,12 +9,12 @@ export default function NotFoundPage() {
     <PageContainer className="py-16">
       <EmptyState
         title="Page not found"
-        description="The page you requested does not exist in SteelOps AI v2."
-        actionLabel="Go to Today"
+        description="The page you requested does not exist in JSPL EAF TTT."
+        actionLabel="Go to Dashboard"
       />
       <div className="mt-6 flex justify-center">
         <ActionButton asChild>
-          <Link href="/dashboard">Open Today</Link>
+          <Link href="/eaf/dashboard">Open Dashboard</Link>
         </ActionButton>
       </div>
     </PageContainer>

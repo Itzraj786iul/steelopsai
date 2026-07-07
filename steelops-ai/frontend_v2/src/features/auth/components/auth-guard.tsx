@@ -5,8 +5,8 @@ import { useEffect } from "react";
 
 import { PageLoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { isGuestAuthMode } from "@/lib/auth/guest-auth";
 import { getAccessToken } from "@/services/api-client";
-import { canAccessRoute } from "@/lib/rbac/permissions";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -24,12 +24,11 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
     if (isLoading || isPublicRoute) return;
 
     if (!isAuthenticated || !getAccessToken()) {
+      if (isGuestAuthMode()) {
+        router.replace("/eaf/dashboard");
+        return;
+      }
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-      return;
-    }
-
-    if (user && pathname !== "/unauthorized" && !canAccessRoute(user.role, pathname)) {
-      router.replace("/unauthorized");
     }
   }, [isAuthenticated, isLoading, isPublicRoute, pathname, router, user]);
 
