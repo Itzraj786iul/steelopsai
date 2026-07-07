@@ -1,0 +1,16 @@
+Feature,Category
+HM_X_POWER,Interactions
+BUCKET_X_CPC,Interactions
+OXYGEN_PER_TONNE,Operational
+POWER_PER_TONNE,Operational
+SOLID_BURDEN_RATIO,Ratios
+HM_TO_DRI_RATIO,Ratios
+BURDEN_SHARE_RANGE,Burden
+HM_TO_BUCKET_RATIO,Ratios
+BUCKET_X_DOLO,Interactions
+CPC_X_DRI,Interactions
+FLUX_PER_TONNE,Operational
+FLUX_TO_CARBON_RATIO,Ratios
+DOLO_X_LIME,Interactions
+DOLO_SQ,Polynomial
+CPC_X_HBI,Interactions

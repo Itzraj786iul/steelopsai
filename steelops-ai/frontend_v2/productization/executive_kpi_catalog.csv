@@ -1,0 +1,22 @@
+KPI,Category,Format,Source,Board priority
+Today's savings,Financial,INR,activePackage + schedule,P0
+Minutes saved,Operational,minutes,activePackage,P0
+Heat average,Operational,minutes,activePackage,P0
+Target achievement %,Performance,percent,derived,P0
+AI adoption %,Trust,percent,derived from heats,P0
+Prediction accuracy %,Trust,percent,benchmark 91.2%,P1
+Plant health score,Operations,0-100,derived,P1
+CO₂ reduction,Sustainability,tonnes,derived from minutes,P1
+Power saved,Energy,MWh,derived,P1
+Oxygen saved,Energy,Nm³,derived,P1
+GREEN heat %,Sustainability,percent,activePackage,P0
+High risks prevented,Narrative,count,derived,P1
+Efficiency improvement %,Narrative,percent,weekly benchmark,P2
+EAF unit health,Plant map,0-100,per furnace,P0
+EAF unit savings,Plant map,INR,allocated,P1
+Shift B adoption,Shift intel,percent,shift metrics,P2
+Operator acceptance,Leaderboard,percent,operator table,P2
+Root cause - High DRI,Root cause,Pareto count,learning proxy,P1
+Annual ROI,ROI,percent,roi model,P0
+Payback months,ROI,months,roi model,P0
+Projected annual value,ROI,INR,roi model,P0

@@ -1,0 +1,34 @@
+stage,action,rule,rows_affected,reason
+decision,KEEP,High HM Heats,17,Large hot metal heats occasionally occur and are retained when total charge and burden closure remain physically consistent.
+decision,KEEP,High DRI Heats,11,High DRI heats are retained when they still close the charge balance and remain within a plausible total charge envelope.
+decision,KEEP,Large Bucket Heats,12,Large scrap bucket values can be real if the full burden still closes against total charge.
+decision,KEEP and FLAG,Shutdown-like / Long-delay Heats,299,"Very large TTT values represent real operational interruptions. They are retained for robustness and future two-stage modeling, not deleted."
+decision,CORRECT,Shift Labels with Clear Alpha Prefix,13830,"Shift labels such as A1, B10, c3 are standardized to A, B, C because the alpha prefix carries the actual shift identity."
+decision,IMPUTE,Missing HBI with Proven Non-use,3663,"HBI is replaced with 0 only when HM + DRI + Bucket already closes the total charge, proving HBI was not required in that heat."
+decision,IMPUTE,Missing Bucket with Proven Zero Scrap,5,"Bucket is replaced with 0 only when HM + DRI + HBI already closes the total charge, proving no additional scrap bucket is needed."
+decision,REMOVE,Extreme Lime Additions,3,"LIME values above 50 t are industrially impossible for a single EAF heat. Decimal-shift corrections are possible (e.g. 974 -> 9.74 or 97.4) but cannot be proven automatically, so these rows are excluded."
+decision,REMOVE,Extreme Dolomite Additions,7,DOLO values above 10 t are inconsistent with normal slag practice and are excluded rather than auto-corrected.
+decision,REMOVE,Extreme CPC Values,9,CPC spikes above 3000 are not treated as trustworthy carbon-injection measurements without independent confirmation.
+decision,REMOVE,Invalid or Placeholder Targets,1183,"Blank, invalid, or zero-minute TTT values cannot serve as a valid supervised target."
+correction,CORRECT,Normalize Shift labels to A/B/C,13830,Resolved shift code from alpha prefix.
+imputation,IMPUTE,Set HBI=0 when charge balance proves non-use,3663,HM + DRI + Bucket already closes total charge.
+imputation,IMPUTE,Set Bucket=0 when charge balance proves zero scrap bucket,5,HM + DRI + HBI already closes total charge.
+removal,REMOVE,Blank or duplicate Heat Number,0,Heat identity must be unique and nonblank for a modeling record.
+removal,REMOVE,Invalid / blank / zero TTT,1183,Target is not usable for supervised learning.
+removal,REMOVE,Total charge outside industrial envelope,390,Total charge below 80 t looks like partial/incomplete heat data; above 300 t is physically impossible.
+removal,REMOVE,HM greater than total charge,0,Hot metal cannot exceed the reported total charge.
+removal,REMOVE,DRI greater than total charge,0,DRI cannot exceed the reported total charge.
+removal,REMOVE,POWER outside physical envelope,65,Total electrical energy must remain within a physically plausible heat-level envelope.
+removal,REMOVE,OXY outside physical envelope,13,Total oxygen must remain within a physically plausible heat-level envelope.
+removal,REMOVE,LIME missing or impossible,9,Lime must be present and within industrial flux practice.
+removal,REMOVE,DOLO missing or impossible,10,Dolomite must be present and within industrial flux practice.
+removal,REMOVE,CPC missing or impossible,11,Carbon injection must be present and within industrial practice.
+removal,REMOVE,Bucket impossible,3,Scrap bucket amount cannot be negative and must stay within a plausible charge contribution.
+removal,REMOVE,Unresolved Shift label,204,Shift could not be safely corrected to A/B/C.
+removal,REMOVE,Charge balance mismatch > 10 t,3,HM + DRI + HBI + Bucket must stay close to total charge for a trustworthy full-heat record.
+removal,REMOVE,Missing HM or DRI after industrial checks,2,"Core burden components are unresolved, so the recipe is incomplete for modeling."
+summary,INFO,Final rows,12758,Rows retained in final_model_dataset.csv
+summary,INFO,Rows removed,1893,Total rows excluded by industrial cleaning rules
+summary,INFO,Rows corrected,13830,Rows with safe deterministic corrections applied
+summary,INFO,Rows imputed,3668,Rows with industrially justified imputations applied
+summary,INFO,Rows flagged and kept,188,Rows intentionally retained despite long delays or unusual but plausible burden practice

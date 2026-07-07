@@ -1,0 +1,7 @@
+Metric,Value
+VIF-clean pool size,22.0
+Maximum VIF,4.798414127643477
+Minimal features,15.0
+Balanced features,22.0
+Research features,22.0
+Features removed for multicollinearity,59.0

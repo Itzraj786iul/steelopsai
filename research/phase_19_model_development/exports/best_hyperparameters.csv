@@ -1,0 +1,11 @@
+Model,Best CV MAE,Best Parameters
+LinearRegression,3.2877345959289683,"{""fit_intercept"": true}"
+Ridge,3.2877346090038757,"{""alpha"": 0.0010008682194795624}"
+Lasso,3.287531902753938,"{""alpha"": 0.009661712787743514}"
+ElasticNet,3.2875976858514995,"{""alpha"": 0.008388773026641686, ""l1_ratio"": 0.9482155485633253}"
+RandomForest,3.235451551784382,"{""n_estimators"": 377, ""max_depth"": 10, ""min_samples_leaf"": 6, ""max_features"": 0.8}"
+ExtraTrees,3.2508266787042785,"{""n_estimators"": 324, ""max_depth"": 19, ""min_samples_leaf"": 3, ""max_features"": 0.8}"
+XGBoost,3.1928988243580787,"{""n_estimators"": 278, ""max_depth"": 3, ""learning_rate"": 0.035708830308316064, ""subsample"": 0.6547328072050586, ""colsample_bytree"": 0.8783621020700009, ""reg_lambda"": 1.441193174006024}"
+LightGBM,3.1987300891017965,"{""n_estimators"": 363, ""max_depth"": 3, ""learning_rate"": 0.03610145221194417, ""num_leaves"": 28, ""subsample"": 0.8019619803613595, ""colsample_bytree"": 0.9726658083610886}"
+CatBoost,3.192188897461919,"{""iterations"": 440, ""depth"": 4, ""learning_rate"": 0.053766664682128894, ""l2_leaf_reg"": 8.839048781613084}"
+HistGradientBoosting,3.1981129816573115,"{""max_depth"": 3, ""learning_rate"": 0.06220171301020152, ""max_iter"": 177, ""min_samples_leaf"": 17, ""l2_regularization"": 1.0928786003331894}"

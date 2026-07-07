@@ -1,0 +1,30 @@
+Iteration,Feature Count,Max VIF Feature,Max VIF,Feature Removed,Reason
+0,50,DRI,inf,Bucket,VIF=inf exceeds 5.0; removed as least essential redundant variable.
+1,49,DRI,inf,DRI,VIF=inf exceeds 5.0; removed as least essential redundant variable.
+2,48,HM,inf,HM,VIF=inf exceeds 5.0; removed as least essential redundant variable.
+3,47,SHIFT_C,inf,SHIFT_A,VIF=inf exceeds 5.0; removed as least essential redundant variable.
+4,46,SHIFT_C,inf,SHIFT_B,VIF=inf exceeds 5.0; removed as least essential redundant variable.
+5,45,LIME,2224.061733200159,LIME,VIF=2224.06 exceeds 5.0; removed as least essential redundant variable.
+6,44,VIRGIN_BURDEN,1683.1298060275526,VIRGIN_BURDEN,VIF=1683.13 exceeds 5.0; removed as least essential redundant variable.
+7,43,OXY,1218.2514193802913,OXY,VIF=1218.25 exceeds 5.0; removed as least essential redundant variable.
+8,42,SOLID_BURDEN,771.2923055939538,SOLID_BURDEN,VIF=771.29 exceeds 5.0; removed as least essential redundant variable.
+9,41,POWER,564.5524317769225,POWER,VIF=564.55 exceeds 5.0; removed as least essential redundant variable.
+10,40,CPC,281.8840838509186,CPC,VIF=281.88 exceeds 5.0; removed as least essential redundant variable.
+11,39,OXY_X_POWER,204.83402843971194,OXY_X_POWER,VIF=204.83 exceeds 5.0; removed as least essential redundant variable.
+12,38,LIME_X_OXY,175.1122493082143,LIME_X_OXY,VIF=175.11 exceeds 5.0; removed as least essential redundant variable.
+13,37,DRI_X_POWER,153.96842466596522,DRI_X_POWER,VIF=153.97 exceeds 5.0; removed as least essential redundant variable.
+14,36,T C,139.02639460301057,T C,VIF=139.03 exceeds 5.0; removed as least essential redundant variable.
+15,35,HM_X_LIME,124.64684227865578,HM_X_LIME,VIF=124.65 exceeds 5.0; removed as least essential redundant variable.
+16,34,DRI_X_OXY,120.50201767637711,DRI_X_OXY,VIF=120.50 exceeds 5.0; removed as least essential redundant variable.
+17,33,LIME_X_POWER,94.44614943867185,LIME_X_POWER,VIF=94.45 exceeds 5.0; removed as least essential redundant variable.
+18,32,HM_X_OXY,72.27753291244427,HM_X_OXY,VIF=72.28 exceeds 5.0; removed as least essential redundant variable.
+19,31,DRI_X_LIME,59.5444258236037,DRI_X_LIME,VIF=59.54 exceeds 5.0; removed as least essential redundant variable.
+20,30,DRI_PCT_TC,48.23185209029521,DRI_PCT_TC,VIF=48.23 exceeds 5.0; removed as least essential redundant variable.
+21,29,DOLO,40.06028888503774,DOLO,VIF=40.06 exceeds 5.0; removed as least essential redundant variable.
+22,28,CARBON_TO_OXYGEN_RATIO,32.361447693133385,CARBON_TO_OXYGEN_RATIO,VIF=32.36 exceeds 5.0; removed as least essential redundant variable.
+23,27,POWER_TO_OXYGEN_RATIO,25.502615217453773,POWER_TO_OXYGEN_RATIO,VIF=25.50 exceeds 5.0; removed as least essential redundant variable.
+24,26,HBI,13.645394477669498,HBI,VIF=13.65 exceeds 5.0; removed as least essential redundant variable.
+25,25,BUCKET_X_DRI,10.316108325469054,BUCKET_X_DRI,VIF=10.32 exceeds 5.0; removed as least essential redundant variable.
+26,24,DRI_TO_BUCKET_RATIO,9.322060729391982,DRI_TO_BUCKET_RATIO,VIF=9.32 exceeds 5.0; removed as least essential redundant variable.
+27,23,CPC_X_DOLO,7.044763796077791,CPC_X_DOLO,VIF=7.04 exceeds 5.0; removed as least essential redundant variable.
+28,22,HBI_SQ,4.798414127643477,,Converged

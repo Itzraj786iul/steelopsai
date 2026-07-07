@@ -1,0 +1,60 @@
+Feature Removed,Feature Kept,Reason
+SCRAP_DOMINANCE,BUCKET_SHARE_METALLIC,Exact duplicate of BUCKET_SHARE_METALLIC; lower industrial priority or higher VIF.
+BUCKET_PCT_TC,SCRAP_RATIO,Exact duplicate of SCRAP_RATIO; lower industrial priority or higher VIF.
+DRI_SHARE_METALLIC,DRI_DOMINANCE,Exact duplicate of DRI_DOMINANCE; lower industrial priority or higher VIF.
+HM_PCT_TC,LIQUID_BURDEN_RATIO,Exact duplicate of LIQUID_BURDEN_RATIO; lower industrial priority or higher VIF.
+HBI_SHARE_METALLIC,HBI_PCT_TC,Exact duplicate of HBI_PCT_TC; lower industrial priority or higher VIF.
+CHARGE_DEVIATION_FROM_120,T C,Exact duplicate of T C; lower industrial priority or higher VIF.
+RELATIVE_CHARGE_DEVIATION,T C,Exact duplicate of T C; lower industrial priority or higher VIF.
+CARBON_PER_METALLIC_TONNE,CARBON_PER_TONNE,Exact duplicate of CARBON_PER_TONNE; lower industrial priority or higher VIF.
+DOLO_PER_METALLIC_TONNE,DOLO_PER_TONNE,Exact duplicate of DOLO_PER_TONNE; lower industrial priority or higher VIF.
+METALLIC_PERCENTAGE,METALLIC_BURDEN_RATIO,Exact duplicate of METALLIC_BURDEN_RATIO; lower industrial priority or higher VIF.
+DRI_SQ,DRI,Cluster 1: retained higher-priority / lower-VIF representative.
+DRI_X_HM,DRI,Cluster 1: retained higher-priority / lower-VIF representative.
+BUCKET_SHARE_METALLIC,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+BUCKET_SQ,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+BUCKET_X_HM,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+BUCKET_X_LIME,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+BUCKET_X_OXY,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+BUCKET_X_POWER,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+SCRAP_RATIO,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+VIRGIN_BURDEN_RATIO,Bucket,Cluster 6: retained higher-priority / lower-VIF representative.
+DRI_DOMINANCE,DRI_PCT_TC,Cluster 7: retained higher-priority / lower-VIF representative.
+FLUX_PER_METALLIC_TONNE,FLUX_PER_TONNE,Cluster 11: retained higher-priority / lower-VIF representative.
+TOTAL_FLUX,FLUX_PER_TONNE,Cluster 11: retained higher-priority / lower-VIF representative.
+VIRGIN_TO_SCRAP_RATIO,DRI_TO_BUCKET_RATIO,Cluster 14: retained higher-priority / lower-VIF representative.
+DOLO_PER_TONNE,DOLO,Cluster 19: retained higher-priority / lower-VIF representative.
+DOLO_X_DRI,DOLO,Cluster 19: retained higher-priority / lower-VIF representative.
+DOLO_X_HM,DOLO,Cluster 19: retained higher-priority / lower-VIF representative.
+DOLO_X_OXY,DOLO,Cluster 19: retained higher-priority / lower-VIF representative.
+DOLO_X_POWER,DOLO,Cluster 19: retained higher-priority / lower-VIF representative.
+LIME_PER_METALLIC_TONNE,LIME,Cluster 21: retained higher-priority / lower-VIF representative.
+LIME_PER_TONNE,LIME,Cluster 21: retained higher-priority / lower-VIF representative.
+LIME_SQ,LIME,Cluster 21: retained higher-priority / lower-VIF representative.
+DRI_X_HBI,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_DOMINANCE,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_PCT_TC,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_TO_BUCKET_RATIO,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_X_HM,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_X_LIME,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_X_OXY,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HBI_X_POWER,HBI,Cluster 22: retained higher-priority / lower-VIF representative.
+HM_DOMINANCE,SOLID_BURDEN_RATIO,Cluster 24: retained higher-priority / lower-VIF representative.
+HM_SHARE_METALLIC,SOLID_BURDEN_RATIO,Cluster 24: retained higher-priority / lower-VIF representative.
+LIQUID_BURDEN_RATIO,SOLID_BURDEN_RATIO,Cluster 24: retained higher-priority / lower-VIF representative.
+LIQUID_TO_SOLID_RATIO,SOLID_BURDEN_RATIO,Cluster 24: retained higher-priority / lower-VIF representative.
+HM_SQ,HM,Cluster 25: retained higher-priority / lower-VIF representative.
+OXY_SQ,OXY,Cluster 29: retained higher-priority / lower-VIF representative.
+POWER_SQ,POWER,Cluster 32: retained higher-priority / lower-VIF representative.
+POWER_PER_METALLIC_TONNE,POWER_PER_TONNE,Cluster 34: retained higher-priority / lower-VIF representative.
+CARBON_PER_TONNE,CPC,Cluster 35: retained higher-priority / lower-VIF representative.
+CPC_X_LIME,CPC,Cluster 35: retained higher-priority / lower-VIF representative.
+CPC_X_OXY,CPC,Cluster 35: retained higher-priority / lower-VIF representative.
+CPC_X_POWER,CPC,Cluster 35: retained higher-priority / lower-VIF representative.
+TOTAL_METALLIC_INPUT,T C,Cluster 38: retained higher-priority / lower-VIF representative.
+T_C_SQ,T C,Cluster 38: retained higher-priority / lower-VIF representative.
+OXYGEN_PER_METALLIC_TONNE,OXYGEN_PER_TONNE,Cluster 39: retained higher-priority / lower-VIF representative.
+CPC_SQ,CARBON_TO_OXYGEN_RATIO,Cluster 41: retained higher-priority / lower-VIF representative.
+CPC_X_HM,CARBON_TO_OXYGEN_RATIO,Cluster 41: retained higher-priority / lower-VIF representative.
+HM_TO_HBI_RATIO,DRI_TO_HBI_RATIO,Cluster 45: retained higher-priority / lower-VIF representative.
+METALLIC_BURDEN_RATIO,CHARGE_BALANCE_ERROR,Cluster 50: retained higher-priority / lower-VIF representative.

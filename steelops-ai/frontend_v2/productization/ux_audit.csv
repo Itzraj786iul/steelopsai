@@ -1,0 +1,22 @@
+Severity,Page,Screenshot placeholder,Issue,Recommendation,Priority
+High,Copilot,copilot-empty-state.png,Empty state used error styling — feels like failure,Use neutral EmptyState with clear CTA and illustration,P0
+High,Dashboard,dashboard-metrics.png,Metric cards lack visual hierarchy vs Palantir/Linear,Hero command strip + elevated KPI cards with motion entrance,P0
+High,Global,spacing-global.png,Inconsistent vertical rhythm (py-4 vs py-6),Standardize PageContainer py-8 and section gap-8,P0
+High,Copilot,copilot-layout.png,Copilot flagship page lacks immersive header band,Add command header with plant context + keyboard hints,P0
+Medium,Live,live-workspace.png,Control room lacks visual density hierarchy,Stage clock hero + glass panels + alert drawer affordance,P1
+Medium,Digital Twin,twin-player.png,No furnace/process visualization,Add animated furnace stage indicator,P1
+Medium,Global,loading-global.png,Generic skeleton blocks — no prediction shimmer,PredictionShimmer + ChartSkeleton variants,P1
+Medium,Tables,dashboard-table.png,Tables feel like admin CRUD,Sticky header + row hover lift + zebra subtle,P1
+Medium,Sidebar,sidebar-nav.png,No collapse animation / favorites,Framer sidebar transition + recent pages section,P1
+Medium,Errors,error-global.png,All errors look identical destructive red,Industrial error variants: offline / API / prediction,P1
+Low,Mobile,mobile-nav.png,Mobile sidebar basic sheet,Improve touch targets 44px minimum,P2
+Low,Accessibility,a11y-focus.png,Focus rings inconsistent,Unified focus-visible ring token,P2
+Low,Charts,chart-loading.png,Charts pop in without skeleton,Lazy chart with branded shimmer,P2
+Medium,Copilot,copilot-confidence.png,SHAP drivers plain list,Visual bar chart for driver impact,P1
+Medium,Approvals,approvals-empty.png,No dedicated empty state,Preset empty state with link to Copilot,P2
+Medium,Planning,planning-placeholder.png,Route placeholders generic,Industrial empty with schedule CTA,P2
+Low,Typography,headers-global.png,Page titles same weight everywhere,Display scale for flagship only,P2
+Medium,Live,live-fullscreen.png,Immersive mode minimal chrome,Control room top bar with connection pulse,P1
+High,Navigation,command-palette.png,Command palette functional but plain,Glass modal + grouped actions + icons,P1
+Medium,Buttons,buttons-global.png,Button variants inconsistent across features,ActionButton as single source,P2
+Low,Footer,footer-status.png,Footer status low contrast,Slightly elevated glass footer,P3

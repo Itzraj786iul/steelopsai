@@ -1,0 +1,139 @@
+{
+  "phase": "20.2",
+  "strategy": "physics_guided_local_search",
+  "current_recipe": {
+    "HM": 56.8,
+    "DRI": 63.2,
+    "HBI": 0.0,
+    "Bucket": 0.0,
+    "LIME": 9.9,
+    "DOLO": 2.5,
+    "CPC": 576.0,
+    "POWER": 29985.0,
+    "OXY": 3911.0,
+    "Shift": "B"
+  },
+  "optimized_recipe": {
+    "HM": 55.983207461233974,
+    "DRI": 64.01679253876603,
+    "HBI": 0.0,
+    "Bucket": 0.0,
+    "LIME": 9.097219594313525,
+    "DOLO": 2.4240065073355352,
+    "CPC": 628.1033365497967,
+    "POWER": 30330.234066580284,
+    "OXY": 3864.619540328375,
+    "Shift": "B"
+  },
+  "top5_feasible": [
+    {
+      "rank": 1,
+      "recipe": {
+        "HM": 55.983207461233974,
+        "DRI": 64.01679253876603,
+        "HBI": 0.0,
+        "Bucket": 0.0,
+        "LIME": 9.097219594313525,
+        "DOLO": 2.4240065073355352,
+        "CPC": 628.1033365497967,
+        "POWER": 30330.234066580284,
+        "OXY": 3864.619540328375,
+        "Shift": "B"
+      },
+      "predicted_ttt": 38.80343135273666,
+      "industrial_penalty": 1.3460583961814259,
+      "physics_penalty": 0.0,
+      "historical_penalty": 0.0,
+      "score": 40.149489748918086
+    },
+    {
+      "rank": 2,
+      "recipe": {
+        "HM": 55.096,
+        "DRI": 64.904,
+        "HBI": 0.0,
+        "Bucket": 0.0,
+        "LIME": 9.269016488356389,
+        "DOLO": 2.5874063762029347,
+        "CPC": 548.7523693274094,
+        "POWER": 29550.870675612416,
+        "OXY": 3851.889401015346,
+        "Shift": "B"
+      },
+      "predicted_ttt": 38.69405951501783,
+      "industrial_penalty": 1.3509754931057958,
+      "physics_penalty": 0.19728208078874337,
+      "historical_penalty": 0.0,
+      "score": 40.242317088912365
+    },
+    {
+      "rank": 3,
+      "recipe": {
+        "HM": 55.41333845634825,
+        "DRI": 64.58666154365176,
+        "HBI": 0.0,
+        "Bucket": 0.0,
+        "LIME": 9.299979894387652,
+        "DOLO": 2.3809481872823675,
+        "CPC": 590.6249096177974,
+        "POWER": 29649.62927298233,
+        "OXY": 3850.5294450685883,
+        "Shift": "B"
+      },
+      "predicted_ttt": 38.85633991882166,
+      "industrial_penalty": 1.2998333663732988,
+      "physics_penalty": 0.08947693233754771,
+      "historical_penalty": 0.0,
+      "score": 40.24565021753251
+    },
+    {
+      "rank": 4,
+      "recipe": {
+        "HM": 57.54427620313608,
+        "DRI": 62.45572379686392,
+        "HBI": 0.0,
+        "Bucket": 0.0,
+        "LIME": 9.392519573380799,
+        "DOLO": 2.3678289777845167,
+        "CPC": 519.4643237474127,
+        "POWER": 29596.543099207047,
+        "OXY": 3839.917791911257,
+        "Shift": "B"
+      },
+      "predicted_ttt": 38.82126136958637,
+      "industrial_penalty": 1.3576802364237497,
+      "physics_penalty": 0.10364032704164164,
+      "historical_penalty": 0.0,
+      "score": 40.28258193305175
+    },
+    {
+      "rank": 5,
+      "recipe": {
+        "HM": 58.504,
+        "DRI": 61.496,
+        "HBI": 0.0,
+        "Bucket": 0.0,
+        "LIME": 8.982966050407905,
+        "DOLO": 2.4464409978227013,
+        "CPC": 625.5638805082713,
+        "POWER": 30676.779567389593,
+        "OXY": 3852.0492697203604,
+        "Shift": "B"
+      },
+      "predicted_ttt": 38.8833467635964,
+      "industrial_penalty": 1.4295195903602769,
+      "physics_penalty": 0.0,
+      "historical_penalty": 0.0,
+      "score": 40.31286635395668
+    }
+  ],
+  "current_predicted_ttt_min": 39.90435492813712,
+  "best_feasible_predicted_ttt_min": 38.80343135273666,
+  "best_industrial_penalty": 1.3460583961814259,
+  "best_physics_penalty": 0.0,
+  "best_historical_penalty": 0.0,
+  "best_feasible_score": 40.149489748918086,
+  "expected_improvement_min": 1.1009235754004578,
+  "physics_compliant": true,
+  "power_restriction": 0
+}

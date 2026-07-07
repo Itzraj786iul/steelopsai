@@ -1,0 +1,13 @@
+services:
+  frontend_v2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://host.docker.internal:8000
+      NEXT_PUBLIC_WS_URL: ws://host.docker.internal:8000
+      NEXT_PUBLIC_DEFAULT_PLANT: jspl-angul
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
