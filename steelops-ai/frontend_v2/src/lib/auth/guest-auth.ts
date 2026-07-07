@@ -22,6 +22,11 @@ function saveUsers(users: StoredGuestUser[]): void {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
+function toPublicUser(stored: StoredGuestUser): User {
+  const { id, email, full_name, role, tenant_id, is_active } = stored;
+  return { id, email, full_name, role, tenant_id, is_active };
+}
+
 export function isGuestAuthMode(): boolean {
   if (process.env.NEXT_PUBLIC_AUTH_MODE === "api") return false;
   if (process.env.NEXT_PUBLIC_AUTH_MODE === "guest") return true;
@@ -53,8 +58,7 @@ export async function guestRegister(payload: RegisterRequest): Promise<User> {
     password: payload.password,
   };
   saveUsers([...users, user]);
-  const { password: _, ...publicUser } = user;
-  return publicUser;
+  return toPublicUser(user);
 }
 
 export async function guestLogin(payload: LoginRequest): Promise<{ tokens: TokenResponse; user: User }> {
@@ -65,8 +69,7 @@ export async function guestLogin(payload: LoginRequest): Promise<{ tokens: Token
   if (!match) {
     throw new Error("Invalid email or password");
   }
-  const { password: _, ...user } = match;
-  return { tokens: guestTokens(), user };
+  return { tokens: guestTokens(), user: toPublicUser(match) };
 }
 
 export function guestMe(): User | null {
