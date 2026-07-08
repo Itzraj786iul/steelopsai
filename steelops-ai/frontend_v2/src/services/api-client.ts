@@ -103,11 +103,20 @@ apiClient.interceptors.response.use(
 );
 
 export function getApiErrorMessage(error: unknown, fallback = "Something went wrong"): string {
-  if (axios.isAxiosError<ApiError>(error)) {
+  if (axios.isAxiosError(error)) {
     if (!error.response) {
       return "Cannot reach the API. Verify the backend is running.";
     }
-    return error.response.data?.message ?? fallback;
+    const data = error.response.data as ApiError & {
+      detail?: string | Array<{ msg?: string; loc?: string[] }>;
+    };
+    if (typeof data?.detail === "string") {
+      return data.detail;
+    }
+    if (Array.isArray(data?.detail)) {
+      return data.detail.map((item) => item.msg ?? JSON.stringify(item)).join("; ");
+    }
+    return data?.message ?? fallback;
   }
   if (error instanceof Error) return error.message;
   return fallback;

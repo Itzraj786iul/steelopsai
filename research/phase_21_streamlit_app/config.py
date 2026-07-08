@@ -44,7 +44,7 @@ OPERATOR_COLS = CONTROLLABLE_NUMERIC + ["Shift"]
 VALID_SHIFTS = ["A", "B", "C"]
 
 CHARGE_MIN_T = 115.0
-CHARGE_MAX_T = 125.0
+CHARGE_MAX_T = 150.0
 Z_95 = 1.96
 
 # Test MAE from frozen Phase 19 production model (display margin).

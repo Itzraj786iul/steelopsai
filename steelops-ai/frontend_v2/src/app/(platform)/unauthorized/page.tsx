@@ -1,13 +1,13 @@
+import Link from "next/link";
+
 import { EmptyState } from "@/components/feedback/empty-state";
-import { DashboardLayout, PageHeader } from "@/components/layout/page-header";
+import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { ActionButton } from "@/components/data-display/action-button";
-import Link from "next/link";
 
 export default function UnauthorizedPage() {
   return (
-    <DashboardLayout>
-      <PageHeader title="Unauthorized" description="Your role does not have access to this area." />
+    <PageContainer title="Unauthorized" description="Your role does not have access to this area.">
       <SectionCard>
         <EmptyState
           title="Access restricted"
@@ -19,6 +19,6 @@ export default function UnauthorizedPage() {
           </ActionButton>
         </div>
       </SectionCard>
-    </DashboardLayout>
+    </PageContainer>
   );
 }

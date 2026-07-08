@@ -14,7 +14,6 @@ import { usePlantContext } from "@/hooks/use-plant-context";
 import { APP_NAME } from "@/lib/constants";
 import {
   ALL_NAV_ITEMS,
-  PLATFORM_NAV,
   PRIMARY_NAV,
   type NavDefinition,
 } from "@/lib/navigation";
@@ -197,15 +196,6 @@ export function Sidebar({ badges }: SidebarProps) {
               </div>
             </>
           ) : null}
-
-          <Separator />
-          <NavSection
-            title="Platform"
-            items={PLATFORM_NAV}
-            collapsed={collapsed}
-            pathname={pathname}
-            canAccess={() => true}
-          />
         </div>
       </ScrollArea>
     </motion.aside>

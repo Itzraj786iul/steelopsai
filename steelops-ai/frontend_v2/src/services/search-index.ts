@@ -1,6 +1,6 @@
 import { ALL_NAV_ITEMS, QUICK_ACTIONS } from "@/lib/navigation";
 import { canAccessRoute } from "@/lib/rbac/permissions";
-import type { CommandPaletteItem, Heat } from "@/types";
+import type { CommandPaletteItem } from "@/types";
 
 export function buildNavigationItems(role: string): CommandPaletteItem[] {
   return ALL_NAV_ITEMS.filter((item) => {
@@ -22,16 +22,6 @@ export function buildQuickActionItems(): CommandPaletteItem[] {
     href: action.href,
     group: "action" as const,
     keywords: [action.label.toLowerCase(), action.shortcut?.toLowerCase() ?? ""],
-  }));
-}
-
-export function buildHeatItems(heats: Heat[]): CommandPaletteItem[] {
-  return heats.map((heat) => ({
-    id: `heat-${heat.id}`,
-    label: `Heat ${heat.heat_number}`,
-    href: `/heats/${heat.id}`,
-    group: "heat" as const,
-    keywords: [heat.heat_number, heat.shift ?? "", heat.status],
   }));
 }
 

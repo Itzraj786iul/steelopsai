@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { AUTH_COOKIE_KEY } from "@/lib/constants";
-import { resolveLegacyRedirect } from "@/lib/navigation/legacy-redirects";
 
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/eaf", "/unauthorized"];
 
@@ -12,12 +11,6 @@ function isPublicPath(pathname: string): boolean {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  const legacyTarget = resolveLegacyRedirect(pathname);
-  if (legacyTarget) {
-    return NextResponse.redirect(new URL(legacyTarget, request.url));
-  }
-
   const isPublic = isPublicPath(pathname);
   const isAuthenticated = request.cookies.get(AUTH_COOKIE_KEY)?.value === "1";
 

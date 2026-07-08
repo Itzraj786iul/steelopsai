@@ -6,7 +6,7 @@ The production web interface lives in:
 ../steelops-ai/frontend_v2/
 ```
 
-Phase 22 integrates the frozen ML pipeline (Phases 19 + 20.2) into the existing SteelOps design system without rebuilding the UI.
+Version **2.5.0** — unified JSPL EAF decision support platform (Phase 22.5).
 
 ## Run
 
@@ -24,19 +24,20 @@ npm install
 npm run dev
 ```
 
-## EAF Routes
+## Routes
 
 | Route | Page |
 |-------|------|
-| `/` | Landing (JSPL hero) |
-| `/eaf/dashboard` | KPI dashboard |
+| `/` | Landing |
+| `/eaf/dashboard` | Executive dashboard |
 | `/eaf/prediction` | TTT prediction |
 | `/eaf/optimizer` | Recipe optimizer |
 | `/eaf/whatif` | What-if analysis |
-| `/eaf/historical` | Historical analytics |
-| `/eaf/health` | Process health gauges |
-| `/eaf/model` | Model information |
-| `/eaf/about` | Pipeline & research |
-| `/eaf/reports` | Downloads |
+| `/eaf/historical` | Historical analysis |
+| `/eaf/health` | Process health |
+| `/eaf/model` | Model insights |
+| `/eaf/reports` | Reports & downloads |
+| `/eaf/settings` | Settings |
+| `/eaf/about` | About & documentation |
 
 Streamlit (`research/phase_21_streamlit_app`) remains a prototype only.

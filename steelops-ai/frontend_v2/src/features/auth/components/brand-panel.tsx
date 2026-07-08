@@ -2,6 +2,8 @@
 
 import { Flame } from "lucide-react";
 
+import { APP_NAME } from "@/lib/constants";
+
 export function BrandPanel() {
   return (
     <div className="relative hidden overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-orange-950 lg:flex lg:w-1/2">
@@ -12,17 +14,17 @@ export function BrandPanel() {
             <Flame className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <p className="text-lg font-semibold">SteelOps AI</p>
-            <p className="text-sm text-white/70">Enterprise v2</p>
+            <p className="text-lg font-semibold">{APP_NAME}</p>
+            <p className="text-sm text-white/70">Decision Support Platform</p>
           </div>
         </div>
         <div className="max-w-md space-y-4">
-          <h1 className="text-4xl font-semibold tracking-tight">The operating system for modern steel production.</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">Electric Arc Furnace tap-to-tap intelligence.</h1>
           <p className="text-white/75">
-            One intelligent assistant for operators, engineers, shift incharges, and plant leadership.
+            Predict cycle time, optimize recipes with physics constraints, and export industrial decision reports.
           </p>
         </div>
-        <p className="text-sm text-white/50">JSPL Angul · EAF Intelligence Platform</p>
+        <p className="text-sm text-white/50">JSPL Angul · EAF #1</p>
       </div>
     </div>
   );

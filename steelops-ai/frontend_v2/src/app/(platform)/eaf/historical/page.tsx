@@ -18,7 +18,7 @@ export default function EafHistoricalPage() {
   const dist = data?.distribution?.HM ?? [];
 
   return (
-    <PageContainer title="Historical Analytics" description="Compare against plant operating history">
+    <PageContainer title="Historical Analysis" description="Compare current recipe inputs against plant operating history">
       <SectionCard title="Operating Comparison">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -41,10 +41,17 @@ export default function EafHistoricalPage() {
                   <td className="font-mono">{v.p5.toFixed(2)}</td>
                   <td className="font-mono">{v.p95.toFixed(2)}</td>
                   <td>
-                    <span className={
-                      v.status === "Normal" ? "text-green-600" :
-                      v.status === "Below normal" ? "text-amber-600" : "text-red-600"
-                    }>{v.status}</span>
+                    <span
+                      className={
+                        v.status === "Normal"
+                          ? "text-green-600"
+                          : v.status === "Below normal"
+                            ? "text-amber-600"
+                            : "text-red-600"
+                      }
+                    >
+                      {v.status}
+                    </span>
                   </td>
                 </tr>
               ))}

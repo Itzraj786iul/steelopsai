@@ -1,5 +1,5 @@
 export const APP_NAME = "JSPL EAF TTT";
-export const APP_VERSION = "2.0.0";
+export const APP_VERSION = "2.5.0";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const EAF_API_URL = process.env.NEXT_PUBLIC_EAF_API_URL ?? "http://localhost:8001";

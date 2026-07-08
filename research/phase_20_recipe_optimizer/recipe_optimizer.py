@@ -37,7 +37,7 @@ PREPROC_PATH = PHASE19_EXPORTS / "preprocessing_pipeline.pkl"
 CONTROLLABLE_NUMERIC = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"]
 BURDEN_COLS = ["HM", "DRI", "HBI", "Bucket"]
 CHARGE_MIN_T = 115.0
-CHARGE_MAX_T = 125.0
+CHARGE_MAX_T = 150.0
 
 POWER_REDUCTION_EXEMPT_PCT = 0.01
 IMPROVEMENT_EXEMPT_MIN = 2.0
@@ -190,7 +190,10 @@ def validate_candidate(
     charge = total_charge(candidate)
 
     if charge < CHARGE_MIN_T or charge > CHARGE_MAX_T:
-        return ValidationResult(False, "Charge imbalance (outside 115-125 t band)")
+        return ValidationResult(
+            False,
+            f"Charge imbalance (outside {CHARGE_MIN_T:.0f}-{CHARGE_MAX_T:.0f} t band)",
+        )
 
     if abs(charge - original_charge) > cfg.charge_tolerance_t:
         return ValidationResult(False, "Charge imbalance (>2 t from current)")

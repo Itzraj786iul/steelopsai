@@ -43,7 +43,7 @@ export default function EafWhatIfPage() {
   const chartData = tornado.map((t) => ({ name: t.variable, low: t.low, high: t.high }));
 
   return (
-    <PageContainer title="What-if Analysis" description="Live sensitivity — no page refresh">
+    <PageContainer title="What-if Analysis" description="Live sensitivity analysis — adjust variables and observe TTT response">
       <SectionCard title="Live Prediction">
         <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
       </SectionCard>
@@ -51,7 +51,9 @@ export default function EafWhatIfPage() {
         <div className="grid gap-6 sm:grid-cols-2">
           {SLIDERS.map(({ key, min, max, step }) => (
             <div key={key} className="space-y-2">
-              <Label>{key}: {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)}</Label>
+              <Label>
+                {key}: {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)}
+              </Label>
               <input
                 type="range"
                 className="w-full accent-primary"

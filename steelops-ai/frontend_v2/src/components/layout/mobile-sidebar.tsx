@@ -4,43 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { APP_NAME } from "@/lib/constants";
-import {
-  PLATFORM_NAV,
-  PRIMARY_NAV,
-  type NavDefinition,
-} from "@/lib/navigation";
+import { PRIMARY_NAV, type NavDefinition } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
-interface MobileSidebarProps {
-  badges?: Partial<Record<NonNullable<NavDefinition["badgeKey"]>, number>>;
-}
-
 function MobileNavSection({
-  title,
   items,
   pathname,
-  badges,
   onNavigate,
 }: {
-  title?: string;
   items: NavDefinition[];
   pathname: string;
-  badges?: MobileSidebarProps["badges"];
   onNavigate: () => void;
 }) {
-  if (!items.length) return null;
-
   return (
     <div className="space-y-1">
-      {title ? <p className="px-3 py-2 text-label">{title}</p> : null}
       {items.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-        const badge = item.badgeKey ? badges?.[item.badgeKey] : undefined;
         return (
           <Link
             key={item.href}
@@ -53,7 +35,6 @@ function MobileNavSection({
           >
             <Icon className="h-4 w-4" />
             <span className="flex-1">{item.label}</span>
-            {badge && badge > 0 ? <Badge variant="outline">{badge}</Badge> : null}
           </Link>
         );
       })}
@@ -61,7 +42,7 @@ function MobileNavSection({
   );
 }
 
-export function MobileSidebar({ badges }: MobileSidebarProps) {
+export function MobileSidebar() {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebarStore();
 
@@ -72,16 +53,7 @@ export function MobileSidebar({ badges }: MobileSidebarProps) {
           <SheetTitle>{APP_NAME}</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)] px-3 py-4">
-          <div className="space-y-4">
-            <MobileNavSection items={PRIMARY_NAV} pathname={pathname} badges={badges} onNavigate={() => setMobileOpen(false)} />
-            <Separator />
-            <MobileNavSection
-              title="Platform"
-              items={PLATFORM_NAV}
-              pathname={pathname}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          </div>
+          <MobileNavSection items={PRIMARY_NAV} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
         </ScrollArea>
       </SheetContent>
     </Sheet>
