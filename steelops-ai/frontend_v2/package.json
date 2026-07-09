@@ -1,6 +1,6 @@
 {
   "name": "frontend_v2",
-  "version": "2.5.0",
+  "version": "2.8.0",
   "private": true,
   "scripts": {
     "clean": "node ./scripts/clean-next.mjs",

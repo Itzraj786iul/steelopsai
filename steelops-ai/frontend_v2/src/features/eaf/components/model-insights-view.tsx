@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { Badge } from "@/components/ui/badge";
 import { ConfidenceRing } from "@/components/industrial/gauges";
 import { ContributorList } from "@/features/eaf/components/contributor-list";
 import { FeatureImportanceChart } from "@/features/eaf/components/feature-importance-chart";
 import { useEafModelInfo } from "@/features/eaf/hooks/use-eaf";
 import { DEFAULT_RECIPE, eafApi, type PredictResponse } from "@/lib/api/eaf";
+import { ELECTRICAL_ENERGY_FULL_LABEL, formatVariableLabel } from "@/lib/eaf-labels";
+import { PRODUCTION_MODEL_PHASE } from "@/lib/constants";
 
 export function ModelInsightsView() {
   const { info, loading: modelLoading } = useEafModelInfo();
@@ -21,7 +26,7 @@ export function ModelInsightsView() {
   if (modelLoading && !info) {
     return (
       <PageContainer title="Model Insights" description="Loading production model metadata…">
-        {null}
+        <p className="text-sm text-muted-foreground">Loading…</p>
       </PageContainer>
     );
   }
@@ -29,9 +34,31 @@ export function ModelInsightsView() {
   return (
     <PageContainer
       title="Model Insights"
-      description="Frozen Phase 19 ensemble model — feature importance, SHAP attribution, and prediction explanation"
+      description={`Frozen ${PRODUCTION_MODEL_PHASE} ensemble — SHAP attribution, leakage documentation, and industrial interpretation`}
     >
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Badge>Production — deployed</Badge>
+        <Badge variant="outline">MAE ≈ {info?.test_mae} min</Badge>
+      </div>
+
+      <SectionCard title="Electrical Energy (kWh) — important note" className="border-amber-500/30 bg-amber-500/5">
+        <p className="flex gap-2 text-sm text-muted-foreground">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <span>
+            JSPL confirmed the field is <strong className="text-foreground">{ELECTRICAL_ENERGY_FULL_LABEL}</strong>,
+            recorded after heat completion — not electrical power (MW). The production model uses it because it was
+            available during historical training. Research (Phases 23–26) identified energy-derived features as
+            retrospective for planning-time decisions. The production model remains unchanged until an industrially
+            validated replacement is available. See{" "}
+            <Link href="/eaf/research/leakage" className="text-primary hover:underline">
+              Leakage Analysis
+            </Link>
+            .
+          </span>
+        </p>
+      </SectionCard>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <SectionCard title="Model">
           <p className="text-2xl font-semibold">{info?.model_name}</p>
           <p className="mt-1 text-sm text-muted-foreground">{info?.dataset}</p>
@@ -54,17 +81,30 @@ export function ModelInsightsView() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <FeatureImportanceChart contributors={prediction?.top_contributors ?? []} title="SHAP Summary" />
+        <FeatureImportanceChart contributors={prediction?.top_contributors ?? []} title="Production SHAP Summary" />
         <ContributorList
-          title="Top Contributors"
+          title="Top Features"
           description="Local SHAP-style attribution at the default operating recipe"
           contributors={prediction?.top_contributors ?? []}
           limit={10}
         />
       </div>
 
+      <SectionCard title="Why Electrical Energy appears in top features" className="mt-4">
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <li>
+            • <strong className="text-foreground">HM × Electrical Energy</strong> and{" "}
+            <strong className="text-foreground">Electrical Energy / Tonne</strong> are among the strongest predictors
+            because realized energy consumption correlates with how long the heat actually ran.
+          </li>
+          <li>• At planning time, operators do not yet know final kWh — this is a retrospective signal.</li>
+          <li>• Research leakage-free models (Phase 24–26) achieve similar MAE (~3.24–3.64 min) without energy inputs on normal heats.</li>
+          <li>• Future production upgrades require P0 sensors (delay codes, power-on/off) before replacing energy features.</li>
+        </ul>
+      </SectionCard>
+
       {prediction ? (
-        <SectionCard title="Prediction Explanation" description="Interpretation for the reference heat recipe">
+        <SectionCard title="Prediction Explanation" description="Interpretation for the reference heat recipe" className="mt-4">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-3">
               <p className="font-mono text-4xl font-bold text-primary">{prediction.predicted_ttt.toFixed(2)} min</p>
@@ -88,7 +128,26 @@ export function ModelInsightsView() {
         </SectionCard>
       ) : null}
 
-      <SectionCard title="Model Information" description="Production artifacts and feature schema">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <SectionCard title="Current production limitations">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• Retrospective Electrical Energy features unsuitable for pre-heat planning without caution</li>
+            <li>• Delay/abnormal heats not modeled separately in production (single regressor)</li>
+            <li>• ~3 min MAE ceiling on existing columns (Phase 26 information ceiling)</li>
+            <li>• Backend charge validation (115–150 t) unchanged — UI allows wider range with warnings</li>
+          </ul>
+        </SectionCard>
+        <SectionCard title="Expected future improvements">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• P0 MES/SCADA: delay codes, power-on/off, restriction flag</li>
+            <li>• Shadow-deploy two-stage architecture (Phase 25) after instrumentation</li>
+            <li>• Sub-2.5 min target with full digital twin V2 sensor suite</li>
+            <li>• Planning-safe optimizer replacing retrospective energy inputs</li>
+          </ul>
+        </SectionCard>
+      </div>
+
+      <SectionCard title="Model Information" description="Production artifacts and feature schema" className="mt-4">
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
             <p className="text-label">Artifacts</p>
@@ -107,7 +166,7 @@ export function ModelInsightsView() {
             <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
               {info?.features?.map((f) => (
                 <li key={f} className="font-mono text-muted-foreground">
-                  {f}
+                  {formatVariableLabel(f)}
                 </li>
               ))}
             </ul>

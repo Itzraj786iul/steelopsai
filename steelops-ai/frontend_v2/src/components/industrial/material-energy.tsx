@@ -59,7 +59,7 @@ interface EnergyFlowProps {
 export const EnergyFlow = memo(function EnergyFlow({ powerKwh, oxygen = 0, greenPct = 0, className }: EnergyFlowProps) {
   return (
     <div className={cn("grid gap-3", className)} role="img" aria-label="Energy flow">
-      <FlowBar label="Power" value={powerKwh / 1000} max={50} color={INDUSTRIAL_CHART.primary} unit=" MWh" />
+      <FlowBar label="Electrical Energy" value={powerKwh / 1000} max={50} color={INDUSTRIAL_CHART.primary} unit=" MWh" />
       <FlowBar label="Oxygen" value={oxygen} max={5000} color={INDUSTRIAL_CHART.secondary} unit=" Nm³" />
       <FlowBar label="GREEN" value={greenPct} max={100} color={INDUSTRIAL_CHART.accent} unit="%" />
     </div>

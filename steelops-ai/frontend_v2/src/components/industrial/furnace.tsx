@@ -90,7 +90,7 @@ export const FurnaceCrossSection = memo(function FurnaceCrossSection({
         <IndustrialGauge label="Carbon" value={carbon * 100} min={0} max={10} unit="%" color={INDUSTRIAL_CHART.secondary} />
         <IndustrialGauge label="Phosphorus" value={phosphorus * 1000} min={0} max={50} unit="ppm" color={INDUSTRIAL_CHART.prediction} />
         <IndustrialGauge label="Slag" value={slag} min={0} max={25} unit="%" color={INDUSTRIAL_CHART.muted} />
-        <IndustrialGauge label="Power" value={power} min={0} max={100} unit="%" color={INDUSTRIAL_CHART.primary} className="col-span-2" />
+        <IndustrialGauge label="Electrical Energy" value={power} min={0} max={100} unit="%" color={INDUSTRIAL_CHART.primary} className="col-span-2" />
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
 export const APP_NAME = "JSPL EAF TTT";
-export const APP_VERSION = "2.5.0";
+export const APP_VERSION = "2.8.0";
+export const RESEARCH_VERSION = "Phase 27";
+export const PRODUCTION_MODEL_PHASE = "Phase 19";
+export const OPTIMIZER_PHASE = "Phase 20.2";
+export const DATASET_VERSION = "Industrial EAF Heats (Phase 16 normal cohort)";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const EAF_API_URL = process.env.NEXT_PUBLIC_EAF_API_URL ?? "http://localhost:8001";

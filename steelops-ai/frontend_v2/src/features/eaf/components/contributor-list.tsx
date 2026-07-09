@@ -1,5 +1,6 @@
 import type { ContributorItem } from "@/lib/api/eaf";
 import { SectionCard } from "@/components/layout/section-card";
+import { formatContributorLabel } from "@/lib/eaf-labels";
 
 interface ContributorListProps {
   title?: string;
@@ -22,7 +23,7 @@ export function ContributorList({
         <ul className="space-y-2 text-sm">
           {items.map((c) => (
             <li key={c.feature} className="flex items-center justify-between border-b border-border/50 py-2 last:border-0">
-              <span>{c.display_name ?? c.feature}</span>
+              <span>{formatContributorLabel(c.feature, c.display_name)}</span>
               <span className="font-mono text-muted-foreground">{c.contribution?.toFixed(3)}</span>
             </li>
           ))}

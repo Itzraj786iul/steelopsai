@@ -7,7 +7,9 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Label } from "@/components/ui/label";
 import { eafApi } from "@/lib/api/eaf";
+import { formatVariableLabel } from "@/lib/eaf-labels";
 import { useEafRecipe } from "@/features/eaf/hooks/use-eaf";
+import { getApiErrorMessage } from "@/services/api-client";
 
 const SLIDERS = [
   { key: "HM" as const, min: 40, max: 80, step: 0.1 },
@@ -22,17 +24,23 @@ export default function EafWhatIfPage() {
   const { recipe, update } = useEafRecipe();
   const [pred, setPred] = useState<number | null>(null);
   const [tornado, setTornado] = useState<{ variable: string; low: number; high: number }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(async (r: typeof recipe) => {
-    const { data } = await eafApi.whatif(r);
-    setPred(data.predicted_ttt);
-    setTornado(
-      data.tornado.map((t: { variable: string; low_delta: number; high_delta: number }) => ({
-        variable: t.variable,
-        low: t.low_delta,
-        high: t.high_delta,
-      }))
-    );
+    try {
+      setError(null);
+      const { data } = await eafApi.whatif(r);
+      setPred(data.predicted_ttt);
+      setTornado(
+        data.tornado.map((t: { variable: string; low_delta: number; high_delta: number }) => ({
+          variable: t.variable,
+          low: t.low_delta,
+          high: t.high_delta,
+        }))
+      );
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, "What-if analysis unavailable"));
+    }
   }, []);
 
   useEffect(() => {
@@ -40,19 +48,24 @@ export default function EafWhatIfPage() {
     return () => clearTimeout(t);
   }, [recipe, run]);
 
-  const chartData = tornado.map((t) => ({ name: t.variable, low: t.low, high: t.high }));
+  const chartData = tornado.map((t) => ({
+    name: formatVariableLabel(t.variable),
+    low: t.low,
+    high: t.high,
+  }));
 
   return (
     <PageContainer title="What-if Analysis" description="Live sensitivity analysis — adjust variables and observe TTT response">
       <SectionCard title="Live Prediction">
         <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
+        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
       <SectionCard title="Adjust Variables" className="mt-6">
         <div className="grid gap-6 sm:grid-cols-2">
           {SLIDERS.map(({ key, min, max, step }) => (
             <div key={key} className="space-y-2">
               <Label>
-                {key}: {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)}
+                {formatVariableLabel(key)}: {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)}
               </Label>
               <input
                 type="range"
@@ -69,16 +82,22 @@ export default function EafWhatIfPage() {
       </SectionCard>
       <SectionCard title="Tornado Sensitivity" className="mt-6">
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="name" type="category" width={60} />
-              <Tooltip />
-              <Bar dataKey="low" fill="#B83232" name="Decrease" />
-              <Bar dataKey="high" fill="#1B7A3D" name="Increase" />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="low" fill="#B83232" name="Decrease" />
+                <Bar dataKey="high" fill="#1B7A3D" name="Increase" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Adjust sliders to compute sensitivity.
+            </p>
+          )}
         </div>
       </SectionCard>
     </PageContainer>

@@ -104,8 +104,11 @@ apiClient.interceptors.response.use(
 
 export function getApiErrorMessage(error: unknown, fallback = "Something went wrong"): string {
   if (axios.isAxiosError(error)) {
+    if (error.code === "ECONNABORTED") {
+      return "Request timed out. The model may still be loading — please try again in a moment.";
+    }
     if (!error.response) {
-      return "Cannot reach the API. Verify the backend is running.";
+      return "Cannot reach the API. Verify the backend is running and your network connection is stable.";
     }
     const data = error.response.data as ApiError & {
       detail?: string | Array<{ msg?: string; loc?: string[] }>;

@@ -12,11 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePermissions } from "@/hooks/use-auth";
 import { usePlantContext } from "@/hooks/use-plant-context";
 import { APP_NAME } from "@/lib/constants";
-import {
-  ALL_NAV_ITEMS,
-  PRIMARY_NAV,
-  type NavDefinition,
-} from "@/lib/navigation";
+import { ALL_NAV_ITEMS, PRIMARY_NAV, flattenNavItems, type NavDefinition } from "@/lib/navigation";
 import { industrialEase } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
@@ -28,7 +24,7 @@ interface SidebarProps {
 }
 
 function resolveNavLabel(href: string) {
-  return ALL_NAV_ITEMS.find((item) => item.href === href)?.label ?? href.replace(/^\//, "");
+  return flattenNavItems(ALL_NAV_ITEMS).find((item) => item.href === href)?.label ?? href.replace(/^\//, "");
 }
 
 function NavLink({
@@ -36,11 +32,13 @@ function NavLink({
   collapsed,
   active,
   badge,
+  nested,
 }: {
   item: NavDefinition;
   collapsed: boolean;
   active: boolean;
   badge?: number;
+  nested?: boolean;
 }) {
   const Icon = item.icon;
 
@@ -49,6 +47,7 @@ function NavLink({
       href={item.href}
       className={cn(
         "group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-ring",
+        nested && !collapsed && "ml-3 h-9 border-l border-border/60 pl-3",
         active
           ? "bg-primary text-primary-foreground shadow-glow-primary"
           : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -91,15 +90,34 @@ function NavSection({
   return (
     <div className="space-y-1">
       {title && !collapsed ? <p className="px-3 py-2 text-label">{title}</p> : null}
-      {visibleItems.map((item) => (
-        <NavLink
-          key={item.href}
-          item={item}
-          collapsed={collapsed}
-          active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
-          badge={item.badgeKey ? badges?.[item.badgeKey] : undefined}
-        />
-      ))}
+      {visibleItems.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const children = item.children?.filter((child) => canAccess(child.href));
+
+        return (
+          <div key={item.href} className="space-y-1">
+            <NavLink
+              item={item}
+              collapsed={collapsed}
+              active={active}
+              badge={item.badgeKey ? badges?.[item.badgeKey] : undefined}
+            />
+            {!collapsed && children?.length ? (
+              <div className="space-y-0.5">
+                {children.map((child) => (
+                  <NavLink
+                    key={child.href}
+                    item={child}
+                    collapsed={collapsed}
+                    active={pathname === child.href}
+                    nested
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -112,8 +130,10 @@ export function Sidebar({ badges }: SidebarProps) {
   const { canAccessRoute } = usePermissions();
   const { plant } = usePlantContext();
 
+  const flatNav = flattenNavItems(ALL_NAV_ITEMS);
+
   const pinnedItems = pinned
-    .map((href) => ALL_NAV_ITEMS.find((item) => item.href === href))
+    .map((href) => flatNav.find((item) => item.href === href))
     .filter((item): item is NavDefinition => Boolean(item && canAccessRoute(item.href)));
 
   const recentItems = recent

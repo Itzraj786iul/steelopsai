@@ -4,20 +4,29 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { OptimizerDisclaimer } from "@/features/eaf/components/validation-banner";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
+import { useEafHistorical } from "@/features/eaf/hooks/use-eaf-historical";
 import { useEafOptimize, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
+import { formatVariableLabel } from "@/lib/eaf-labels";
 
 export default function EafOptimizerPage() {
   const { recipe, update, charge } = useEafRecipe();
   const { optimize, loading, error, result } = useEafOptimize();
+  const { data: historical } = useEafHistorical(recipe);
 
   return (
     <PageContainer title="Recipe Optimizer" description="Physics-guided Phase 20.2 recipe optimization with constraint validation">
-      <RecipeForm recipe={recipe} onChange={update} charge={charge} />
+      <OptimizerDisclaimer className="mb-6" />
+      <RecipeForm recipe={recipe} onChange={update} charge={charge} historicalVariables={historical?.variables} />
       <Button className="mt-6" onClick={() => optimize(recipe)} disabled={loading}>
         {loading ? "Optimizing…" : "Run Optimizer"}
       </Button>
-      {error ? <p className="mt-4 text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       {result ? (
         <>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -48,7 +57,7 @@ export default function EafOptimizerPage() {
                 <tbody>
                   {result.comparison?.map((row) => (
                     <tr key={row.variable} className="border-b border-border/50">
-                      <td className="py-2 font-medium">{row.variable}</td>
+                      <td className="py-2 font-medium">{formatVariableLabel(row.variable)}</td>
                       <td className="font-mono">{row.current.toFixed(2)}</td>
                       <td className="font-mono">{row.optimized.toFixed(2)}</td>
                       <td className="font-mono">

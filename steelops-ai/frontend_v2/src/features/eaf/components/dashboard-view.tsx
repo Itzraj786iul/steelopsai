@@ -1,15 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { LineChart } from "lucide-react";
+import { FlaskConical, LineChart } from "lucide-react";
 
 import { ActionButton } from "@/components/data-display/action-button";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { Badge } from "@/components/ui/badge";
 import { EafKpiCard } from "@/features/eaf/components/eaf-kpi-card";
 import { EafQuickActions } from "@/features/eaf/components/eaf-quick-actions";
 import { ContributorList } from "@/features/eaf/components/contributor-list";
 import { useEafDashboard } from "@/features/eaf/hooks/use-eaf";
+import {
+  APP_VERSION,
+  DATASET_VERSION,
+  OPTIMIZER_PHASE,
+  PRODUCTION_MODEL_PHASE,
+  RESEARCH_VERSION,
+} from "@/lib/constants";
 import { DEFAULT_RECIPE } from "@/lib/api/eaf";
 
 export function EafDashboardView() {
@@ -18,31 +26,60 @@ export function EafDashboardView() {
   return (
     <PageContainer
       title="Dashboard"
-      description="Executive overview — model performance, predictions, and optimization impact for the current heat recipe"
+      description="Executive overview — production model status, research progress, and optimization impact"
     >
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <EafKpiCard
-          title="Current Model"
+          title="Production Model"
           value={loading ? "…" : (model?.model_name ?? "—")}
-          subtitle={model?.optimizer_version ? `Optimizer ${model.optimizer_version}` : undefined}
+          subtitle={`${PRODUCTION_MODEL_PHASE} — deployed`}
         />
         <EafKpiCard
-          title="MAE"
+          title="Research Status"
+          value={RESEARCH_VERSION}
+          subtitle="Experimental — not for live decisions"
+          valueClassName="text-lg"
+        />
+        <EafKpiCard
+          title="Current Version"
+          value={`v${APP_VERSION}`}
+          subtitle={`Optimizer ${OPTIMIZER_PHASE}`}
+        />
+        <EafKpiCard
+          title="Latest Phase"
+          value="Phase 28"
+          subtitle="Website enhancement & research integration"
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <EafKpiCard
+          title="Expected MAE"
           value={loading ? "…" : `${model?.test_mae?.toFixed(2) ?? "—"} min`}
-          subtitle="Test-set mean absolute error"
+          subtitle="Production test-set MAE (normal heats)"
         />
         <EafKpiCard
-          title="R²"
-          value={loading ? "…" : (model?.test_r2?.toFixed(3) ?? "—")}
-          subtitle="Test-set coefficient of determination"
+          title="Digital Twin Readiness"
+          value="V1"
+          subtitle="Production website only — V2 needs P0 sensors"
+          valueClassName="text-lg"
         />
         <EafKpiCard
-          title="Process Status"
+          title="Data Quality"
           value={loading ? "…" : (prediction?.operator_summary?.process_status ?? "—")}
-          valueClassName="text-2xl text-green-600"
-          subtitle={prediction?.operator_summary?.risk ? `Risk: ${prediction.operator_summary.risk}` : undefined}
+          subtitle="Reference recipe process status"
+        />
+        <EafKpiCard
+          title="Industrial Coverage"
+          value="~65%"
+          subtitle="Phase 27 gap analysis — P0 tags missing"
+          valueClassName="text-lg"
         />
       </div>
 
@@ -98,22 +135,31 @@ export function EafDashboardView() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ContributorList contributors={prediction?.top_contributors ?? []} limit={5} />
-        <SectionCard
-          title="Model Insights"
-          description="Feature attribution and model metadata for the current operating point"
-        >
+        <SectionCard title="Research Center" description="Phases 23–27 findings — does not affect production">
           <p className="text-sm text-muted-foreground">
-            Explore SHAP contributors, global feature importance, confidence intervals, and frozen production model
-            artifacts.
+            Leakage analysis, two-stage architecture, feature discovery, industrial roadmap, and digital twin planning.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Badge>Production frozen</Badge>
+            <Badge variant="outline">{DATASET_VERSION}</Badge>
+          </div>
           <ActionButton className="mt-4" variant="outline" asChild>
-            <Link href="/eaf/model">
-              <LineChart className="mr-2 h-4 w-4" />
-              Open Model Insights
+            <Link href="/eaf/research">
+              <FlaskConical className="mr-2 h-4 w-4" />
+              Open Research Center
             </Link>
           </ActionButton>
         </SectionCard>
       </div>
+
+      <SectionCard title="Model Insights" description="SHAP attribution and production metadata" className="mt-4">
+        <ActionButton variant="outline" asChild>
+          <Link href="/eaf/model">
+            <LineChart className="mr-2 h-4 w-4" />
+            Open Model Insights
+          </Link>
+        </ActionButton>
+      </SectionCard>
 
       <EafQuickActions />
     </PageContainer>

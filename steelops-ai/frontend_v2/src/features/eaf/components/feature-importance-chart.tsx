@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 import type { ContributorItem } from "@/lib/api/eaf";
 import { SectionCard } from "@/components/layout/section-card";
+import { formatContributorLabel } from "@/lib/eaf-labels";
 
 interface FeatureImportanceChartProps {
   contributors: ContributorItem[];
@@ -16,7 +17,7 @@ export function FeatureImportanceChart({
 }: FeatureImportanceChartProps) {
   const data = contributors
     .map((c) => ({
-      name: c.display_name ?? c.feature,
+      name: formatContributorLabel(c.feature, c.display_name),
       importance: Math.abs(c.global_importance ?? c.contribution ?? 0),
     }))
     .sort((a, b) => b.importance - a.importance)

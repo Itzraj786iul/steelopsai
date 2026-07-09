@@ -23,19 +23,44 @@ function MobileNavSection({
       {items.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const children = item.children;
+
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium",
-              active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            <span className="flex-1">{item.label}</span>
-          </Link>
+          <div key={item.href} className="space-y-1">
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium",
+                active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="flex-1">{item.label}</span>
+            </Link>
+            {children?.length ? (
+              <div className="ml-4 space-y-1 border-l border-border/60 pl-2">
+                {children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const childActive = pathname === child.href;
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        "flex h-10 items-center gap-2 rounded-md px-3 text-sm",
+                        childActive ? "bg-primary/90 text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <ChildIcon className="h-3.5 w-3.5" />
+                      <span>{child.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </div>
