@@ -20,7 +20,7 @@ OPTIMIZER_PKL_PATH = PHASE20_EXPORTS / "recipe_optimizer.pkl"
 LOGS_DIR = BACKEND_ROOT / "logs"
 
 APP_NAME = "JSPL EAF TTT API"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.8.1"
 MODEL_NAME = "Stacking Regressor"
 OPTIMIZER_VERSION = "Phase 20.2 Physics Guided"
 TEST_MAE = 3.061

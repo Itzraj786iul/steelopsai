@@ -4,12 +4,30 @@ from __future__ import annotations
 
 import sys
 import time
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any
 
 import pandas as pd
 
 from app.core.config import CI_HALF_WIDTH_95, DEFAULT_RECIPE, PHASE21_ROOT, TEST_MAE, get_settings
+from app.core.version_registry import get_version_registry
+from app.services.industrial_validation import (
+    build_advisory_warnings,
+    build_operator_summary,
+    compute_confidence,
+    derive_charge_bounds,
+    full_historical_statistics,
+    sanitize_recipe,
+    total_charge,
+)
+from app.services.response_labels import (
+    relabel_comparison_row,
+    relabel_contributor,
+    relabel_historical_variable,
+    relabel_process_health_item,
+)
+from app.services.structured_logging import log_optimization, log_prediction
 
 
 def _ensure_phase21_path() -> None:
@@ -46,10 +64,22 @@ def get_historical_raw() -> pd.DataFrame:
     return load_historical_raw()
 
 
+def _prediction_metadata(confidence: str, warnings: list[str]) -> dict[str, Any]:
+    registry = get_version_registry()
+    return {
+        "model_version": registry["backend_version"],
+        "pipeline": registry["model_phase"],
+        "optimizer": registry["optimizer_phase"],
+        "prediction_timestamp": datetime.now(timezone.utc).isoformat(),
+        "confidence": confidence,
+        "warnings": warnings,
+    }
+
+
 def _top_contributors_fast(engine: Any, recipe: dict[str, Any]) -> list[dict[str, Any]]:
     """Top-5 ablation attribution — same logic as PredictionEngine, fewer features."""
     _ensure_phase21_path()
-    from config import FEATURE_DISPLAY_NAMES, TOP_CONTRIBUTOR_FEATURES
+    from config import TOP_CONTRIBUTOR_FEATURES
     from feature_engineering import engineer_recipe_features, recipe_to_dataframe
 
     current_feats = engineer_recipe_features(recipe_to_dataframe(recipe)).iloc[0]
@@ -62,81 +92,130 @@ def _top_contributors_fast(engine: Any, recipe: dict[str, Any]) -> list[dict[str
         modified[feat] = engine.baseline_features[feat]
         mod_pred = engine._predict_from_features(modified.to_frame().T)
         rows.append(
-            {
-                "feature": feat,
-                "display_name": FEATURE_DISPLAY_NAMES.get(feat, feat.replace("_", " ")),
-                "contribution": float(base_pred - mod_pred),
-                "global_importance": float(imp_map.get(feat, 0.0)),
-            }
+            relabel_contributor(
+                {
+                    "feature": feat,
+                    "display_name": feat,
+                    "contribution": float(base_pred - mod_pred),
+                    "global_importance": float(imp_map.get(feat, 0.0)),
+                }
+            )
         )
     rows.sort(key=lambda row: abs(row["contribution"]), reverse=True)
     return rows
 
 
 def predict_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
-    _ensure_phase21_path()
-    from types import SimpleNamespace
+    start = time.perf_counter()
+    clean_recipe, sanitize_notices = sanitize_recipe(recipe)
 
-    from utils import (
-        build_operator_summary,
-        live_validation_warnings,
-        validate_recipe,
+    try:
+        stats = get_historical_stats()
+        stats_loaded = True
+    except Exception:
+        stats = pd.DataFrame()
+        stats_loaded = False
+
+    bounds = derive_charge_bounds(stats) if stats_loaded else derive_charge_bounds(
+        pd.DataFrame(
+            {
+                "p5": [28, 31, 0, 0],
+                "median": [56.8, 63.2, 0, 0],
+                "p95": [60, 68, 0, 0],
+                "mean": [56.8, 63.2, 0, 0],
+                "std": [2, 2, 0, 0],
+            },
+            index=["HM", "DRI", "HBI", "Bucket"],
+        )
     )
 
-    ok, errors = validate_recipe(recipe)
-    if not ok:
-        raise ValueError("; ".join(errors))
+    advisory_warnings, charge_class, plain_warnings = (
+        build_advisory_warnings(clean_recipe, stats, bounds, sanitize_notices)
+        if stats_loaded
+        else build_advisory_warnings(clean_recipe, stats, bounds, sanitize_notices + ["Historical statistics unavailable — confidence may be conservative."])
+    )
+
+    confidence = compute_confidence(total_charge(clean_recipe), bounds, len(advisory_warnings))
 
     engine = get_prediction_engine()
-    stats = get_historical_stats()
-    predicted = engine.predict(recipe)
-    top_contributors = _top_contributors_fast(engine, recipe)
-    result = SimpleNamespace(
-        predicted_ttt=predicted,
-        margin=TEST_MAE,
-        ci_lower_95=predicted - CI_HALF_WIDTH_95,
-        ci_upper_95=predicted + CI_HALF_WIDTH_95,
+    predicted = engine.predict(clean_recipe)
+    top_contributors = _top_contributors_fast(engine, clean_recipe)
+
+    operator_summary = build_operator_summary(
+        clean_recipe,
+        predicted,
+        confidence,
+        charge_class,
+        advisory_warnings,
     )
-    warnings = live_validation_warnings(recipe, stats)
-    summary = build_operator_summary(recipe, result, stats)
+
+    latency_ms = (time.perf_counter() - start) * 1000
+    log_prediction(
+        charge=total_charge(clean_recipe),
+        shift=str(clean_recipe.get("Shift", "C")),
+        confidence=confidence,
+        warnings=plain_warnings,
+        predicted_ttt=predicted,
+        latency_ms=latency_ms,
+    )
 
     return {
-        "predicted_ttt": result.predicted_ttt,
-        "margin": result.margin,
-        "ci_lower_95": result.ci_lower_95,
-        "ci_upper_95": result.ci_upper_95,
+        "predicted_ttt": predicted,
+        "margin": TEST_MAE,
+        "ci_lower_95": predicted - CI_HALF_WIDTH_95,
+        "ci_upper_95": predicted + CI_HALF_WIDTH_95,
         "top_contributors": top_contributors,
-        "operator_summary": summary,
-        "validation_warnings": [{"level": l, "message": m} for l, m in warnings],
+        "operator_summary": operator_summary,
+        "validation_warnings": advisory_warnings,
+        "confidence": confidence,
+        "charge_classification": charge_class,
+        "metadata": _prediction_metadata(confidence, plain_warnings),
     }
 
 
 def optimize_recipe(recipe: dict[str, Any], n_generate: int = 1000) -> dict[str, Any]:
-    _ensure_phase21_path()
-    from utils import arrow_for_delta, validate_recipe
-
-    ok, errors = validate_recipe(recipe)
-    if not ok:
-        raise ValueError("; ".join(errors))
+    start = time.perf_counter()
+    clean_recipe, _ = sanitize_recipe(recipe)
 
     opt_engine = get_optimizer_engine()
-    opt = opt_engine.optimize(recipe, power_restriction=int(recipe.get("Power_Restriction", 0)), n_generate=n_generate)
+    opt = opt_engine.optimize(
+        clean_recipe,
+        power_restriction=int(clean_recipe.get("Power_Restriction", 0)),
+        n_generate=n_generate,
+    )
+
+    _ensure_phase21_path()
+    from utils import arrow_for_delta
 
     comparison = []
     for col in ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"]:
-        cur = float(recipe[col])
+        cur = float(clean_recipe[col])
         rec = float(opt.optimized_recipe[col])
         delta = rec - cur
-        comparison.append({
-            "variable": col,
-            "current": cur,
-            "optimized": rec,
-            "difference": delta,
-            "pct_change": (delta / cur * 100) if abs(cur) > 1e-6 else 0.0,
-            "arrow": arrow_for_delta(delta, col),
-            "reason": opt_engine.explain_change(col, cur, rec, bool(opt.power_restriction)),
-            "physics_status": opt_engine.physics_status(col, recipe, opt.optimized_recipe, bool(opt.power_restriction)),
-        })
+        comparison.append(
+            relabel_comparison_row(
+                {
+                    "variable": col,
+                    "current": cur,
+                    "optimized": rec,
+                    "difference": delta,
+                    "pct_change": (delta / cur * 100) if abs(cur) > 1e-6 else 0.0,
+                    "arrow": arrow_for_delta(delta, col),
+                    "reason": opt_engine.explain_change(col, cur, rec, bool(opt.power_restriction)),
+                    "physics_status": opt_engine.physics_status(
+                        col, clean_recipe, opt.optimized_recipe, bool(opt.power_restriction)
+                    ),
+                }
+            )
+        )
+
+    latency_ms = (time.perf_counter() - start) * 1000
+    log_optimization(
+        charge=total_charge(clean_recipe),
+        shift=str(clean_recipe.get("Shift", "C")),
+        improvement_min=float(opt.improvement_min),
+        latency_ms=latency_ms,
+    )
 
     return {
         "current_recipe": opt.current_recipe,
@@ -152,65 +231,80 @@ def optimize_recipe(recipe: dict[str, Any], n_generate: int = 1000) -> dict[str,
 
 
 def whatif_analysis(recipe: dict[str, Any], variables: list[str] | None = None) -> dict[str, Any]:
-    _ensure_phase21_path()
+    clean_recipe, _ = sanitize_recipe(recipe)
     engine = get_prediction_engine()
     variables = variables or ["HM", "DRI", "POWER", "OXY", "CPC", "Bucket"]
-    baseline = engine.predict(recipe)
+    baseline = engine.predict(clean_recipe)
     tornado = []
     for var in variables:
-        base_val = float(recipe[var])
+        if var not in clean_recipe:
+            continue
+        base_val = float(clean_recipe[var])
         span = max(base_val * 0.05, 1.0 if var not in {"POWER", "OXY"} else 100.0)
-        low = dict(recipe)
-        high = dict(recipe)
+        low = dict(clean_recipe)
+        high = dict(clean_recipe)
         low[var] = max(0.0, base_val - span)
         high[var] = base_val + span
-        tornado.append({
-            "variable": var,
-            "low_delta": engine.predict(low) - baseline,
-            "high_delta": engine.predict(high) - baseline,
-        })
+        from app.services.response_labels import format_display_name
+
+        tornado.append(
+            {
+                "variable": var,
+                "display_name": format_display_name(var),
+                "low_delta": engine.predict(low) - baseline,
+                "high_delta": engine.predict(high) - baseline,
+            }
+        )
     return {"predicted_ttt": baseline, "baseline_ttt": baseline, "tornado": tornado}
 
 
 def process_health(recipe: dict[str, Any]) -> list[dict[str, Any]]:
+    clean_recipe, _ = sanitize_recipe(recipe)
     _ensure_phase21_path()
     from utils import process_health_table
 
-    health = process_health_table(recipe, get_historical_stats())
+    health = process_health_table(clean_recipe, get_historical_stats())
     color_map = {"Excellent": "green", "Good": "green", "Warning": "yellow", "Out of Practice": "red"}
     items = []
     for _, row in health.iterrows():
-        items.append({
-            "gauge": row["Gauge"],
-            "value": float(row["Value"]),
-            "p5": float(row["P5"]),
-            "median": float(row["Median"]),
-            "p95": float(row["P95"]),
-            "status": row["Status"],
-            "color": color_map.get(row["Status"], "yellow"),
-        })
+        items.append(
+            relabel_process_health_item(
+                {
+                    "gauge": row["Gauge"],
+                    "value": float(row["Value"]),
+                    "p5": float(row["P5"]),
+                    "median": float(row["Median"]),
+                    "p95": float(row["P95"]),
+                    "status": row["Status"],
+                    "color": color_map.get(row["Status"], "yellow"),
+                }
+            )
+        )
     return items
 
 
 def historical_comparison(recipe: dict[str, Any]) -> dict[str, Any]:
+    clean_recipe, _ = sanitize_recipe(recipe)
     _ensure_phase21_path()
     from utils import historical_comparison_table
 
     stats = get_historical_stats()
-    table = historical_comparison_table(recipe, stats)
+    table = historical_comparison_table(clean_recipe, stats)
     raw = get_historical_raw()
     dist: dict[str, list[float]] = {}
     for col in ["HM", "DRI", "POWER", "OXY"]:
         dist[col] = raw[col].dropna().tolist()[:500]
     variables = [
-        {
-            "variable": str(row["Variable"]),
-            "current": float(row["Current"]),
-            "p5": float(row["P5"]),
-            "median": float(row["Median"]),
-            "p95": float(row["P95"]),
-            "status": str(row["Status"]),
-        }
+        relabel_historical_variable(
+            {
+                "variable": str(row["Variable"]),
+                "current": float(row["Current"]),
+                "p5": float(row["P5"]),
+                "median": float(row["Median"]),
+                "p95": float(row["P95"]),
+                "status": str(row["Status"]),
+            }
+        )
         for _, row in table.iterrows()
     ]
     return {
@@ -219,17 +313,27 @@ def historical_comparison(recipe: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def historical_statistics() -> dict[str, Any]:
+    stats = get_historical_stats()
+    raw = get_historical_raw()
+    return {
+        "variables": full_historical_statistics(stats, raw),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def generate_report(recipe: dict[str, Any], fmt: str = "json", include_opt: bool = True) -> bytes | str:
     _ensure_phase21_path()
     from utils import build_csv_export, build_json_export, generate_pdf_report, historical_comparison_table, generate_industrial_interpretation
 
-    pred_data = predict_recipe(recipe)
+    clean_recipe, _ = sanitize_recipe(recipe)
+    pred_data = predict_recipe(clean_recipe)
     engine = get_prediction_engine()
-    result = engine.predict_with_interval(recipe)
+    result = engine.predict_with_interval(clean_recipe)
     opt = None
     if include_opt:
         try:
-            opt_data = optimize_recipe(recipe, n_generate=200)
+            opt_data = optimize_recipe(clean_recipe, n_generate=200)
             opt = type("Opt", (), opt_data)()
             opt.optimized_recipe = opt_data["optimized_recipe"]
             opt.current_ttt = opt_data["current_ttt"]
@@ -240,16 +344,21 @@ def generate_report(recipe: dict[str, Any], fmt: str = "json", include_opt: bool
             opt = None
 
     stats = get_historical_stats()
-    interpretations = generate_industrial_interpretation(recipe, result.predicted_ttt, stats, result.top_contributors)
-    comparison = historical_comparison_table(recipe, stats)
+    interpretations = generate_industrial_interpretation(clean_recipe, result.predicted_ttt, stats, result.top_contributors)
+    comparison = historical_comparison_table(clean_recipe, stats)
 
     if fmt == "json":
-        return build_json_export(recipe, result, opt)
+        return build_json_export(clean_recipe, result, opt)
     if fmt == "csv":
-        return build_csv_export(recipe, result, opt)
+        return build_csv_export(clean_recipe, result, opt)
     if fmt == "pdf":
         return generate_pdf_report(
-            recipe, result, opt, interpretations, comparison, result.contributions,
+            clean_recipe,
+            result,
+            opt,
+            interpretations,
+            comparison,
+            result.contributions,
             operator_summary=pred_data["operator_summary"],
         )
     raise ValueError(f"Unsupported format: {fmt}")
@@ -260,8 +369,10 @@ class MLService:
 
     def health(self) -> dict[str, Any]:
         settings = get_settings()
+        registry = get_version_registry()
         model_ok = False
         opt_ok = False
+        stats_ok = False
         try:
             get_prediction_engine()
             model_ok = True
@@ -272,11 +383,27 @@ class MLService:
             opt_ok = True
         except Exception:
             pass
+        try:
+            get_historical_stats()
+            stats_ok = True
+        except Exception:
+            pass
+
         return {
             "status": "ok" if model_ok else "degraded",
             "model_loaded": model_ok,
             "optimizer_loaded": opt_ok,
+            "historical_statistics_loaded": stats_ok,
             "version": settings.app_version,
+            "frontend_version": registry["frontend_version"],
+            "backend_version": registry["backend_version"],
+            "production_model": registry["model_phase"],
+            "optimizer_version": registry["optimizer_phase"],
+            "research_version": registry["research_phase"],
+            "dataset_version": registry["dataset_version"],
+            "git_commit": registry["git_commit"],
+            "build_date": registry["build_date"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def model_info(self) -> dict[str, Any]:
@@ -294,6 +421,8 @@ class MLService:
             TEST_MAE,
             TEST_R2,
         )
+        from app.services.response_labels import format_display_name
+
         return {
             "model_name": MODEL_NAME,
             "optimizer_version": OPTIMIZER_VERSION,
@@ -303,12 +432,16 @@ class MLService:
             "ci_half_width_95": CI_HALF_WIDTH_95,
             "dataset": DATASET_LABEL,
             "features": MODEL_FEATURES,
+            "feature_labels": [format_display_name(f) for f in MODEL_FEATURES],
             "artifacts": {
                 "production_model": str(MODEL_PATH),
                 "preprocessing": str(PREPROC_PATH),
                 "optimizer_pkl": str(OPTIMIZER_PKL_PATH),
             },
         }
+
+    def version_registry(self) -> dict[str, Any]:
+        return get_version_registry()
 
 
 ml_service = MLService()
