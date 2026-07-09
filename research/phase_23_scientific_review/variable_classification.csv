@@ -1,0 +1,29 @@
+Variable,Controllable,Response,Intermediate,Should_be_Prediction,Should_be_Optimization,Confidence,References
+Hot Metal (HM),Semi-controllable,No,No,Yes (as ratio/interaction),Yes (within HM-DRI coupling),High,"Duan et al. 2014 (steel research int); Yang et al. 2023 (J Clean Prod); Kirschen et al. 2011 (Energy)"
+DRI (tonnage),Semi-controllable,No,No,Yes (share/ratio not raw ton),Yes (coupled with HM),High,"Memoli et al. 2021 (Processes); Kirschen et al. 2011; Memoli et al. 2021 (Processes 9:402)"
+HBI,Semi-controllable,No,No,Conditional (sparse in JSPL data),Conditional,Medium,"Memoli et al. 2021; Kirschen et al. 2011"
+Scrap / Bucket,Controllable,No,No,Yes (share/ratio),Yes,High,"Memoli et al. 2021; Kirschen et al. 2011; Štore Steel GP study (Energies 2019)"
+DRI Metallization,Semi-controllable (upstream),No,Yes,Yes (if available),Indirect only,High,"Kirschen et al. 2011; Midrex tech article; Memoli et al. 2021"
+Electrical Energy Consumed (kWh) — POWER field,Semi-controllable setpoint / accumulated response,Partially,Yes,Conditional — leakage risk if end-of-heat total used,No as free decision variable,High,"Knutsen et al. 2020 (Metals 10:36); Sjunnesson et al. 2019 (Metals 9:959); Kirschen et al. 2011"
+Transformer Power (kW/MW),Controllable (equipment limit),No,Yes,Yes if real-time telemetry exists,Yes as constraint not target,High,"Pfeifer 2011 (Metals 11:1348); Kirschen et al. 2011; Primetals Melt Expert"
+Power-on Time (arcing time),Semi-controllable,Partially,Yes,Yes — strong TTT component,Yes — minimize subject to quality,High,"CJCE 2025 MGGP-GA arcing study; Sjunnesson et al. 2019; Knutsen et al. 2020"
+Power-off Time,Mostly response,Partially,Yes,Yes (delay features),Minimize operationally,High,"Knutsen et al. 2020; Štore Steel (Energies 2019); TERI EAF best practices"
+Chemical Energy (C/O2/Ng combustion),Controllable,No,Yes,Yes (CPC OXY Ng proxies),Yes,High,"Kirschen et al. 2011; Morales et al. 2025 (Minerals); Memoli et al. 2021"
+Oxygen (OXY),Controllable,No,No,Yes (per-tonne),Yes,High,"Duan et al. 2014; Kirschen et al. 2011; Memoli et al. 2021"
+CPC (carbon powder/charge),Controllable,No,No,Yes,Yes,High,"Morales et al. 2025; Kirschen et al. 2011; Skupien/Gaskell foaming models"
+Carbon Injection (distinct from CPC if measured),Controllable,No,No,Yes if measured,Yes,Medium,"Morales et al. 2025; Kirschen et al. 2011"
+Foamy Slag (operational state),Semi-controllable via C/O2/flux,No,Yes,Yes if proxied (FeO slag C/O2),Indirect via C/O2/flux,Medium,"Kirschen et al. 2011; Węglarz et al. 2024 (Materials); Aminorroaya THD study"
+Lime (LIME),Controllable,No,No,Yes (per-tonne/ratio),Yes,High,"Memoli et al. 2021; Kirschen et al. 2011; Štore Steel (Energies 2019)"
+Dolomite (DOLO),Controllable,No,No,Yes,Yes,High,"Memoli et al. 2021; Kirschen et al. 2011"
+Basicity (CaO/SiO2 or B3),Derived controllable,No,Yes,Yes if computed from flux + burden,Yes,High,"Memoli et al. 2021; AusIMM Memoli transient slag 2015"
+Shift,Uncontrollable context,No,No,Weak — crew/equipment context,No,Low,"Plant operations literature; JSPL data shows low SHAP"
+Total Charge (T C),Semi-controllable,No,No,Yes (normalized features),Constraint in optimizer,High,"Pfeifer 2011; JSPL charge band 115-150 t"
+Tap Weight,Mostly response,Yes,Partially,Exclude as pre-heat input; use historically,No,Medium,"Pfeifer 2011; Kirschen et al. 2011"
+Delays (maintenance/technological),Mostly exogenous,Partially,Yes,Yes if logged,Minimize operationally,High,"Štore Steel (Energies 2019); Knutsen et al. 2020"
+Power Restriction,Exogenous constraint,No,Yes,Yes (flag/constraint),Yes (hard constraint),High,"JSPL industrial practice; Kirschen et al. 2011"
+HM_X_POWER (engineered),Derived,No,Yes,Review — encodes HM×energy leakage,Exclude from optimizer free vars,Medium,JSPL Phase 18-19 artifacts
+POWER_PER_TONNE (engineered),Derived,No,Yes,Leakage risk if energy is end-of-heat,Exclude,High,Sjunnesson et al. 2019; Knutsen et al. 2020
+OXYGEN_PER_TONNE (engineered),Derived,No,No,Yes,Yes,High,Duan et al. 2014; Kirschen et al. 2011
+BUCKET_X_CPC (engineered),Derived,No,No,Yes,Yes,Medium,Memoli et al. 2021; Morales et al. 2025
+SOLID_BURDEN_RATIO (engineered),Derived,No,No,Yes,Yes,High,Memoli et al. 2021; Kirschen et al. 2011
+CHARGE_BALANCE_ERROR (engineered),Data quality,No,No,Exclude or QC only,Exclude,High,JSPL Phase 13 cleaning logic

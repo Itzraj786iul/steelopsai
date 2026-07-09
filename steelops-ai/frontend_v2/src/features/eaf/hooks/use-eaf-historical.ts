@@ -1,36 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { eafApi, type EafRecipe, type HistoricalResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 
-export function useEafHistorical(recipe: EafRecipe) {
+/** Historical comparison — manual fetch only (no API calls on page navigation). */
+export function useEafHistorical(_recipe?: EafRecipe) {
   const [data, setData] = useState<HistoricalResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const refresh = useCallback(async (recipe: EafRecipe) => {
     setLoading(true);
     setError(null);
+    try {
+      const { data: response } = await eafApi.historical(recipe);
+      setData(response);
+      return response;
+    } catch (e: unknown) {
+      const msg = getApiErrorMessage(e, "Historical comparison unavailable");
+      setError(msg);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    eafApi
-      .historical(recipe)
-      .then(({ data: response }) => {
-        if (!cancelled) setData(response);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(getApiErrorMessage(e, "Historical comparison unavailable"));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe]);
-
-  return { data, loading, error };
+  return { data, loading, error, refresh };
 }

@@ -1,0 +1,2 @@
+Overall_MAE,Classifier_Accuracy,Normal_MAE,Abnormal_warning_Precision,Abnormal_warning_Recall,False_alarm_rate_pct,Missed_delay_rate_pct,TP,FP,FN,TN,N_test,Single_model_MAE_baseline,MAE_improvement_vs_single
+16.035163140767615,0.9408307210031348,4.641011544021248,0.2988505747126437,0.22413793103448276,2.504105090311987,77.58620689655173,26,61,90,2375,2552,36.426303397040854,20.39114025627324

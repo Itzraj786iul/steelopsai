@@ -1,0 +1,24 @@
+Feature,Industrial_explanation,Available,Engineered_proxy,Potential_importance,Literature
+Hot metal fraction,Sensible heat accelerates melting; needs O2 coordination,Yes,HM_FRAC,High,Duan 2014
+DRI fraction,Gangue/FeO load; metallization not logged,Yes,DRI_FRAC,High,Kirschen 2011
+Scrap fraction,Scrap pile vs flat DRI bath melting,Yes,SCRAP_FRAC,Medium,Memoli 2021
+Solid burden ratio,Solid melting demand,Yes,SOLID_BURDEN_RATIO,High,Memoli 2021
+HM/DRI balance,Substitution chemistry,Yes,HM_TO_DRI_RATIO,High,Duan 2014
+HM×O2 normalized,Oxygen coordination with HM,Yes (Dataset A),HM_X_OXY_NORM,High,Duan 2014
+Oxygen per tonne,Decarb/refining intensity,Yes (Dataset A),OXYGEN_PER_TONNE,High,Duan 2014
+Carbon per tonne,Foamy slag / chemical energy,Yes (Dataset A),CARBON_PER_TONNE,Medium,Morales 2025
+CPC×DRI,FeO reduction foam,Yes (Dataset A),CPC_X_DRI,Medium,Morales 2025
+Flux per tonne,Slag volume,Yes,FLUX_PER_TONNE,Medium,Memoli 2021
+Lime/Dolomite ratio,Basicity proxy,Yes,LIME_TO_DOLO_RATIO,Low,Memoli 2021
+Burden diversity,Charge heterogeneity,Yes,BURDEN_SHARE_RANGE,Medium,Phase 18
+Charge size,Heat capacity scaling,Yes,CHARGE_SIZE_TC,Medium,JSPL
+Foamy slag height,Arc stability,No,,High,Kirschen 2011
+DRI metallization %,Arc stability optimum 94-96%,No,,High,Kirschen 2011
+Power-on time,Major TTT component,No,,High,Knutsen 2020
+Power-off / delays,Idle radiation losses,No,,High,Knutsen 2020
+EE_KWH / SEC,Outcome of duration,No (post-heat),,Excluded,Sjunnesson 2019
+Power restriction flag,Transformer cap,No,,Medium,Phase 23.5
+DRI temperature,Hot vs cold DRI,No,,High,TERI 2024
+Slag FeO,Foamy slag driver,No,,Medium,Morales 2025
+Electrode regulation,Arc stability,No,,Medium,Primetals
+Bucket sequence,Charging logistics,No,,Low,Knutsen 2020

@@ -5,21 +5,24 @@ import { Bar, BarChart, CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveC
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { Button } from "@/components/ui/button";
+import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { useEafHistorical } from "@/features/eaf/hooks/use-eaf-historical";
 import { useEafRecipe } from "@/features/eaf/hooks/use-eaf";
+import { useCurrentHeatStore } from "@/stores/current-heat-store";
 import { assessCharge, historicalStatusLabel } from "@/lib/charge-validation";
 import { formatVariableLabel } from "@/lib/eaf-labels";
-import { eafApi } from "@/lib/api/eaf";
 
 export default function EafHistoricalPage() {
   const { recipe, update, charge } = useEafRecipe();
-  const { data, loading, error } = useEafHistorical(recipe);
-  const [pred, setPred] = useState<number | null>(null);
+  const { data, loading, error, refresh } = useEafHistorical();
+  const cachedPrediction = useCurrentHeatStore((s) => s.active?.prediction?.predicted_ttt ?? null);
+  const [pred, setPred] = useState<number | null>(cachedPrediction);
 
   useEffect(() => {
-    eafApi.predict(recipe).then(({ data: d }) => setPred(d.predicted_ttt)).catch(() => undefined);
-  }, [recipe]);
+    setPred(cachedPrediction);
+  }, [cachedPrediction]);
 
   const vars = data?.variables ?? [];
   const chargeAssessment = assessCharge(charge, vars);
@@ -51,7 +54,13 @@ export default function EafHistoricalPage() {
   }, []);
 
   return (
-    <PageContainer title="Historical Analysis" description="Compare current recipe inputs against plant operating history with P5–P95 bands">
+    <PageContainer title="Historical Analysis" description="Compare current heat recipe against plant operating history">
+      <CurrentHeatBanner />
+      <div className="mt-4">
+        <Button variant="outline" onClick={() => refresh(recipe)} disabled={loading}>
+          {loading ? "Loading…" : "Load historical bands"}
+        </Button>
+      </div>
       <RecipeForm recipe={recipe} onChange={update} charge={charge} historicalVariables={vars} />
 
       {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}

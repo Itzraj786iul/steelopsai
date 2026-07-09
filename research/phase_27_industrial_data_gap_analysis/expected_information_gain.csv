@@ -1,0 +1,24 @@
+Variable,Priority,Expected_MAE_improvement_min,Implementation_effort,Likely_source,Cumulative_optimistic_min,Realistic_note
+Delay codes,P0,2.0,Low–Medium,MES historian,2.0,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Power-on time,P0,1.5,Medium,SCADA electrical metering,3.5,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Power-off time,P0,1.2,Medium,SCADA + MES event timer,4.7,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Charging / crane wait timestamps,P0,1.0,Low–Medium,MES logistics,5.7,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Power restriction flag,P0,0.6,Low,EMS / MES,6.3,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+DRI metallization %,P1,0.8,Medium,DRI plant laboratory,7.1,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Bucket sequence + times,P1,0.5,Medium,MES,7.6,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+O2 flow profile,P1,0.5,Medium–High,SCADA gas system,8.1,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+HM temperature at charge,P1,0.4,Medium,Pyrometer / ladle TC,8.5,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Carbon injection profile,P1,0.4,Medium–High,SCADA injection,8.9,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Slag chemistry,P2,0.6,High,Laboratory / XRFS,9.5,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Ladle waiting time,P2,0.5,Medium,MES secondary metallurgy,10.0,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Arc voltage & current,P2,0.4,Medium,SCADA electrodes,10.4,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Electrode breakage event,P2,0.4,Low,PLC + operator log,10.8,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Transformer tap / MW,P2,0.3,Low–Medium,SCADA transformer,11.100000000000001,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Tap temperature,P2,0.3,Low,TC probe,11.400000000000002,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Foam index / camera,P3,0.5,High,Camera / derived,11.900000000000002,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Alarm & maintenance logs,P3,0.4,Medium,Historian,12.300000000000002,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Operator interventions,P3,0.3,Medium,MES HMI log,12.600000000000003,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+Electrode consumption,P3,0.2,Medium,Stores + MES,12.800000000000002,"Gains overlap; use 40–60% of sum for portfolio planning. Delay codes mainly improve abnormal/path MAE & warning recall, not only normal MAE."
+SCENARIO_A_P0_bundle,P0,1.8,6–12 months,MES+SCADA,1.8,Normal-heat MAE ~3.3→~2.3–2.7; delay recall ≫22%
+SCENARIO_B_P0_plus_P1,P0+P1,2.4,12–24 months,MES+SCADA+lab,2.4,Sub-2.5 MAE plausible on normal heats with clean labels
+SCENARIO_C_digital_twin_v3,P0–P2,2.8,24–36 months,Historian+live tags,2.8,Dynamic TTT + delay early warning; twin residual depends on sensor quality

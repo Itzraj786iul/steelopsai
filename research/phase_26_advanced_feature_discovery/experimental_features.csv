@@ -1,0 +1,5 @@
+Feature,Robustness,SHAP_mean_abs,MI,Boruta_hit_rate,Stability_selection,Is_new,Industrial_meaning,Expected_sign,Operator_controllable,Family,Formula
+HM_DRI_SCRAP_PRODUCT,0.3964575756173512,0.167054607867417,0.0835694035578793,0.0,1.0,True,Third-order burden mix intensity,Ambiguous,True,Interaction,HM·DRI·(Bucket+1)/TC²
+BURDEN_ENTROPY,0.3932351946417176,0.1483912653124699,0.0879096509258863,0.0,1.0,True,Entropy of HM/DRI/HBI/scrap shares; melt heterogeneity,Positive,True,Burden_diversity,-Σ p_i ln p_i
+FLUX_SOLID_CARBON,0.3202705717953036,0.1110713526984683,0.0228910495333094,0.0,1.0,True,Slag–solid–carbon conjoint intensity,Ambiguous,True,Interaction,FLUX·SOLID·CPC / TC²
+CHARGE_DIVERSITY_INDEX,0.3160067356146567,0.1485452045055971,0.0894397842879159,0.0,0.9,True,Gini–Simpson diversity; multi-burden mix complexity,Positive,True,Burden_diversity,1 - Σ p_i²

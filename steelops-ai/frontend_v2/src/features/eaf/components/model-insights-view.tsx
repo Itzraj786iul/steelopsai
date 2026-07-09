@@ -8,8 +8,8 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
 import { ConfidenceRing } from "@/components/industrial/gauges";
-import { ContributorList } from "@/features/eaf/components/contributor-list";
 import { FeatureImportanceChart } from "@/features/eaf/components/feature-importance-chart";
+import { ShapInterpretations } from "@/features/eaf/components/shap-interpretations";
 import { useEafModelInfo } from "@/features/eaf/hooks/use-eaf";
 import { DEFAULT_RECIPE, eafApi, type PredictResponse } from "@/lib/api/eaf";
 import { ELECTRICAL_ENERGY_FULL_LABEL, formatVariableLabel } from "@/lib/eaf-labels";
@@ -82,11 +82,9 @@ export function ModelInsightsView() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <FeatureImportanceChart contributors={prediction?.top_contributors ?? []} title="Production SHAP Summary" />
-        <ContributorList
-          title="Top Features"
-          description="Local SHAP-style attribution at the default operating recipe"
-          contributors={prediction?.top_contributors ?? []}
-          limit={10}
+        <ShapInterpretations
+          contributors={prediction?.explainability?.contributor_interpretations ?? prediction?.top_contributors ?? []}
+          title="Metallurgical Interpretation"
         />
       </div>
 

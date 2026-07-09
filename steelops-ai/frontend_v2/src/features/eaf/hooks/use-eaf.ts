@@ -2,17 +2,36 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { DEFAULT_RECIPE, eafApi, type EafRecipe, type ModelInfoResponse, type OptimizeResponse, type PredictResponse } from "@/lib/api/eaf";
+import {
+  DEFAULT_RECIPE,
+  eafApi,
+  type EafRecipe,
+  type HybridTrustResponse,
+  type ModelInfoResponse,
+  type OptimizeResponse,
+  type OptimizeV2Response,
+  type PredictResponse,
+} from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
-import { useEafHistoryStore } from "@/stores/eaf-history-store";
+import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
-export function useEafRecipe(initial: EafRecipe = DEFAULT_RECIPE) {
-  const [recipe, setRecipe] = useState<EafRecipe>(initial);
-  const update = useCallback(<K extends keyof EafRecipe>(key: K, value: EafRecipe[K]) => {
-    setRecipe((r) => ({ ...r, [key]: value }));
-  }, []);
+export function useEafRecipe() {
+  const active = useCurrentHeatStore((s) => s.active);
+  const setRecipe = useCurrentHeatStore((s) => s.setRecipe);
+  const updateRecipeField = useCurrentHeatStore((s) => s.updateRecipeField);
+  const setHeatNumber = useCurrentHeatStore((s) => s.setHeatNumber);
+  const heatNumber = active?.heatNumber ?? "";
+  const recipe = active?.recipe ?? DEFAULT_RECIPE;
+
+  const update = useCallback(
+    <K extends keyof EafRecipe>(key: K, value: EafRecipe[K]) => {
+      updateRecipeField(key, value);
+    },
+    [updateRecipeField]
+  );
+
   const charge = recipe.HM + recipe.DRI + recipe.HBI + recipe.Bucket;
-  return { recipe, setRecipe, update, charge };
+  return { recipe, setRecipe, update, charge, heatNumber, setHeatNumber };
 }
 
 export function useEafModelInfo() {
@@ -32,25 +51,46 @@ export function useEafModelInfo() {
 }
 
 export function useEafPredict() {
-  const addPrediction = useEafHistoryStore((s) => s.addPrediction);
+  const updatePrediction = useCurrentHeatStore((s) => s.updatePrediction);
+  const cached = useCurrentHeatStore((s) => s.active?.prediction);
+  const cachedHybrid = useCurrentHeatStore((s) => s.active?.hybrid);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<PredictResponse | null>(null);
+  const [result, setResult] = useState<(PredictResponse & { hybrid_trust?: HybridTrustResponse }) | null>(
+  () =>
+      cached
+        ? ({
+            ...cached,
+            hybrid_trust: cachedHybrid ?? undefined,
+          } as PredictResponse & { hybrid_trust?: HybridTrustResponse })
+        : null
+  );
+
+  useEffect(() => {
+    if (cached) {
+      setResult({
+        ...cached,
+        hybrid_trust: cachedHybrid ?? undefined,
+      } as PredictResponse & { hybrid_trust?: HybridTrustResponse });
+    }
+  }, [cached, cachedHybrid]);
 
   const predict = useCallback(
-    async (recipe: EafRecipe) => {
+    async (recipe: EafRecipe, heatId = "") => {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await eafApi.predict(recipe);
-        setResult(data);
-        addPrediction({
-          predictedTtt: data.predicted_ttt,
-          ciLower: data.ci_lower_95,
-          ciUpper: data.ci_upper_95,
-          confidence: data.operator_summary?.confidence ?? "—",
-        });
-        return data;
+        const [{ data }, hybridRes] = await Promise.all([
+          eafApi.predict(recipe),
+          eafApi.hybridEvaluate(recipe, heatId).catch(() => null),
+        ]);
+        const hybrid = hybridRes?.data ?? null;
+        const merged = hybrid ? { ...data, hybrid_trust: hybrid } : data;
+        const warnings =
+          data.validation_warnings?.filter((w) => w.level !== "error").map((w) => w.message) ?? [];
+        updatePrediction(data, hybrid, warnings);
+        setResult(merged as PredictResponse & { hybrid_trust?: HybridTrustResponse });
+        return merged;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Prediction failed");
         setError(msg);
@@ -59,17 +99,22 @@ export function useEafPredict() {
         setLoading(false);
       }
     },
-    [addPrediction]
+    [updatePrediction]
   );
 
   return { predict, loading, error, result };
 }
 
 export function useEafOptimize() {
-  const addOptimization = useEafHistoryStore((s) => s.addOptimization);
+  const updateOptimizer = useCurrentHeatStore((s) => s.updateOptimizer);
+  const cached = useCurrentHeatStore((s) => s.active?.optimizer);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<OptimizeResponse | null>(null);
+  const [result, setResult] = useState<OptimizeResponse | null>(cached ?? null);
+
+  useEffect(() => {
+    if (cached) setResult(cached);
+  }, [cached]);
 
   const optimize = useCallback(
     async (recipe: EafRecipe) => {
@@ -78,11 +123,7 @@ export function useEafOptimize() {
       try {
         const { data } = await eafApi.optimize(recipe);
         setResult(data);
-        addOptimization({
-          currentTtt: data.current_ttt,
-          optimizedTtt: data.optimized_ttt,
-          savingMin: data.improvement_min,
-        });
+        updateOptimizer(data, undefined);
         return data;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Optimization failed");
@@ -92,46 +133,58 @@ export function useEafOptimize() {
         setLoading(false);
       }
     },
-    [addOptimization]
+    [updateOptimizer]
   );
 
   return { optimize, loading, error, result };
 }
 
-export function useEafDashboard(recipe: EafRecipe = DEFAULT_RECIPE) {
-  const [loading, setLoading] = useState(true);
+export function useEafOptimizeV2() {
+  const updateOptimizer = useCurrentHeatStore((s) => s.updateOptimizer);
+  const cachedProd = useCurrentHeatStore((s) => s.active?.optimizer);
+  const cachedV2 = useCurrentHeatStore((s) => s.active?.optimizerV2);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [model, setModel] = useState<ModelInfoResponse | null>(null);
-  const [prediction, setPrediction] = useState<PredictResponse | null>(null);
-  const [optimization, setOptimization] = useState<OptimizeResponse | null>(null);
+  const [result, setResult] = useState<OptimizeV2Response | null>(cachedV2 ?? null);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+    if (cachedV2) setResult(cachedV2);
+  }, [cachedV2]);
 
-    Promise.all([
-      eafApi.modelInfo().then(({ data }) => data),
-      eafApi.predict(recipe).then(({ data }) => data),
-      eafApi.optimize(recipe).then(({ data }) => data),
-    ])
-      .then(([modelInfo, predictResult, optimizeResult]) => {
-        if (cancelled) return;
-        setModel(modelInfo);
-        setPrediction(predictResult);
-        setOptimization(optimizeResult);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(getApiErrorMessage(e, "Failed to load dashboard data"));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  const optimizeV2 = useCallback(
+    async (recipe: EafRecipe) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await eafApi.optimizeV2(recipe);
+        setResult(data);
+        updateOptimizer(cachedProd ?? undefined, data);
+        return data;
+      } catch (e: unknown) {
+        const msg = getApiErrorMessage(e, "Optimizer V2 failed");
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [updateOptimizer, cachedProd]
+  );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe]);
+  return { optimizeV2, loading, error, result };
+}
 
-  return { loading, error, model, prediction, optimization };
+export function useEafDashboard() {
+  const active = useCurrentHeatStore((s) => s.active);
+  const { info: model, loading: modelLoading, error: modelError } = useEafModelInfo();
+
+  return {
+    loading: modelLoading,
+    error: modelError,
+    model,
+    prediction: active?.prediction ?? null,
+    optimization: active?.optimizer ?? null,
+    hybrid: active?.hybrid ?? null,
+    active,
+  };
 }

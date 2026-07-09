@@ -26,6 +26,94 @@ export interface ContributorItem {
   display_name?: string;
   contribution: number;
   global_importance?: number;
+  interpretation?: string;
+  direction?: string;
+}
+
+export interface SimilarHeatItem {
+  heat_id: string;
+  shift: string;
+  charge_t: number;
+  actual_ttt?: number | null;
+  predicted_ttt: number;
+  ttt_difference?: number | null;
+  similarity_pct: number;
+  distance: number;
+}
+
+export interface IndustrialObservation {
+  observation: string;
+  severity: string;
+}
+
+export interface DigitalTwinLayer {
+  score: number;
+  status: string;
+}
+
+export interface DigitalTwinReadiness {
+  layers: Record<string, DigitalTwinLayer>;
+  overall_score: number;
+  readiness_tier: string;
+}
+
+export interface PredictionExplainability {
+  similar_heats: SimilarHeatItem[];
+  contributor_interpretations: ContributorItem[];
+  prediction_quality: string;
+  industrial_observations: IndustrialObservation[];
+  digital_twin_readiness?: DigitalTwinReadiness;
+  historical_similarity_pct?: number | null;
+  industrial_risk?: string;
+}
+
+export interface ValidatedRecommendationRow extends OptimizationRow {
+  historical_p5?: number;
+  historical_median?: number;
+  historical_p95?: number;
+  historical_status?: string;
+  severity?: string;
+  risk_level?: string;
+  industrial_acceptability?: string;
+  absolute_change?: number;
+  percent_change?: number;
+  display_name?: string;
+}
+
+export interface Top5Alternative {
+  rank: number;
+  predicted_ttt: number;
+  improvement_min: number;
+  risk_level: string;
+  confidence: string;
+  similarity_pct: number;
+  total_penalty: number;
+  hm: number;
+  dri: number;
+  power: number;
+  oxy: number;
+}
+
+export interface OptimizationExplainability {
+  validated_recommendations: ValidatedRecommendationRow[];
+  recommendation_confidence: string;
+  recommendation_stability: string;
+  top5_alternatives: Top5Alternative[];
+  recommendation_narrative: string[];
+  penalty_breakdown: Record<string, number>;
+  similar_heats: SimilarHeatItem[];
+  industrial_observations: IndustrialObservation[];
+  digital_twin_readiness?: DigitalTwinReadiness;
+  diagnostics?: Record<string, unknown>;
+}
+
+export interface PredictionMetadata {
+  model_version: string;
+  pipeline: string;
+  optimizer: string;
+  prediction_timestamp: string;
+  confidence: string;
+  warnings: string[];
 }
 
 export interface PredictResponse {
@@ -36,10 +124,141 @@ export interface PredictResponse {
   top_contributors: ContributorItem[];
   operator_summary: Record<string, string>;
   validation_warnings: ValidationWarning[];
+  confidence?: string;
+  charge_classification?: string;
+  metadata?: PredictionMetadata;
+  explainability?: PredictionExplainability;
+}
+
+export interface HybridTrustResponse {
+  heat_id: string;
+  current_ttt: number;
+  predicted_ttt: number;
+  improvement_min: number;
+  hybrid_score: number;
+  score_breakdown: Record<string, number>;
+  reliability_index: number;
+  reliability_tier: string;
+  physics_confidence: number;
+  ai_confidence: number;
+  industrial_confidence: number;
+  historical_similarity_pct: number;
+  recommendation_stability: number;
+  agreement_pct: number;
+  consensus: string;
+  decision_tree: string[];
+  scenarios: Record<string, unknown>[];
+  digital_twin: Record<string, unknown>;
+  recommended_recipe: EafRecipe;
+  top5: Record<string, unknown>[];
+  explanation: Record<string, unknown>;
+}
+
+export interface OptimizeV2Recommendation {
+  rank: number;
+  recipe: EafRecipe;
+  predicted_ttt: number;
+  improvement_min: number;
+  confidence: string;
+  historical_similarity_pct: number;
+  stability: number;
+  rules_satisfied: number;
+  rules_violated: number;
+  physics_feasible: boolean;
+  physics_violations: string[];
+  objective_breakdown: Record<string, unknown>;
+  explanation: RecommendationExplanation;
+  industrial_score: number;
+  physics_score: number;
+}
+
+export interface OptimizeV2Response {
+  current_recipe: EafRecipe;
+  current_ttt: number;
+  optimized_recipe: EafRecipe;
+  optimized_ttt: number;
+  improvement_min: number;
+  physics_compliant: boolean;
+  power_optimized: boolean;
+  recommendations: OptimizeV2Recommendation[];
+  diagnostics: Record<string, unknown>;
+}
+
+export interface RecommendationExplanation {
+  narrative?: string;
+  narrative_lines?: string[];
+  expected_saving_min?: number;
+  confidence?: string;
+  historical_support?: string[];
+  literature_support?: string[];
+  rule_trace?: string[];
+  rules_satisfied?: number;
+  rules_violated?: number;
+}
+
+export interface ValidationEntry {
+  heat_number: string;
+  predicted_ttt: number;
+  actual_ttt?: number | string | null;
+  optimizer_used: string;
+  recommendation_applied: boolean | string;
+  operator_comments?: string;
+  recorded_at?: string;
+  difference?: number | null;
+}
+
+export interface ValidationListResponse {
+  entries: ValidationEntry[];
+  metrics: {
+    count: number;
+    mae?: number | null;
+    rmse?: number | null;
+    bias?: number | null;
+    mape?: number | null;
+  };
+}
+
+export interface OperatorFeedbackEntry {
+  heat_number?: string;
+  optimizer_used?: string;
+  status: "Accepted" | "Modified" | "Rejected";
+  comment?: string;
+  constraint_issue?: string;
+  maintenance_issue?: string;
+  impractical_reason?: string;
+  recorded_at?: string;
+}
+
+export interface ReliabilitySummary {
+  avg_reliability_index: number | null;
+  avg_ai_confidence: number | null;
+  avg_physics_confidence: number | null;
+  avg_industrial_confidence: number | null;
+  avg_historical_similarity: number | null;
+  recommendation_acceptance_rate_pct: number | null;
+  optimizer_success_rate_pct: number | null;
+  validation_metrics: ValidationListResponse["metrics"];
+  prediction_error_trend: { heat_number?: string; recorded_at?: string; error_min: number; signed_error_min: number }[];
+}
+
+export interface ReadinessIndicator {
+  area: string;
+  status: "green" | "yellow" | "red";
+  score: number | null;
+  summary: string;
+  recommendations: string[];
+}
+
+export interface DeploymentReadiness {
+  overall_status: "green" | "yellow" | "red";
+  overall_score: number;
+  indicators: ReadinessIndicator[];
+  generated_at: string;
 }
 
 export interface OptimizationRow {
   variable: string;
+  display_name?: string;
   current: number;
   optimized: number;
   difference: number;
@@ -59,6 +278,7 @@ export interface OptimizeResponse {
   best_score: number;
   comparison: OptimizationRow[];
   diagnostics: Record<string, unknown>;
+  explainability?: OptimizationExplainability;
 }
 
 export interface HistoricalVariable {
@@ -123,10 +343,24 @@ export const eafApi = {
   predict: (recipe: EafRecipe) => eafClient.post<PredictResponse>("/predict", recipe),
   optimize: (recipe: EafRecipe, n_generate = 1000) =>
     eafClient.post<OptimizeResponse>("/optimize", { ...recipe, n_generate }),
+  optimizeV2: (recipe: EafRecipe) => eafClient.post<OptimizeV2Response>("/optimize/v2", recipe),
+  hybridEvaluate: (recipe: EafRecipe, heat_id = "") =>
+    eafClient.post<HybridTrustResponse>("/hybrid/evaluate", { ...recipe, heat_id }),
   whatif: (recipe: EafRecipe) => eafClient.post("/whatif", recipe),
   historical: (recipe: EafRecipe) => eafClient.post<HistoricalResponse>("/historical", recipe),
   processHealth: (recipe: EafRecipe) =>
     eafClient.post<{ items: ProcessHealthItem[] }>("/process-health", recipe),
+  validationList: () => eafClient.get<ValidationListResponse>("/validation"),
+  validationCreate: (entry: Omit<ValidationEntry, "recorded_at" | "difference">) =>
+    eafClient.post<ValidationEntry>("/validation", entry),
+  feedbackList: () => eafClient.get<OperatorFeedbackEntry[]>("/feedback"),
+  feedbackCreate: (entry: OperatorFeedbackEntry) => eafClient.post<OperatorFeedbackEntry>("/feedback", entry),
+  feedbackSummary: () =>
+    eafClient.get<{ total: number; accepted: number; modified: number; rejected: number; acceptance_rate_pct: number | null }>(
+      "/feedback/summary"
+    ),
+  reliabilitySummary: () => eafClient.get<ReliabilitySummary>("/reliability/summary"),
+  deploymentReadiness: () => eafClient.get<DeploymentReadiness>("/deployment/readiness"),
   report: (recipe: EafRecipe, format: "json" | "csv" | "pdf") =>
     eafClient.post(
       "/report",

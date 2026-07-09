@@ -8,19 +8,40 @@ from fastapi import APIRouter, HTTPException, Query, Response
 
 from app.core.config import DEFAULT_RECIPE
 from app.schemas.recipe import (
+    DeploymentReadinessResponse,
+    FeedbackSummaryResponse,
     HealthResponse,
     HistoricalResponse,
     HistoricalStatisticsResponse,
+    HybridEvaluateRequest,
+    HybridTrustResponse,
     ModelInfoResponse,
+    OperatorFeedbackRequest,
+    OperatorFeedbackResponse,
     OptimizeRequest,
     OptimizeResponse,
+    OptimizeV2Response,
     PredictRequest,
     PredictionResponse,
     ProcessHealthResponse,
+    ReliabilitySummaryResponse,
     ReportRequest,
+    ValidationEntryRequest,
+    ValidationEntryResponse,
+    ValidationListResponse,
     VersionRegistryResponse,
     WhatIfRequest,
     WhatIfResponse,
+)
+from app.services.phase_33_service import deployment_readiness, reliability_summary
+from app.services.research_bridge_service import evaluate_hybrid, optimize_v2
+from app.services.validation_store import (
+    add_feedback,
+    add_validation,
+    feedback_summary,
+    list_feedback,
+    list_validation,
+    validation_metrics,
 )
 from app.services.ml_service import (
     generate_report,
@@ -77,7 +98,9 @@ async def model_info() -> ModelInfoResponse:
         "Predicts tap-to-tap time in minutes for a heat recipe using the frozen Phase 19 production model. "
         "Total charge and operating inputs are advisory only — realistic industrial heats (80–145 t) are accepted "
         "and returned with warnings instead of HTTP validation errors. "
-        "Electrical Energy (kWh) is exposed in contributor labels; the request field remains `POWER` for compatibility."
+        "Electrical Energy (kWh) is exposed in contributor labels; the request field remains `POWER` for compatibility. "
+        "Phase 29 adds optional `explainability` with similar heats, SHAP metallurgical interpretations, "
+        "prediction quality, industrial observations, and digital twin readiness — no change to model inference."
     ),
     responses={
         200: {
@@ -119,7 +142,9 @@ async def predict(req: PredictRequest) -> PredictionResponse:
     description=(
         "Runs the frozen Phase 20.2 optimizer to recommend recipe adjustments that reduce predicted tap-to-tap time "
         "while respecting plant physics constraints. Recommendations inherit production model semantics including "
-        "Electrical Energy (kWh). This endpoint never rejects requests solely because of total charge."
+        "Electrical Energy (kWh). This endpoint never rejects requests solely because of total charge. "
+        "Phase 29 adds optional `explainability` with validated recommendations, severity/risk, top-5 alternatives, "
+        "recommendation confidence/stability, and metallurgical narrative — optimizer logic unchanged."
     ),
 )
 async def optimize(req: OptimizeRequest) -> OptimizeResponse:
@@ -205,6 +230,119 @@ async def report_get(
         media_type=media[format],
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.post(
+    "/hybrid/evaluate",
+    response_model=HybridTrustResponse,
+    summary="Phase 32 hybrid trust evaluation",
+    description=(
+        "Evaluates the frozen Phase 32 Hybrid Decision Engine for operator trust metrics. "
+        "Does not modify production prediction or Phase 20.2 optimizer endpoints."
+    ),
+)
+async def hybrid_evaluate(req: HybridEvaluateRequest) -> HybridTrustResponse:
+    try:
+        data = evaluate_hybrid(req.to_dict(), heat_id=req.heat_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Hybrid evaluation failed: {exc}") from exc
+    return HybridTrustResponse(**data)
+
+
+@router.post(
+    "/optimize/v2",
+    response_model=OptimizeV2Response,
+    summary="Phase 31 Optimizer V2 (research)",
+    description=(
+        "Runs the frozen Phase 31 planning-safe optimizer. Never optimizes POWER. "
+        "Production `/optimize` (Phase 20.2) remains unchanged."
+    ),
+)
+async def optimize_v2_route(req: PredictRequest) -> OptimizeV2Response:
+    try:
+        data = optimize_v2(req.to_dict())
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Optimizer V2 failed: {exc}") from exc
+    return OptimizeV2Response(**data)
+
+
+@router.get(
+    "/validation",
+    response_model=ValidationListResponse,
+    summary="Plant validation history",
+)
+async def validation_list() -> ValidationListResponse:
+    entries = []
+    for row in list_validation():
+        diff = None
+        if row.get("actual_ttt") not in (None, "", "Pending"):
+            try:
+                diff = round(float(row["actual_ttt"]) - float(row["predicted_ttt"]), 3)
+            except (TypeError, ValueError):
+                pass
+        entries.append(ValidationEntryResponse(**row, difference=diff))
+    return ValidationListResponse(entries=entries, metrics=validation_metrics())
+
+
+@router.post(
+    "/validation",
+    response_model=ValidationEntryResponse,
+    summary="Record plant validation result",
+)
+async def validation_create(req: ValidationEntryRequest) -> ValidationEntryResponse:
+    row = add_validation(req.model_dump())
+    diff = None
+    if row.get("actual_ttt") not in (None, "", "Pending"):
+        try:
+            diff = round(float(row["actual_ttt"]) - float(row["predicted_ttt"]), 3)
+        except (TypeError, ValueError):
+            pass
+    return ValidationEntryResponse(**row, difference=diff)
+
+
+@router.get(
+    "/feedback",
+    response_model=list[OperatorFeedbackResponse],
+    summary="Operator feedback history",
+)
+async def feedback_list() -> list[OperatorFeedbackResponse]:
+    return [OperatorFeedbackResponse(**r) for r in list_feedback()]
+
+
+@router.post(
+    "/feedback",
+    response_model=OperatorFeedbackResponse,
+    summary="Submit operator feedback on a recommendation",
+)
+async def feedback_create(req: OperatorFeedbackRequest) -> OperatorFeedbackResponse:
+    return OperatorFeedbackResponse(**add_feedback(req.model_dump()))
+
+
+@router.get(
+    "/feedback/summary",
+    response_model=FeedbackSummaryResponse,
+    summary="Operator feedback acceptance summary",
+)
+async def feedback_summary_route() -> FeedbackSummaryResponse:
+    return FeedbackSummaryResponse(**feedback_summary())
+
+
+@router.get(
+    "/reliability/summary",
+    response_model=ReliabilitySummaryResponse,
+    summary="Reliability dashboard aggregates",
+)
+async def reliability_summary_route() -> ReliabilitySummaryResponse:
+    return ReliabilitySummaryResponse(**reliability_summary())
+
+
+@router.get(
+    "/deployment/readiness",
+    response_model=DeploymentReadinessResponse,
+    summary="Industrial deployment readiness assessment",
+)
+async def deployment_readiness_route() -> DeploymentReadinessResponse:
+    return DeploymentReadinessResponse(**deployment_readiness())
 
 
 @router.post("/report")

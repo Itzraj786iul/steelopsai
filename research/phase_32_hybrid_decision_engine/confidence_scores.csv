@@ -1,0 +1,11 @@
+Heat,Physics_Confidence,AI_Confidence,Industrial_Confidence,Reliability_Index,Score_prediction_score,Score_physics_score,Score_industrial_rule_score,Score_historical_similarity,Score_risk_score,Score_operator_preference,DT_prediction_readiness,DT_optimizer_readiness,DT_sensor_completeness,DT_industrial_completeness,DT_overall_digital_twin_readiness,DT_tier
+4618213,94.9,66.5,82.2,72.2,11.71,18.98,16.44,6.32,6.96,10.0,79.7,85,35,74.6,68,Developing
+4618212,94.1,69.3,83.8,72.2,15.54,18.82,16.76,7.51,7.64,4.0,84.3,85,35,80.3,71,Developing
+4618211,85.0,70.7,84.6,71.7,20.07,17.0,16.92,8.14,7.93,4.0,86.2,85,35,82.8,72,Developing
+4618210,79.3,67.5,82.5,71.0,18.3,15.86,16.5,6.57,7.42,4.0,82.8,85,35,78.5,70,Developing
+4618209,94.1,69.9,84.3,74.9,14.96,18.82,16.86,7.89,7.62,6.0,84.1,85,35,80.1,71,Developing
+4618208,86.1,66.0,81.9,68.5,17.99,17.22,16.38,6.11,6.86,6.0,79.1,85,35,73.8,68,Developing
+4618207,93.6,72.6,85.8,74.7,16.64,18.72,17.16,9.03,8.22,4.0,88.2,85,35,85.2,73,Developing
+4618206,88.8,74.6,87.3,77.6,18.93,17.76,17.46,10.14,8.38,6.0,89.2,85,35,86.5,73,Developing
+4618205,81.1,69.0,83.5,70.2,13.01,16.22,16.7,7.29,7.69,6.0,84.6,85,35,80.8,71,Developing
+4618204,0.0,0.0,0.0,0.0,,,,,,,70.3,85,35,62.9,63,Developing

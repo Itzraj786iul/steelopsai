@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlantContext } from "@/hooks/use-plant-context";
 import { PLANTS, SHIFTS } from "@/lib/constants";
+import { CurrentHeatPill } from "@/features/eaf/components/current-heat-drawer";
+import { NewHeatButton } from "@/features/eaf/components/new-heat-button";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
@@ -27,6 +29,8 @@ export function HeaderBar() {
       <BreadcrumbBar />
 
       <div className="ml-auto flex items-center gap-2">
+        <CurrentHeatPill />
+        <NewHeatButton />
         <Select value={plantId} onValueChange={setPlantId}>
           <SelectTrigger className="hidden w-[160px] md:flex">
             <SelectValue placeholder="Plant" />

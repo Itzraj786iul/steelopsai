@@ -1,15 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { eafApi } from "@/lib/api/eaf";
+import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
+import { eafApi, type EafRecipe } from "@/lib/api/eaf";
 import { formatVariableLabel } from "@/lib/eaf-labels";
-import { useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import { getApiErrorMessage } from "@/services/api-client";
+import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
 const SLIDERS = [
   { key: "HM" as const, min: 40, max: 80, step: 0.1 },
@@ -21,12 +24,23 @@ const SLIDERS = [
 ];
 
 export default function EafWhatIfPage() {
-  const { recipe, update } = useEafRecipe();
+  const activeRecipe = useCurrentHeatStore((s) => s.active?.recipe);
+  const setRecipe = useCurrentHeatStore((s) => s.setRecipe);
+  const [workingCopy, setWorkingCopy] = useState<EafRecipe | null>(null);
   const [pred, setPred] = useState<number | null>(null);
   const [tornado, setTornado] = useState<{ variable: string; low: number; high: number }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const run = useCallback(async (r: typeof recipe) => {
+  useEffect(() => {
+    if (activeRecipe && !workingCopy) {
+      setWorkingCopy({ ...activeRecipe });
+    }
+  }, [activeRecipe, workingCopy]);
+
+  const run = useCallback(async (r: EafRecipe) => {
+    setLoading(true);
     try {
       setError(null);
       const { data } = await eafApi.whatif(r);
@@ -40,13 +54,25 @@ export default function EafWhatIfPage() {
       );
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "What-if analysis unavailable"));
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => run(recipe), 350);
-    return () => clearTimeout(t);
-  }, [recipe, run]);
+  const updateWorking = <K extends keyof EafRecipe>(key: K, value: EafRecipe[K]) => {
+    setWorkingCopy((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const resetToCurrent = () => {
+    if (activeRecipe) setWorkingCopy({ ...activeRecipe });
+  };
+
+  const applyToOptimizer = () => {
+    if (workingCopy) {
+      setRecipe(workingCopy);
+      router.push("/eaf/optimizer");
+    }
+  };
 
   const chartData = tornado.map((t) => ({
     name: formatVariableLabel(t.variable),
@@ -54,13 +80,35 @@ export default function EafWhatIfPage() {
     high: t.high,
   }));
 
+  if (!activeRecipe) {
+    return (
+      <PageContainer title="What-if Analysis" description="Sensitivity analysis on the current heat session">
+        <CurrentHeatBanner />
+      </PageContainer>
+    );
+  }
+
+  const recipe = workingCopy ?? activeRecipe;
+
   return (
-    <PageContainer title="What-if Analysis" description="Live sensitivity analysis — adjust variables and observe TTT response">
-      <SectionCard title="Live Prediction">
+    <PageContainer title="What-if Analysis" description="Working copy — changes do not overwrite Current Heat until applied">
+      <CurrentHeatBanner />
+      <SectionCard title="Live Prediction (working copy)" className="mt-6">
         <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={() => run(recipe)} disabled={loading}>
+            {loading ? "Running…" : "Run What-if"}
+          </Button>
+          <Button variant="outline" onClick={resetToCurrent}>
+            Reset to Current Heat
+          </Button>
+          <Button variant="secondary" onClick={applyToOptimizer}>
+            Apply to Optimizer
+          </Button>
+        </div>
         {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
-      <SectionCard title="Adjust Variables" className="mt-6">
+      <SectionCard title="Adjust Variables (working copy)" className="mt-6">
         <div className="grid gap-6 sm:grid-cols-2">
           {SLIDERS.map(({ key, min, max, step }) => (
             <div key={key} className="space-y-2">
@@ -74,7 +122,7 @@ export default function EafWhatIfPage() {
                 max={max}
                 step={step}
                 value={recipe[key] as number}
-                onChange={(e) => update(key, parseFloat(e.target.value))}
+                onChange={(e) => updateWorking(key, parseFloat(e.target.value))}
               />
             </div>
           ))}
@@ -95,7 +143,7 @@ export default function EafWhatIfPage() {
             </ResponsiveContainer>
           ) : (
             <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Adjust sliders to compute sensitivity.
+              Click Run What-if to compute sensitivity.
             </p>
           )}
         </div>

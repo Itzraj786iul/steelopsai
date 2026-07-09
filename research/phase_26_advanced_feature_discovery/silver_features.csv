@@ -1,0 +1,5 @@
+Feature,Robustness,SHAP_mean_abs,MI,Boruta_hit_rate,Stability_selection,Is_new,Industrial_meaning,Expected_sign,Operator_controllable,Family,Formula
+DRI_X_LIME,0.4153417192742596,0.1695496829956331,0.0667599498946653,0.0,1.0,False,Phase 24 base,,True,Phase24_base,
+DRI_X_HM,0.4108612090721871,0.16074155100998,0.0763740975694746,0.0,1.0,False,Phase 24 base,,True,Phase24_base,
+DRI_SQ,0.4107964092703705,0.0787372540399045,0.1212525811464502,0.0,0.8,False,Phase 24 base,,True,Phase24_base,
+DRI_OXY_FLUX,0.3208722620286867,0.0778222243713509,0.0548220234307468,0.3333333333333333,0.5,True,DRI refining / slag path intensity,Conditional,True,Interaction,DRI·OXY·FLUX / TC²

@@ -1,0 +1,123 @@
+Variable,Feature_Stage,Availability,Classification,Leakage_Risk,Can_Use_In,Dependency_Status,Recommendation,In_Production_Model
+HM,Raw,Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI,Raw,Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HBI,Raw,Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+Bucket,Raw,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+LIME,Raw,Planning,Controllable,Low,Prediction; Optimization,SAFE,KEEP,No
+DOLO,Raw,Planning,Controllable,Low,Prediction; Optimization,SAFE,KEEP,No
+EE_KWH,Raw,Post-process,Outcome,High,Neither,LEAKY,REMOVE,Indirect
+OXY,Raw,Unknown,Semi-controllable,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Indirect
+CPC,Raw,Unknown,Semi-controllable,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Indirect
+Shift,Raw,Planning,Uncontrollable context,Low,Prediction,SAFE,KEEP,No
+T C,Raw,Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+Power Restriction,Raw,Planning; Online,Exogenous constraint,None,Prediction; Optimization,SAFE,KEEP,No
+TTT,Raw,Post-process,Response,N/A (target),Neither,SAFE,REMOVE (as input),No
+HM_X_POWER,Production (Phase 18/19),Post-process,Intermediate/Outcome,High,Neither,LEAKY,REMOVE,Yes
+BUCKET_X_CPC,Production (Phase 18/19),Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Yes
+OXYGEN_PER_TONNE,Production (Phase 18/19),Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Yes
+POWER_PER_TONNE,Production (Phase 18/19),Post-process,Outcome,High,Neither,LEAKY,REMOVE,Yes
+SOLID_BURDEN_RATIO,Production (Phase 18/19),Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+HM_TO_DRI_RATIO,Production (Phase 18/19),Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+BURDEN_SHARE_RANGE,Production (Phase 18/19),Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+HM_TO_BUCKET_RATIO,Production (Phase 18/19),Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+BUCKET_X_DOLO,Production (Phase 18/19),Planning,Controllable,Low,Prediction; Optimization,SAFE,KEEP,Yes
+CPC_X_DRI,Production (Phase 18/19),Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Yes
+FLUX_PER_TONNE,Production (Phase 18/19),Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+FLUX_TO_CARBON_RATIO,Production (Phase 18/19),Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Yes
+DOLO_X_LIME,Production (Phase 18/19),Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,Yes
+DOLO_SQ,Production (Phase 18/19),Planning,Controllable,None,Prediction,SAFE,KEEP,Yes
+CPC_X_HBI,Production (Phase 18/19),Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,Yes
+DRI_TO_HBI_RATIO,Production (Phase 18/19),Planning,Semi-controllable,None,Prediction,SAFE,KEEP,Yes
+BUCKET_X_HBI,Production (Phase 18/19),Planning,Controllable,None,Prediction,SAFE,KEEP,Yes
+DOLO_X_HBI,Production (Phase 18/19),Planning,Controllable,None,Prediction,SAFE,KEEP,Yes
+HBI_SQ,Production (Phase 18/19),Planning,Semi-controllable,None,Prediction,SAFE,KEEP,Yes
+SHIFT_LABEL,Production (Phase 18/19),Planning,Context,Low,Prediction,SAFE,KEEP,Yes
+SHIFT_C,Production (Phase 18/19),Planning,Context,Low,Prediction,SAFE,KEEP,Yes
+CHARGE_BALANCE_ERROR,Production (Phase 18/19),Planning,Data QC,None,Neither,SAFE,REMOVE,Yes
+POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+OXY_X_POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+DRI_X_POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+POWER_SQ,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+POWER_PER_METALLIC_TONNE,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+SPECIFIC_ENERGY,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+POWER_TO_OXYGEN_RATIO,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+POWER_INTENSITY,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+SHIFT_TARGET_ENCODED_ANALYSIS,Phase 16 pool,Post-process,Response,High,Neither,LEAKY,REMOVE,No
+HM_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CARBON_PER_TONNE,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+HM_PCT_TC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_PCT_TC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HBI_PCT_TC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+BUCKET_PCT_TC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HM_SHARE_METALLIC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_SHARE_METALLIC,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+SCRAP_RATIO,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+VIRGIN_BURDEN_RATIO,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+LIQUID_BURDEN_RATIO,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+LIQUID_TO_SOLID_RATIO,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HM_DOMINANCE,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_DOMINANCE,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+SCRAP_DOMINANCE,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+METALLIC_PERCENTAGE,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+TOTAL_METALLIC_INPUT,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+VIRGIN_BURDEN,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+SOLID_BURDEN,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+TOTAL_FLUX,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+CHARGE_DEVIATION_FROM_120,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+RELATIVE_CHARGE_DEVIATION,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HM_SQ,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_SQ,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+BUCKET_SQ,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+T_C_SQ,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HM_X_LIME,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+BUCKET_X_DRI,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+BUCKET_X_HM,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_X_HM,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_X_LIME,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+BUCKET_X_LIME,Phase 16 pool,Planning,Controllable/Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+CPC_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CPC_X_HM,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CPC_X_LIME,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CPC_X_POWER,Phase 16 pool,Post-process,Intermediate,High,Neither,LEAKY,REMOVE,No
+LIME_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+LIME_X_POWER,Phase 16 pool,Post-process,Intermediate,High,Neither,LEAKY,REMOVE,No
+HM_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+DRI_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+BUCKET_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+DOLO_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+OXY_SQ,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CPC_SQ,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CARBON_TO_OXYGEN_RATIO,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CARBON_INTENSITY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+OXYGEN_INTENSITY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+OXYGEN_PER_METALLIC_TONNE,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+CARBON_PER_METALLIC_TONNE,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+SPECIFIC_OXYGEN,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+SPECIFIC_CARBON,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+BUCKET_SHARE_METALLIC,Phase 16 pool,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DRI_SHARE_METALLIC,Phase 16 pool,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HBI_SHARE_METALLIC,Phase 16 pool,Planning,Semi-controllable,None,Prediction; Optimization,SAFE,KEEP,No
+HBI_DOMINANCE,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+HBI_TO_BUCKET_RATIO,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+DRI_TO_BUCKET_RATIO,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+HM_TO_HBI_RATIO,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+METALLIC_BURDEN_RATIO,Phase 16 pool,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+VIRGIN_TO_SCRAP_RATIO,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+LIME_SQ,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+LIME_PER_TONNE,Phase 16 pool,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+DOLO_PER_TONNE,Phase 16 pool,Planning,Controllable,None,Prediction; Optimization,SAFE,KEEP,No
+LIME_PER_METALLIC_TONNE,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+DOLO_PER_METALLIC_TONNE,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+FLUX_PER_METALLIC_TONNE,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+DRI_X_HBI,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+DOLO_X_DRI,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+DOLO_X_HM,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+HBI_X_HM,Phase 16 pool,Planning,Semi-controllable,None,Prediction,SAFE,KEEP,No
+HBI_X_LIME,Phase 16 pool,Planning,Controllable,None,Prediction,SAFE,KEEP,No
+CPC_X_DOLO,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No
+SHIFT_A,Phase 16 pool,Planning,Context,Low,Prediction,SAFE,KEEP,No
+SHIFT_B,Phase 16 pool,Planning,Context,Low,Prediction,SAFE,KEEP,No
+BUCKET_X_POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+DOLO_X_POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+HBI_X_POWER,Phase 16 pool,Post-process,Outcome,High,Neither,LEAKY,REMOVE,No
+HBI_X_OXY,Phase 16 pool,Unknown,Intermediate,Medium,VERIFY,QUESTIONABLE,VERIFY WITH JSPL,No

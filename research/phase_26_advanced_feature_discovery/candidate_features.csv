@@ -1,0 +1,36 @@
+Feature,Formula,Industrial_meaning,Expected_sign,Literature,Operator_controllable,Family,Is_new
+BURDEN_ENTROPY,-Σ p_i ln p_i,Entropy of HM/DRI/HBI/scrap shares; melt heterogeneity,Positive,Memoli 2021 charge diversity,True,Burden_diversity,True
+CHARGE_DIVERSITY_INDEX,1 - Σ p_i²,Gini–Simpson diversity; multi-burden mix complexity,Positive,Ecology/ops analog; Memoli 2021,True,Burden_diversity,True
+BURDEN_SYMMETRY,1 - (max% - min%),Evenness of burden shares,Ambiguous,Phase 26 extension of BURDEN_SHARE_RANGE,True,Burden_diversity,True
+BURDEN_IMBALANCE,|HM% - DRI%|,HM–DRI substitution imbalance,Positive,Duan 2014 HM–DRI coupling,True,Burden_balance,True
+LIQUID_METAL_DOMINANCE,HM% - mean(solid%),Excess liquid metal vs solid average,Negative,Duan 2014; Yang 2023,True,Thermodynamic_proxy,True
+SOLID_BURDEN_COMPACTNESS,SOLID² / TC,Solid burden intensity (quadratic melt load),Positive,Kirschen 2011 solid melting,True,Thermodynamic_proxy,True
+HM_UTILIZATION,HM / SOLID,HM available to assist solid melting,Negative,Duan 2014,True,Utilization,True
+DRI_UTILIZATION,DRI / TC,DRI share as utilization intensity,Conditional,Kirschen 2011,True,Utilization,True
+BUCKET_UTILIZATION,Bucket / SOLID,Scrap among solids,Nonlinear,Memoli 2021,True,Utilization,True
+FLUX_SATURATION_INDEX,FLUX / SOLID,Flux relative to solid FeO/slag formers,Positive if excess,Memoli 2021 slag volume,True,Slag_chemistry,True
+SLAG_CHEMISTRY_PROXY,FLUX*(1+DRI%)/TC,Proxy slag demand from flux + DRI gangue,Positive,Kirschen 2011; Memoli 2021,True,Slag_chemistry,True
+BASICITY_PROXY,LIME / (DOLO + 0.1·DRI),Basicity proxy without SiO₂ assay,Conditional,Memoli 2021 B2/B3,True,Slag_chemistry,True
+MGO_SATURATION_PROXY,DOLO / FLUX,MgO share of flux; refractory protection,Ambiguous,Memoli 2021,True,Slag_chemistry,True
+FLUX_EFFICIENCY,TC / FLUX,Charge melted per unit flux (economy of slag),Negative on TTT if efficient,Štore Steel flux findings,True,Efficiency,True
+CARBON_EFFICIENCY,CPC / OXY,C/O balance for foam vs excessive decarb FeO,Nonlinear sweet-spot,Morales 2025; Kirschen 2011,True,Chemical_energy,True
+FOAM_SLAG_PROXY,CPC·√OXY / TC,Foamy-slag formation proxy (C–O synergy),Negative,Skupien/Gaskell foam; Morales 2025,True,Chemical_energy,True
+CHEMICAL_ENERGY_PROXY,CPC·OXY / TC²,Specific chemical energy intensity,Negative,Kirschen 2011 chemical energy,True,Chemical_energy,True
+OXYGEN_EXCESS_INDEX,OXY/CPC − median(OXY/CPC),Deviation from typical C–O practice,Positive if excess O₂,Duan 2014 O₂–HM coordination,True,Chemical_energy,True
+HM_OXY_COORDINATION,HM·OXY / (TC·(CPC+1)),HM–O₂ coordination normalized by carbon,Negative,Duan 2014,True,Chemical_energy,True
+HM_DRI_SCRAP_PRODUCT,HM·DRI·(Bucket+1)/TC²,Third-order burden mix intensity,Ambiguous,Phase 26 interaction discovery,True,Interaction,True
+FLUX_SOLID_CARBON,FLUX·SOLID·CPC / TC²,Slag–solid–carbon conjoint intensity,Ambiguous,Foam + slag volume coupling,True,Interaction,True
+SCRAP_CARBON_OXYGEN,Bucket·CPC·OXY / TC²,Scrap foam pathway intensity,Negative,Morales 2025,True,Interaction,True
+DRI_OXY_FLUX,DRI·OXY·FLUX / TC²,DRI refining / slag path intensity,Conditional,Kirschen 2011,True,Interaction,True
+LOG_SOLID_BURDEN,ln(1+SOLID),Log solid melt load (diminishing marginal effect),Positive,Nonlinear melt kinetics,True,Nonlinear_transform,True
+LOG_OXYGEN,ln(1+OXY),Log oxygen intensity,Negative,Duan 2014 nonlinear O₂ response,True,Nonlinear_transform,True
+SQRT_CPC,√CPC,Diminishing returns of carbon injection,Negative,Foam saturation literature,True,Nonlinear_transform,True
+HM_FRAC_SQ,(HM/TC)²,Quadratic liquid dominance (nonlinear benefit),Negative,Duan 2014,True,Nonlinear_transform,True
+DRI_FRAC_SQ,(DRI/TC)²,Quadratic DRI penalty (FeO escalation),Positive,Kirschen 2011,True,Nonlinear_transform,True
+HIGH_HM_PRACTICE,1(HM% > 0.55),High hot-metal operating practice flag,Negative,Industrial practice regimes,True,Regime_indicator,True
+HIGH_DRI_PRACTICE,1(DRI% > 0.50),High-DRI practice flag,Positive,Memoli 2021 DRI-intensive heats,True,Regime_indicator,True
+HIGH_SCRAP_PRACTICE,1(Scrap% > 0.15),High-scrap practice flag,Nonlinear,Memoli 2021,True,Regime_indicator,True
+LOW_OXYGEN_PRACTICE,1(OXY < P25),Low oxygen operating practice,Positive,Duan 2014 under-blown risk,True,Regime_indicator,True
+FLUX_INTENSIVE,1(FLUX/TC > P75),Flux-intensive slag practice,Positive,Memoli 2021 slag volume,True,Regime_indicator,True
+CHARGE_OVERSIZE,1(TC > 130 t),Oversize charge vs JSPL band,Positive,Pfeifer / JSPL charge band,True,Regime_indicator,True
+RECIPE_MAHALANOBIS_L2,‖z(recipe)‖₂ vs median,Distance from median plant practice,Positive,Process deviation → longer melts,True,Operational,True

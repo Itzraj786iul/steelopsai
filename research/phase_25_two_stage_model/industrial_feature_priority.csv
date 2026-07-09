@@ -1,0 +1,15 @@
+Variable,Separation_importance,Availability,Source,Expected_MAE_improvement_min,Literature,Priority_score
+Delay codes / event logs,Very High,Not in dataset,MES historian,-2.0,Štore Steel 2019; Knutsen 2020,10.0
+Power-on time (arcing minutes),High,Not in dataset,SCADA/MES,-1.5,Knutsen 2020; Sjunnesson 2019,6.0
+Charging delay / crane wait,High,Not in dataset,MES timestamps,-1.2,Knutsen 2020,4.8
+DRI metallization %,High,Not in dataset,DRI plant lab,-0.8,Kirschen 2011; Memoli 2021,3.2
+Power restriction flag,High,Not in dataset,EMS/MES,-0.6,JSPL practice; Kirschen 2011,2.4
+Ladle waiting time,Medium,Not in dataset,MES,-0.5,TERI EAF best practices,1.5
+Electrode breakage event,Medium,Not in dataset,Operator log,-0.4,Pfeifer 2011,1.2000000000000002
+HM temperature at charge,Medium,Not in dataset,Pyrometer,-0.4,Duan 2014,1.2000000000000002
+Transformer tap setpoint,Medium,Not in dataset,SCADA,-0.3,Pfeifer 2011,0.8999999999999999
+Bucket sequence / charge pattern,Medium,Partial (single bucket col),MES,-0.3,Memoli 2021,0.8999999999999999
+Foamy slag indicator,Medium,Not in dataset,Derived from C/O2,-0.3,Kirschen 2011,0.8999999999999999
+OXY (planning setpoint),Medium,Available,Current data,-0.2,Duan 2014 — timing uncertain,0.6000000000000001
+CPC (planning setpoint),Medium,Available,Current data,-0.15,Morales 2025,0.44999999999999996
+Shift (crew context),Low,Available,Current data,-0.05,Low SHAP in Phase 19,0.1

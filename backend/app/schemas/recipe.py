@@ -64,6 +64,88 @@ class ContributorItem(BaseModel):
     display_name: str
     contribution: float
     global_importance: float
+    interpretation: str | None = None
+    direction: str | None = None
+
+
+class SimilarHeatItem(BaseModel):
+    heat_id: str
+    shift: str
+    charge_t: float
+    actual_ttt: float | None = None
+    predicted_ttt: float
+    ttt_difference: float | None = None
+    similarity_pct: float
+    distance: float
+
+
+class IndustrialObservation(BaseModel):
+    observation: str
+    severity: str
+
+
+class DigitalTwinReadiness(BaseModel):
+    layers: dict[str, Any]
+    overall_score: int
+    readiness_tier: str
+
+
+class PredictionExplainability(BaseModel):
+    similar_heats: list[SimilarHeatItem] = Field(default_factory=list)
+    contributor_interpretations: list[ContributorItem] = Field(default_factory=list)
+    prediction_quality: str = Field(..., description="Excellent | Good | Acceptable | Experimental")
+    industrial_observations: list[IndustrialObservation] = Field(default_factory=list)
+    digital_twin_readiness: DigitalTwinReadiness | None = None
+    historical_similarity_pct: float | None = None
+    industrial_risk: str | None = None
+
+
+class ValidatedRecommendationRow(BaseModel):
+    variable: str
+    display_name: str | None = None
+    current: float
+    optimized: float
+    difference: float
+    pct_change: float
+    arrow: str
+    reason: str
+    physics_status: str
+    historical_p5: float | None = None
+    historical_median: float | None = None
+    historical_p95: float | None = None
+    historical_status: str | None = None
+    severity: str | None = None
+    risk_level: str | None = None
+    industrial_acceptability: str | None = None
+    absolute_change: float | None = None
+    percent_change: float | None = None
+
+
+class Top5Alternative(BaseModel):
+    rank: int
+    predicted_ttt: float
+    improvement_min: float
+    risk_level: str
+    confidence: str
+    similarity_pct: float
+    total_penalty: float
+    hm: float
+    dri: float
+    power: float
+    oxy: float
+
+
+class OptimizationExplainability(BaseModel):
+    validated_recommendations: list[ValidatedRecommendationRow] = Field(default_factory=list)
+    recommendation_confidence: str
+    recommendation_stability: str
+    top5_alternatives: list[Top5Alternative] = Field(default_factory=list)
+    recommendation_narrative: list[str] = Field(default_factory=list)
+    penalty_breakdown: dict[str, float] = Field(default_factory=dict)
+    similar_heats: list[SimilarHeatItem] = Field(default_factory=list)
+    industrial_observations: list[IndustrialObservation] = Field(default_factory=list)
+    digital_twin_readiness: DigitalTwinReadiness | None = None
+    diagnostics: dict[str, Any] = Field(default_factory=dict)
 
 
 class PredictionMetadata(BaseModel):
@@ -91,6 +173,7 @@ class PredictionResponse(BaseModel):
     confidence: str = Field(..., description="High | Medium | Low | Very Low based on historical operating statistics")
     charge_classification: str = Field(..., description="Normal | Low | High | Very High | Extreme")
     metadata: PredictionMetadata
+    explainability: PredictionExplainability | None = None
 
 
 class OptimizationComparisonRow(BaseModel):
@@ -115,6 +198,7 @@ class OptimizeResponse(BaseModel):
     best_score: float
     comparison: list[OptimizationComparisonRow]
     diagnostics: dict[str, Any]
+    explainability: OptimizationExplainability | None = None
 
 
 class WhatIfTornadoItem(BaseModel):
@@ -227,3 +311,129 @@ class ReportRequest(BaseModel):
 class ErrorResponse(BaseModel):
     detail: str
     error_code: str | None = None
+
+
+class HybridEvaluateRequest(RecipeInput):
+    heat_id: str = Field("", description="Optional heat number for traceability")
+
+
+class HybridTrustResponse(BaseModel):
+    heat_id: str = ""
+    current_ttt: float
+    predicted_ttt: float
+    improvement_min: float
+    hybrid_score: float
+    score_breakdown: dict[str, float]
+    reliability_index: float
+    reliability_tier: str
+    physics_confidence: float
+    ai_confidence: float
+    industrial_confidence: float
+    historical_similarity_pct: float
+    recommendation_stability: float
+    agreement_pct: float
+    consensus: str
+    decision_tree: list[str]
+    scenarios: list[dict[str, Any]]
+    digital_twin: dict[str, Any]
+    recommended_recipe: dict[str, Any]
+    top5: list[dict[str, Any]]
+    explanation: dict[str, Any]
+
+
+class OptimizeV2Recommendation(BaseModel):
+    rank: int
+    recipe: dict[str, Any]
+    predicted_ttt: float
+    improvement_min: float
+    confidence: str
+    historical_similarity_pct: float
+    stability: float
+    rules_satisfied: int
+    rules_violated: int
+    physics_feasible: bool
+    physics_violations: list[str]
+    objective_breakdown: dict[str, Any]
+    explanation: dict[str, Any]
+    industrial_score: float
+    physics_score: float
+
+
+class OptimizeV2Response(BaseModel):
+    current_recipe: dict[str, Any]
+    current_ttt: float
+    optimized_recipe: dict[str, Any]
+    optimized_ttt: float
+    improvement_min: float
+    physics_compliant: bool
+    power_optimized: bool = False
+    recommendations: list[OptimizeV2Recommendation]
+    diagnostics: dict[str, Any]
+
+
+class ValidationEntryRequest(BaseModel):
+    heat_number: str
+    predicted_ttt: float
+    actual_ttt: float | str | None = None
+    optimizer_used: str = "Phase 20.2"
+    recommendation_applied: bool | str = False
+    operator_comments: str = ""
+
+
+class ValidationEntryResponse(ValidationEntryRequest):
+    recorded_at: str
+    difference: float | None = None
+
+
+class ValidationListResponse(BaseModel):
+    entries: list[ValidationEntryResponse]
+    metrics: dict[str, Any]
+
+
+class OperatorFeedbackRequest(BaseModel):
+    heat_number: str = ""
+    optimizer_used: str = "Phase 20.2"
+    status: Literal["Accepted", "Modified", "Rejected"]
+    comment: str = ""
+    constraint_issue: str = ""
+    maintenance_issue: str = ""
+    impractical_reason: str = ""
+
+
+class OperatorFeedbackResponse(OperatorFeedbackRequest):
+    recorded_at: str
+
+
+class FeedbackSummaryResponse(BaseModel):
+    total: int
+    accepted: int
+    modified: int
+    rejected: int
+    acceptance_rate_pct: float | None
+
+
+class ReadinessIndicator(BaseModel):
+    area: str
+    status: Literal["green", "yellow", "red"]
+    score: float | None = None
+    summary: str
+    recommendations: list[str]
+
+
+class DeploymentReadinessResponse(BaseModel):
+    overall_status: Literal["green", "yellow", "red"]
+    overall_score: float
+    indicators: list[ReadinessIndicator]
+    generated_at: str
+
+
+class ReliabilitySummaryResponse(BaseModel):
+    avg_reliability_index: float | None
+    avg_ai_confidence: float | None
+    avg_physics_confidence: float | None
+    avg_industrial_confidence: float | None
+    avg_historical_similarity: float | None
+    recommendation_acceptance_rate_pct: float | None
+    optimizer_success_rate_pct: float | None
+    validation_metrics: dict[str, Any]
+    prediction_error_trend: list[dict[str, Any]]

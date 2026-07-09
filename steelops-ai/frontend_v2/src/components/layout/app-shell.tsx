@@ -8,6 +8,8 @@ import { HeaderBar } from "@/components/layout/header";
 import { FooterStatus } from "@/components/layout/footer-status";
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
 import { CommandPalette } from "@/features/command-palette/command-palette";
+import { CurrentHeatDrawer } from "@/features/eaf/components/current-heat-drawer";
+import { HeatToast } from "@/features/eaf/components/heat-toast";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useTrackRecentPage } from "@/hooks/use-track-recent-page";
@@ -41,6 +43,8 @@ export function AppShell({ children }: AppShellProps) {
         <FooterStatus />
       </div>
       <CommandPalette />
+      <CurrentHeatDrawer />
+      <HeatToast />
     </div>
   );
 }

@@ -1,0 +1,8 @@
+Feature,Robustness,SHAP_mean_abs,MI,Boruta_hit_rate,Stability_selection,Is_new,Industrial_meaning,Expected_sign,Operator_controllable,Family,Formula
+LOG_OXYGEN,0.9870705579245436,1.131386134982329,0.1108010596534505,1.0,1.0,True,Log oxygen intensity,Negative,True,Nonlinear_transform,ln(1+OXY)
+BUCKET_X_CPC,0.6137059540935127,0.4556943453191239,0.1093788041114178,1.0,0.9,False,Phase 24 base,,True,Phase24_base,
+LOG_SOLID_BURDEN,0.5919423859938122,0.2908380964534537,0.0926857452508347,0.8333333333333334,1.0,True,Log solid melt load (diminishing marginal effect),Positive,True,Nonlinear_transform,ln(1+SOLID)
+SCRAP_CARBON_OXYGEN,0.5908431941697581,0.6003461177214595,0.0846014485677244,1.0,1.0,True,Scrap foam pathway intensity,Negative,True,Interaction,Bucket·CPC·OXY / TC²
+HM_X_OXY_NORM,0.4884742377133687,0.2565934159084143,0.0472100617556749,0.6666666666666666,1.0,False,Phase 24 base,,True,Phase24_base,
+RECIPE_MAHALANOBIS_L2,0.4800992415360097,0.1387978814939142,0.0894778995029623,0.5,1.0,True,Distance from median plant practice,Positive,True,Operational,‖z(recipe)‖₂ vs median
+SOLID_BURDEN_COMPACTNESS,0.4580822530825331,0.1239436274937996,0.0511068032318231,0.6666666666666666,1.0,True,Solid burden intensity (quadratic melt load),Positive,True,Thermodynamic_proxy,SOLID² / TC

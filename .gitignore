@@ -40,3 +40,11 @@ htmlcov/
 
 # Joblib / ML caches (regenerable)
 research/**/cache/
+
+# CatBoost training artifacts
+catboost_info/
+**/catboost_info/
+
+# Generated validation artifacts
+backend/_phase_29_1_results.json
+backend/data/phase_33/

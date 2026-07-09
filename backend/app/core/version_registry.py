@@ -31,9 +31,9 @@ def _git_commit() -> str:
 @lru_cache(maxsize=1)
 def get_version_registry() -> dict[str, Any]:
     return {
-        "frontend_version": "2.8.0",
-        "backend_version": "2.8.1",
-        "research_phase": "Phase 27",
+        "frontend_version": "1.0.0",
+        "backend_version": "1.0.0",
+        "research_phase": "Phase 33 (frozen)",
         "model_phase": "Phase 19",
         "optimizer_phase": "Phase 20.2",
         "dataset_version": "Industrial EAF Heats (Phase 16 normal cohort)",

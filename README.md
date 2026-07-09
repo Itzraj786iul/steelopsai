@@ -1,6 +1,8 @@
 # JSPL EAF Tap-to-Tap Time — Industrial AI Platform
 
-Production integration of the frozen ML pipeline (Phases 1–20.2) into a FastAPI + Next.js decision support platform.
+**Release 1.0.0** — Production-ready Industrial AI Decision Support System.
+
+Frozen ML research (Phases 16–33). Suitable for B.Tech thesis, JSPL demonstration, GitHub portfolio, and publication.
 
 ## Quick start
 
@@ -19,40 +21,66 @@ npm install && npm run dev
 - **API docs:** http://localhost:8001/docs
 - **Streamlit prototype:** `research/phase_21_streamlit_app` (not production)
 
+## Architecture
+
+- **Prediction:** Phase 19 frozen model via `POST /predict`
+- **Production optimizer:** Phase 20.2 via `POST /optimize`
+- **Research optimizer:** Phase 31 V2 via `POST /optimize/v2` (never optimizes POWER)
+- **Trust framework:** Phase 32 via `POST /hybrid/evaluate`
+- **Validation:** `POST /validation`, operator feedback, reliability dashboard
+
+See [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md).
+
 ## Structure
 
 ```
 Data 2/
 ├── backend/                    # FastAPI REST API (production)
-├── frontend/                   # Pointer to production UI
-├── steelops-ai/frontend_v2/    # Next.js app — JSPL EAF pages under /eaf/*
-└── research/                   # Frozen ML artifacts (runtime + prototype)
-    ├── phase_13_industrial_cleaning/   # Historical dataset
-    ├── phase_16_feature_engineering/   # Engineered features dataset
-    ├── phase_18_final_feature_selection/ # Feature list exports
-    ├── phase_19_model_development/     # production_model.pkl
-    ├── phase_20_recipe_optimizer/        # Phase 20.2 optimizer
-    ├── phase_21_streamlit_app/         # ML integration modules (+ Streamlit prototype)
-    └── phase_22_final_validation/      # Validation reports
+├── docs/                       # Phase 33 thesis & deployment documentation
+├── steelops-ai/frontend_v2/    # Next.js app — /eaf/*
+└── research/                   # Frozen ML + research phases (read-only at runtime)
+    ├── phase_19_model_development/
+    ├── phase_20_recipe_optimizer/
+    ├── phase_31_optimizer_v2/
+    ├── phase_32_hybrid_decision_engine/
+    └── phase_33_industrial_product_validation/
 ```
 
-| Path | Role |
-|------|------|
-| `backend/` | FastAPI REST API |
-| `frontend/` | Pointer to production UI |
-| `steelops-ai/frontend_v2/` | Next.js app (JSPL EAF pages under `/eaf/*`) |
-| `research/` | Frozen ML pipeline artifacts (do not retrain) |
+## Website (Release 1.0)
+
+| Page | Purpose |
+|------|---------|
+| `/eaf/prediction` | TTT + Phase 32 trust metrics |
+| `/eaf/optimizer` | Production vs V2 comparison |
+| `/eaf/validation` | Actual plant results |
+| `/eaf/reliability` | Trust aggregates |
+| `/eaf/feedback` | Operator recommendation review |
+| `/eaf/deployment-readiness` | Traffic-light readiness |
 
 ## Documentation
 
+- [Release Notes](release/RELEASE_NOTES_v1.0.md)
+- [Verification Checklist](release/VERIFICATION_CHECKLIST.md)
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
+- [User Manual](docs/USER_MANUAL.md)
 - [API Reference](backend/API.md)
-- [Deployment Guide](DEPLOYMENT.md)
-- [Streamlit prototype README](research/phase_21_streamlit_app/README.md)
+- [Thesis Appendix](docs/THESIS_APPENDIX.md)
 
-## Model
+## Results
 
-- **Stacking Regressor** — MAE 3.06 min, R² 0.366, 22 features
-- **Optimizer** — Phase 20.2 physics-guided local search
+- **Prediction:** Test MAE ~2.1 min (Phase 19 hold-out)
+- **Hybrid reliability:** 68–78 / 100 on live HMI heats (Phase 32)
+- **Optimizer V2:** Planning-safe; POWER immutable
+
+## Limitations
+
+- Actual TTT for latest live heats pending MES import
+- Digital twin sensor gaps (Phase 27)
+- Operator feedback does not retrain models
+
+## Future work
+
+[phase_34_future_work.md](research/phase_33_industrial_product_validation/phase_34_future_work.md)
 
 ## License
 

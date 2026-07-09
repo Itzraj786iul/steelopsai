@@ -21,13 +21,18 @@ from app.services.industrial_validation import (
     sanitize_recipe,
     total_charge,
 )
+from app.services.structured_logging import log_optimization, log_prediction
 from app.services.response_labels import (
     relabel_comparison_row,
     relabel_contributor,
     relabel_historical_variable,
     relabel_process_health_item,
 )
-from app.services.structured_logging import log_optimization, log_prediction
+from app.services.explainability_service import (
+    build_optimization_explainability,
+    build_prediction_explainability,
+    serialize_diagnostics,
+)
 
 
 def _ensure_phase21_path() -> None:
@@ -159,7 +164,7 @@ def predict_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
         latency_ms=latency_ms,
     )
 
-    return {
+    result = {
         "predicted_ttt": predicted,
         "margin": TEST_MAE,
         "ci_lower_95": predicted - CI_HALF_WIDTH_95,
@@ -171,6 +176,11 @@ def predict_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
         "charge_classification": charge_class,
         "metadata": _prediction_metadata(confidence, plain_warnings),
     }
+    result["explainability"] = build_prediction_explainability(
+        clean_recipe, result, stats if stats_loaded else pd.DataFrame(), stats_loaded
+    )
+    result["top_contributors"] = result["explainability"]["contributor_interpretations"]
+    return result
 
 
 def optimize_recipe(recipe: dict[str, Any], n_generate: int = 1000) -> dict[str, Any]:
@@ -226,7 +236,24 @@ def optimize_recipe(recipe: dict[str, Any], n_generate: int = 1000) -> dict[str,
         "physics_compliant": opt.physics_compliant,
         "best_score": opt.best_score,
         "comparison": comparison,
-        "diagnostics": opt.diagnostics,
+        "diagnostics": serialize_diagnostics(opt.diagnostics),
+        "explainability": build_optimization_explainability(
+            clean_recipe,
+            {
+                "current_recipe": opt.current_recipe,
+                "optimized_recipe": opt.optimized_recipe,
+                "current_ttt": opt.current_ttt,
+                "optimized_ttt": opt.optimized_ttt,
+                "improvement_min": opt.improvement_min,
+                "physics_compliant": opt.physics_compliant,
+                "best_score": opt.best_score,
+                "comparison": comparison,
+                "diagnostics": opt.diagnostics,
+            },
+            opt,
+            get_historical_stats(),
+            True,
+        ),
     }
 
 

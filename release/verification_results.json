@@ -1,0 +1,262 @@
+{
+  "version": "1.0.0",
+  "passed": 51,
+  "total": 51,
+  "checks": [
+    {
+      "check": "GET /health",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "check": "Health model_loaded",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Health version 1.0.0",
+      "pass": true,
+      "detail": "1.0.0"
+    },
+    {
+      "check": "GET /version",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Version registry backend",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Version model Phase 19",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Version optimizer Phase 20.2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /model-info",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Model has 22 features",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /predict",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "check": "Prediction TTT in range",
+      "pass": true,
+      "detail": "TTT=39.90 min (default recipe)"
+    },
+    {
+      "check": "Prediction has CI",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Prediction explainability present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /optimize",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Optimizer improvement >= 0",
+      "pass": true,
+      "detail": "saving=0.9642325989236724"
+    },
+    {
+      "check": "Optimizer optimized <= current",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Optimizer comparison rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /optimize/v2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "V2 power_optimized false",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "V2 recommendations top5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "V2 POWER unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /hybrid/evaluate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Hybrid reliability 0-100",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Hybrid consensus present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /whatif",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /historical",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /historical",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /historical/statistics",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /process-health",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /report",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "POST /report",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /validation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /feedback",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /feedback/summary",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /reliability/summary",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "GET /deployment/readiness",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Frontend page /eaf/dashboard",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\dashboard\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/prediction",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\prediction\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/optimizer",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\optimizer\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/validation",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\validation\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/reliability",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\reliability\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/feedback",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\feedback\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/deployment-readiness",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\deployment-readiness\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/whatif",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\whatif\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/historical",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\historical\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/health",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\health\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/model",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\model\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/reports",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\reports\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/settings",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\settings\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/about",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\about\\page.tsx"
+    },
+    {
+      "check": "Frontend page /eaf/research",
+      "pass": true,
+      "detail": "E:\\JSPL INTERNSHIP\\Data 2\\steelops-ai\\frontend_v2\\src\\app\\(platform)\\eaf\\research\\page.tsx"
+    }
+  ]
+}

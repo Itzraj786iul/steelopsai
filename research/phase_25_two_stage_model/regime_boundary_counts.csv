@@ -1,0 +1,5 @@
+Schema,Description,NORMAL,LONG,SHUTDOWN,DELAY,ABNORMAL
+4class_standard,TTT≤60 | 60–120 | 120–180 | >180,12103,423.0,188.0,44.0,
+3class_phase16,Phase 16 style: ≤60 | 60–180 | >180,12103,,188.0,467.0,
+2class_normal_vs_abnormal,Binary: ≤60 vs >60,12103,,,,655.0
+2class_delay_detection,Binary: ≤120 vs >120,12526,,,232.0,

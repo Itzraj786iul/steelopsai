@@ -107,3 +107,4 @@ class PredictionEngine:
         feats = engineer_recipe_features(frame)
         X = self.preprocessor.transform(feats[MODEL_FEATURES].to_numpy())
         return self.model.predict(X)
+    

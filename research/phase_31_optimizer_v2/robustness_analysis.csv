@@ -1,0 +1,7 @@
+Metric,Value
+Recommendation consistency,30/30 trials improved
+Mean predicted improvement (min),1.593
+Std improvement,0.267
+HM recommendation std (t),0.639
+Stability score,87.2
+Most sensitive variable,HM/DRI coupling (Phase 30 rules)

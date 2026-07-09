@@ -1,6 +1,6 @@
 export const APP_NAME = "JSPL EAF TTT";
-export const APP_VERSION = "2.8.0";
-export const RESEARCH_VERSION = "Phase 27";
+export const APP_VERSION = "1.0.0";
+export const RESEARCH_VERSION = "Phase 33 (frozen)";
 export const PRODUCTION_MODEL_PHASE = "Phase 19";
 export const OPTIMIZER_PHASE = "Phase 20.2";
 export const DATASET_VERSION = "Industrial EAF Heats (Phase 16 normal cohort)";
