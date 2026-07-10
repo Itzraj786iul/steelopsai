@@ -5,6 +5,10 @@ export interface User {
   role: string;
   tenant_id: string;
   is_active: boolean;
+  permissions?: string[];
+  shift?: string | null;
+  department_id?: string | null;
+  last_login_at?: string | null;
 }
 
 export interface TokenResponse {

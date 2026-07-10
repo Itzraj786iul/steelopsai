@@ -7,43 +7,70 @@ import {
   isGuestAuthMode,
   setGuestSession,
 } from "@/lib/auth/guest-auth";
+import { eafClient } from "@/lib/api/eaf";
 import { apiClient } from "@/services/api-client";
 import type { LoginRequest, RegisterRequest, TokenResponse, User } from "@/types";
 import type { MessageResponse } from "@/types/api.types";
 
+export interface EnterpriseLoginResponse extends TokenResponse {
+  user?: User & { permissions?: string[]; shift?: string | null; department_id?: string | null };
+}
+
+/** Prefer EAF enterprise auth unless explicitly in guest mode. */
+function useEnterpriseAuth(): boolean {
+  return !isGuestAuthMode() || process.env.NEXT_PUBLIC_AUTH_MODE === "enterprise";
+}
+
 export const authApi = {
   login: async (payload: LoginRequest) => {
-    if (isGuestAuthMode()) {
+    if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
       const { tokens, user } = await guestLogin(payload);
       setGuestSession(user.email);
-      return { data: tokens };
+      return { data: { ...tokens, user } as EnterpriseLoginResponse };
     }
-    return apiClient.post<TokenResponse>("/api/v1/auth/login", payload);
+    const { data } = await eafClient.post<EnterpriseLoginResponse>("/auth/login", payload);
+    return { data };
   },
   register: async (payload: RegisterRequest) => {
-    if (isGuestAuthMode()) {
+    if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
       const user = await guestRegister(payload);
       return { data: user };
     }
-    return apiClient.post<User>("/api/v1/auth/register", payload);
+    // Self-registration disabled in enterprise — admin creates users
+    throw new Error("Self-registration is disabled. Contact your administrator.");
   },
-  refresh: (refreshToken: string) =>
-    isGuestAuthMode()
-      ? Promise.resolve({ data: guestTokens() })
-      : apiClient.post<TokenResponse>("/api/v1/auth/refresh", { refresh_token: refreshToken }),
-  logout: async () => {
-    if (isGuestAuthMode()) {
+  refresh: async (refreshToken: string) => {
+    if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
+      return { data: guestTokens() };
+    }
+    const { data } = await eafClient.post<TokenResponse>("/auth/refresh", { refresh_token: refreshToken });
+    return { data };
+  },
+  logout: async (refreshToken?: string) => {
+    if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
       clearGuestSession();
       return { data: { message: "Logged out" } as MessageResponse };
     }
-    return apiClient.post<MessageResponse>("/api/v1/auth/logout");
+    if (refreshToken) {
+      try {
+        await eafClient.post("/auth/logout", { refresh_token: refreshToken });
+      } catch {
+        /* ignore */
+      }
+    }
+    return { data: { message: "Logged out" } as MessageResponse };
   },
   me: async () => {
-    if (isGuestAuthMode()) {
+    if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
       const user = guestMe();
       if (!user) throw new Error("Not authenticated");
       return { data: user };
     }
-    return apiClient.get<User>("/api/v1/auth/me");
+    const { data } = await eafClient.get<User>("/auth/me");
+    return { data };
   },
+  // Keep legacy platform client available if configured
+  platformMe: () => apiClient.get<User>("/api/v1/auth/me"),
 };
+
+export { useEnterpriseAuth };

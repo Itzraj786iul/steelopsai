@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { AUTH_COOKIE_KEY } from "@/lib/constants";
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/eaf", "/unauthorized"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/unauthorized"];
 
 function isPublicPath(pathname: string): boolean {
   return pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
@@ -18,8 +18,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/eaf/dashboard", request.url));
   }
 
+  // Protect all platform / EAF routes — require login
   if (!isPublic && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/eaf/dashboard", request.url));
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", pathname);
+    return NextResponse.redirect(login);
   }
 
   return NextResponse.next();

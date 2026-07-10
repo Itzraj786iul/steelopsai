@@ -13,6 +13,6 @@ interface RoleGateProps {
 export function RoleGate({ roles, children, fallback = null }: RoleGateProps) {
   const { user } = useAuth();
   const role = normalizeRole(user?.role ?? UserRole.Operator);
-  if (!roles.includes(role)) return <>{fallback}</>;
+  if (!roles.map(String).includes(role)) return <>{fallback}</>;
   return <>{children}</>;
 }

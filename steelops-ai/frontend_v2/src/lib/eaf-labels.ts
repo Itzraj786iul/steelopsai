@@ -10,9 +10,9 @@ export const RECIPE_FIELD_LABELS: Record<string, string> = {
   Bucket: "Bucket (t)",
   LIME: "LIME (t)",
   DOLO: "DOLO (t)",
-  CPC: "CPC",
+  CPC: "Target Carbon Program",
   POWER: ELECTRICAL_ENERGY_LABEL,
-  OXY: "OXY",
+  OXY: "Target Oxygen Program",
   Shift: "Shift",
   Power_Restriction: "Electrical Restriction",
 };

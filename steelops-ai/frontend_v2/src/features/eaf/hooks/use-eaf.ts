@@ -13,7 +13,9 @@ import {
   type PredictResponse,
 } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
+import { useAuditStore } from "@/stores/audit-store";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
+import { usePerformanceStore } from "@/stores/performance-store";
 
 export function useEafRecipe() {
   const active = useCurrentHeatStore((s) => s.active);
@@ -79,6 +81,7 @@ export function useEafPredict() {
     async (recipe: EafRecipe, heatId = "") => {
       setLoading(true);
       setError(null);
+      const start = performance.now();
       try {
         const [{ data }, hybridRes] = await Promise.all([
           eafApi.predict(recipe),
@@ -89,6 +92,31 @@ export function useEafPredict() {
         const warnings =
           data.validation_warnings?.filter((w) => w.level !== "error").map((w) => w.message) ?? [];
         updatePrediction(data, hybrid, warnings);
+        const elapsed = performance.now() - start;
+        usePerformanceStore.getState().record({ type: "prediction", ms: elapsed });
+        if (hybrid) usePerformanceStore.getState().record({ type: "hybrid", ms: elapsed * 0.3 });
+
+        const active = useCurrentHeatStore.getState().active;
+        if (active) {
+          const sim =
+            data.explainability?.historical_similarity_pct ??
+            data.explainability?.similar_heats?.[0]?.similarity_pct ??
+            null;
+          useAuditStore.getState().recordPrediction({
+            heatNumber: heatId || active.heatNumber,
+            shift: recipe.Shift,
+            inputRecipe: { ...recipe },
+            predictedTtt: data.predicted_ttt,
+            confidence: data.confidence ?? data.operator_summary?.confidence ?? null,
+            similarity: sim,
+            operatorDecision: active.recommendationAcceptance,
+            validationStatus: active.validation?.actualTtt ? "Recorded" : "Pending",
+            heatSessionId: active.id,
+          });
+        }
+
+        void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterPrediction());
+
         setResult(merged as PredictResponse & { hybrid_trust?: HybridTrustResponse });
         return merged;
       } catch (e: unknown) {
@@ -120,10 +148,27 @@ export function useEafOptimize() {
     async (recipe: EafRecipe) => {
       setLoading(true);
       setError(null);
+      const start = performance.now();
       try {
         const { data } = await eafApi.optimize(recipe);
         setResult(data);
         updateOptimizer(data, undefined);
+        usePerformanceStore.getState().record({ type: "optimizer", ms: performance.now() - start });
+        const active = useCurrentHeatStore.getState().active;
+        if (active) {
+          useAuditStore.getState().recordRecommendation({
+            heatSessionId: active.id,
+            heatNumber: active.heatNumber,
+            shift: active.shift,
+            originalRecipe: data.current_recipe,
+            optimizedRecipe: data.optimized_recipe,
+            acceptance: active.recommendationAcceptance,
+            finalOperatorRecipe: active.recipe,
+            validationOutcome: active.validation?.actualTtt ?? null,
+            improvementMin: data.improvement_min,
+          });
+        }
+        void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterOptimizer());
         return data;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Optimization failed");
@@ -159,6 +204,7 @@ export function useEafOptimizeV2() {
         const { data } = await eafApi.optimizeV2(recipe);
         setResult(data);
         updateOptimizer(cachedProd ?? undefined, data);
+        void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterOptimizer());
         return data;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Optimizer V2 failed");

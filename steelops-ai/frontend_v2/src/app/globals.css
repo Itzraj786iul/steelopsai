@@ -192,6 +192,19 @@
     background-size: 200% 100%;
     animation: shimmer 1.6s ease-in-out infinite;
   }
+
+  .enterprise-table th,
+  .enterprise-table td {
+    @apply transition-colors duration-200;
+  }
+
+  .enterprise-kpi {
+    @apply min-h-[7rem];
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

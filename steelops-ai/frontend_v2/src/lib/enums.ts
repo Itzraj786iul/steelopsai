@@ -1,12 +1,13 @@
 export enum UserRole {
-  Operator = "operator",
-  ProcessEngineer = "process_engineer",
-  ShiftIncharge = "shift_incharge",
+  Admin = "admin",
+  PlantManager = "plant_manager",
   ProductionManager = "production_manager",
-  PlantHead = "plant_head",
-  CorporateManagement = "corporate_management",
-  Administrator = "administrator",
-  Developer = "developer",
+  ShiftEngineer = "shift_engineer",
+  Operator = "operator",
+  QualityEngineer = "quality_engineer",
+  MaintenanceEngineer = "maintenance_engineer",
+  DataScientist = "data_scientist",
+  Viewer = "viewer",
 }
 
 export enum HeatStatus {

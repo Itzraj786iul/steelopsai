@@ -1,0 +1,66 @@
+"use client";
+
+import Link from "next/link";
+
+import { SectionCard } from "@/components/layout/section-card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { normalizeRole } from "@/lib/rbac/permissions";
+import { UserRole } from "@/lib/enums";
+import { useOpsContextStore } from "@/stores/ops-context-store";
+
+const ROLE_WIDGETS: Record<string, { title: string; href: string; kpi: string }[]> = {
+  [UserRole.Operator]: [
+    { title: "Predict heat", href: "/eaf/prediction", kpi: "Primary" },
+    { title: "My tasks", href: "/eaf/tasks", kpi: "Tasks" },
+    { title: "My performance", href: "/eaf/operator-performance", kpi: "KPIs" },
+    { title: "Queue", href: "/eaf/heat-queue", kpi: "Production" },
+  ],
+  [UserRole.ShiftEngineer]: [
+    { title: "Shift handover", href: "/eaf/shift-handover", kpi: "Handover" },
+    { title: "Approvals", href: "/eaf/approvals", kpi: "Workflow" },
+    { title: "Shift dashboard", href: "/eaf/shift-dashboard", kpi: "Shift" },
+    { title: "Delays", href: "/eaf/delays", kpi: "Downtime" },
+  ],
+  [UserRole.ProductionManager]: [
+    { title: "Live production", href: "/eaf/production-manager", kpi: "Live" },
+    { title: "Heat queue", href: "/eaf/heat-queue", kpi: "Queue" },
+    { title: "Approvals", href: "/eaf/approvals", kpi: "Backlog" },
+    { title: "Ops reports", href: "/eaf/ops-reports", kpi: "Reports" },
+  ],
+  [UserRole.PlantManager]: [
+    { title: "Plant dashboard", href: "/eaf/plant-dashboard", kpi: "Plant" },
+    { title: "Calendar", href: "/eaf/calendar", kpi: "Schedule" },
+    { title: "Analytics", href: "/eaf/production-manager", kpi: "Trends" },
+    { title: "Announcements", href: "/eaf/announcements", kpi: "Comms" },
+  ],
+  [UserRole.Admin]: [
+    { title: "Shifts", href: "/eaf/shifts", kpi: "Shifts" },
+    { title: "Furnaces", href: "/eaf/furnaces", kpi: "Assets" },
+    { title: "Users", href: "/eaf/users", kpi: "RBAC" },
+    { title: "Search", href: "/eaf/search", kpi: "Search" },
+  ],
+};
+
+/** Role-customized shortcuts / KPIs for the main dashboard. */
+export function RoleOpsWidgets() {
+  const { user } = useAuth();
+  const role = normalizeRole(user?.role || "operator");
+  const furnaceId = useOpsContextStore((s) => s.furnaceId);
+  const widgets = ROLE_WIDGETS[role] || ROLE_WIDGETS[UserRole.Operator];
+
+  return (
+    <SectionCard title="Operations shortcuts" description={`Role: ${role} · Furnace: ${furnaceId}`}>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {widgets.map((w) => (
+          <Button key={w.href} asChild variant="outline" className="h-auto flex-col items-start gap-1 py-3">
+            <Link href={w.href}>
+              <span className="text-xs text-muted-foreground">{w.kpi}</span>
+              <span className="font-medium">{w.title}</span>
+            </Link>
+          </Button>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}

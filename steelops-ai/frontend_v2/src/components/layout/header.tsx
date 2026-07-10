@@ -1,16 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { Command, HelpCircle, Menu, Moon, Sun } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Command, HelpCircle, LogOut, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { BreadcrumbBar } from "@/components/layout/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { usePlantContext } from "@/hooks/use-plant-context";
-import { PLANTS, SHIFTS } from "@/lib/constants";
-import { CurrentHeatPill } from "@/features/eaf/components/current-heat-drawer";
 import { NewHeatButton } from "@/features/eaf/components/new-heat-button";
+import { useAuth } from "@/hooks/use-auth";
+import { usePlantContext } from "@/hooks/use-plant-context";
+import { authApi } from "@/lib/api/auth";
+import { PLANTS, SHIFTS } from "@/lib/constants";
+import { getRefreshToken } from "@/services/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
@@ -19,9 +23,19 @@ export function HeaderBar() {
   const { plantId, shift, setPlantId, setShift } = usePlantContext();
   const { setOpen: setPaletteOpen } = useCommandPaletteStore();
   const { setMobileOpen } = useSidebarStore();
+  const { user } = useAuth();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const router = useRouter();
+
+  const logout = async () => {
+    const refresh = getRefreshToken();
+    await authApi.logout(refresh ?? undefined);
+    clearAuth();
+    router.replace("/login");
+  };
 
   return (
-    <header className="sticky top-0 z-[1200] flex h-header items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur md:px-6">
+    <header className="z-[1200] flex h-header shrink-0 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur md:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu className="h-5 w-5" />
       </Button>
@@ -29,7 +43,6 @@ export function HeaderBar() {
       <BreadcrumbBar />
 
       <div className="ml-auto flex items-center gap-2">
-        <CurrentHeatPill />
         <NewHeatButton />
         <Select value={plantId} onValueChange={setPlantId}>
           <SelectTrigger className="hidden w-[160px] md:flex">
@@ -57,6 +70,13 @@ export function HeaderBar() {
           </SelectContent>
         </Select>
 
+        {user ? (
+          <div className="hidden max-w-[140px] truncate text-xs text-muted-foreground lg:block" title={user.email}>
+            {user.full_name}
+            <span className="block text-[10px] uppercase tracking-wide">{user.role}</span>
+          </div>
+        ) : null}
+
         <Button variant="ghost" size="icon" onClick={() => setPaletteOpen(true)} aria-label="Open command palette">
           <Command className="h-4 w-4" />
         </Button>
@@ -74,6 +94,10 @@ export function HeaderBar() {
           <Link href="/eaf/about">
             <HelpCircle className="h-4 w-4" />
           </Link>
+        </Button>
+
+        <Button variant="ghost" size="icon" onClick={() => void logout()} aria-label="Sign out">
+          <LogOut className="h-4 w-4" />
         </Button>
       </div>
     </header>

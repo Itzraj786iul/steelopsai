@@ -1,28 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { APP_NAME } from "@/lib/constants";
-import { PRIMARY_NAV, type NavDefinition } from "@/lib/navigation";
+import { PRODUCTION_NAV, RESEARCH_NAV, ENTERPRISE_NAV, TOOLS_NAV, type NavDefinition } from "@/lib/navigation";
+import { isNavItemActive } from "@/lib/nav-utils";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
 function MobileNavSection({
   items,
   pathname,
+  searchParams,
   onNavigate,
 }: {
   items: NavDefinition[];
   pathname: string;
+  searchParams: URLSearchParams;
   onNavigate: () => void;
 }) {
   return (
     <div className="space-y-1">
       {items.map((item) => {
         const Icon = item.icon;
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = isNavItemActive(pathname, searchParams, item.href);
         const children = item.children;
 
         return (
@@ -42,7 +45,7 @@ function MobileNavSection({
               <div className="ml-4 space-y-1 border-l border-border/60 pl-2">
                 {children.map((child) => {
                   const ChildIcon = child.icon;
-                  const childActive = pathname === child.href;
+                  const childActive = isNavItemActive(pathname, searchParams, child.href);
                   return (
                     <Link
                       key={child.href}
@@ -69,6 +72,7 @@ function MobileNavSection({
 
 export function MobileSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { mobileOpen, setMobileOpen } = useSidebarStore();
 
   return (
@@ -78,7 +82,16 @@ export function MobileSidebar() {
           <SheetTitle>{APP_NAME}</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)] px-3 py-4">
-          <MobileNavSection items={PRIMARY_NAV} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+          <div className="space-y-4">
+            <p className="px-3 text-label">Production</p>
+            <MobileNavSection items={PRODUCTION_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
+            <p className="px-3 text-label">Enterprise</p>
+            <MobileNavSection items={ENTERPRISE_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
+            <p className="px-3 text-label">Research</p>
+            <MobileNavSection items={RESEARCH_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
+            <p className="px-3 text-label">Tools</p>
+            <MobileNavSection items={TOOLS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
+          </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>

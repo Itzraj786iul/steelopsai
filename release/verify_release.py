@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
 sys.path.insert(0, str(BACKEND))
 
+import os  # noqa: E402
+
+os.environ.setdefault("EAF_REQUIRE_AUTH", "0")
+
 from fastapi.testclient import TestClient  # noqa: E402
 from app.core.config import APP_VERSION, DEFAULT_RECIPE  # noqa: E402
 from app.main import app  # noqa: E402

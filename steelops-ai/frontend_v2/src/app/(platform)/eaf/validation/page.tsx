@@ -7,7 +7,10 @@ import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
+import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
+import { HeatLifecycleTimeline } from "@/features/eaf/components/heat-lifecycle-timeline";
+import { RecommendationAcceptanceBadge } from "@/features/eaf/components/recommendation-acceptance-panel";
+import { ValidationMetricsPanel } from "@/features/eaf/components/validation-metrics-panel";
 import { eafApi, type ValidationEntry, type ValidationListResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
@@ -37,7 +40,12 @@ export default function EafValidationPage() {
       optimizer_used: active.optimizerV2 ? "Phase 31 V2" : active.optimizer ? "Phase 20.2" : f.optimizer_used,
       operator_comments: active.validation?.operatorComments ?? f.operator_comments,
       actual_ttt: active.validation?.actualTtt ?? f.actual_ttt,
-      recommendation_applied: active.validation?.recommendationApplied ?? f.recommendation_applied,
+      recommendation_applied:
+        active.recommendationAcceptance === "Accepted"
+          ? "Yes"
+          : active.recommendationAcceptance
+            ? "No"
+            : active.validation?.recommendationApplied ?? f.recommendation_applied,
     }));
   }, [active]);
 
@@ -86,8 +94,12 @@ export default function EafValidationPage() {
   const metrics = data?.metrics;
 
   return (
-    <PageContainer title="Plant Validation" description="Validation linked to the current heat session">
-      <CurrentHeatBanner />
+    <PageContainer title="Validation" description="Plant validation linked to the current heat">
+      {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        <RecommendationAcceptanceBadge />
+      </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-4">
         <MetricCard label="Records" value={metrics?.count ?? 0} />
@@ -95,6 +107,8 @@ export default function EafValidationPage() {
         <MetricCard label="RMSE (min)" value={metrics?.rmse ?? "—"} />
         <MetricCard label="Bias (min)" value={metrics?.bias ?? "—"} />
       </div>
+
+      <ValidationMetricsPanel actualTtt={form.actual_ttt} />
 
       <SectionCard title="Record production result" className="mt-6">
         {!active?.prediction ? (
@@ -123,6 +137,8 @@ export default function EafValidationPage() {
           {saving ? "Saving…" : "Save validation record"}
         </Button>
       </SectionCard>
+
+      {active ? <HeatLifecycleTimeline active={active} /> : null}
 
       <SectionCard title="Validation history" className="mt-6">
         {loading ? (

@@ -1,31 +1,256 @@
 import { UserRole } from "@/lib/enums";
 
-const ROLE_DEFAULT_ROUTES: Record<UserRole, string> = {
+const ROLE_DEFAULT_ROUTES: Record<string, string> = {
+  [UserRole.Admin]: "/eaf/admin",
+  [UserRole.PlantManager]: "/eaf/plant-dashboard",
+  [UserRole.ProductionManager]: "/eaf/shift-dashboard",
+  [UserRole.ShiftEngineer]: "/eaf/dashboard",
   [UserRole.Operator]: "/eaf/prediction",
-  [UserRole.ProcessEngineer]: "/eaf/prediction",
-  [UserRole.ShiftIncharge]: "/eaf/dashboard",
-  [UserRole.ProductionManager]: "/eaf/optimizer",
-  [UserRole.PlantHead]: "/eaf/dashboard",
-  [UserRole.CorporateManagement]: "/eaf/reports",
-  [UserRole.Administrator]: "/eaf/model",
-  [UserRole.Developer]: "/eaf/model",
+  [UserRole.QualityEngineer]: "/eaf/validation-center",
+  [UserRole.MaintenanceEngineer]: "/eaf/delays",
+  [UserRole.DataScientist]: "/eaf/model",
+  [UserRole.Viewer]: "/eaf/heat-history",
 };
 
-const ROUTE_ROLE_ACCESS: Record<string, UserRole[]> = {
-  "/labs/optimization": [UserRole.ProcessEngineer, UserRole.ProductionManager, UserRole.PlantHead, UserRole.Developer],
-  "/labs/simulation": [UserRole.ProcessEngineer, UserRole.ProductionManager, UserRole.PlantHead, UserRole.Developer],
-  "/settings/users": [UserRole.Administrator],
-  "/settings/governance": [UserRole.Administrator],
-  "/settings/governance/models": [UserRole.Administrator, UserRole.ProcessEngineer],
-  "/settings/developer": [UserRole.Developer, UserRole.Administrator],
-  "/executive/multi-plant": [UserRole.CorporateManagement, UserRole.PlantHead, UserRole.Administrator],
+/** Route prefix → roles allowed (admin always allowed via normalize). */
+const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
+  "/eaf/admin": [UserRole.Admin],
+  "/eaf/users": [UserRole.Admin],
+  "/eaf/audit-log": [UserRole.Admin, UserRole.Viewer, UserRole.PlantManager],
+  "/eaf/plant-dashboard": [UserRole.Admin, UserRole.PlantManager],
+  "/eaf/system-health": [UserRole.Admin, UserRole.DataScientist, UserRole.PlantManager],
+  "/eaf/deployment-readiness": [UserRole.Admin, UserRole.PlantManager, UserRole.DataScientist],
+  "/eaf/versions": [UserRole.Admin, UserRole.DataScientist],
+  "/eaf/performance": [UserRole.Admin, UserRole.DataScientist],
+  "/eaf/session-backup": [UserRole.Admin],
+  "/eaf/settings": [UserRole.Admin, UserRole.PlantManager],
+  "/eaf/docs": [UserRole.Admin, UserRole.PlantManager, UserRole.DataScientist, UserRole.Viewer],
+  "/eaf/delays": [
+    UserRole.Admin,
+    UserRole.MaintenanceEngineer,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+  ],
+  "/eaf/alerts": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+    UserRole.MaintenanceEngineer,
+    UserRole.QualityEngineer,
+    UserRole.DataScientist,
+    UserRole.Viewer,
+  ],
+  "/eaf/notifications": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+    UserRole.QualityEngineer,
+    UserRole.MaintenanceEngineer,
+    UserRole.DataScientist,
+    UserRole.Viewer,
+  ],
+  "/eaf/research": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer],
+  "/eaf/model": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer],
+  "/eaf/reliability": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer, UserRole.PlantManager],
+  "/eaf/explainability": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer],
+  "/eaf/audit/predictions": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager, UserRole.Viewer],
+  "/eaf/audit/recommendations": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager, UserRole.Viewer],
+  "/eaf/reports": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.QualityEngineer,
+    UserRole.MaintenanceEngineer,
+    UserRole.DataScientist,
+    UserRole.Viewer,
+  ],
+  "/eaf/heat-history": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.QualityEngineer,
+    UserRole.MaintenanceEngineer,
+    UserRole.DataScientist,
+    UserRole.Viewer,
+    UserRole.Operator,
+  ],
+  "/eaf/shift-dashboard": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.MaintenanceEngineer,
+  ],
+  "/eaf/optimizer": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+  ],
+  "/eaf/prediction": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+  ],
+  "/eaf/whatif": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+  ],
+  "/eaf/validation": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+    UserRole.QualityEngineer,
+  ],
+  "/eaf/dashboard": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+    UserRole.PlantManager,
+  ],
+  "/eaf/shifts": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager, UserRole.ShiftEngineer],
+  "/eaf/furnaces": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager],
+  "/eaf/heat-queue": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+  ],
+  "/eaf/shift-handover": [UserRole.Admin, UserRole.ProductionManager, UserRole.ShiftEngineer],
+  "/eaf/approvals": [
+    UserRole.Admin,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+    UserRole.PlantManager,
+  ],
+  "/eaf/tasks": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+    UserRole.PlantManager,
+    UserRole.QualityEngineer,
+    UserRole.MaintenanceEngineer,
+  ],
+  "/eaf/calendar": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.MaintenanceEngineer,
+  ],
+  "/eaf/announcements": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+    UserRole.Viewer,
+  ],
+  "/eaf/search": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Viewer,
+  ],
+  "/eaf/operator-performance": [
+    UserRole.Admin,
+    UserRole.Operator,
+    UserRole.ShiftEngineer,
+    UserRole.ProductionManager,
+    UserRole.PlantManager,
+  ],
+  "/eaf/production-manager": [UserRole.Admin, UserRole.ProductionManager, UserRole.PlantManager],
+  "/eaf/ops-reports": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Viewer,
+  ],
+  "/eaf/production-plan": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager],
+  "/eaf/heat-scheduler": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+  ],
+  "/eaf/live-board": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+  ],
+  "/eaf/kpi-wall": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+  ],
+  "/eaf/operator-board": [UserRole.Admin, UserRole.Operator, UserRole.ShiftEngineer],
+  "/eaf/supervisor-board": [UserRole.Admin, UserRole.ShiftEngineer, UserRole.ProductionManager],
+  "/eaf/plant-manager-board": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager],
+  "/eaf/production-timeline": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Operator,
+  ],
+  "/eaf/delay-dashboard": [
+    UserRole.Admin,
+    UserRole.MaintenanceEngineer,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.PlantManager,
+  ],
+  "/eaf/mes-reports": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Viewer,
+  ],
+  "/eaf/mes-search": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.Viewer,
+  ],
 };
 
-export function normalizeRole(role: string): UserRole {
-  const normalized = role.toLowerCase().replace(/\s+/g, "_") as UserRole;
-  if (Object.values(UserRole).includes(normalized)) {
-    return normalized;
-  }
+const LEGACY_ROLE_MAP: Record<string, string> = {
+  administrator: UserRole.Admin,
+  plant_head: UserRole.PlantManager,
+  corporate_management: UserRole.PlantManager,
+  production_manager: UserRole.ProductionManager,
+  shift_incharge: UserRole.ShiftEngineer,
+  process_engineer: UserRole.QualityEngineer,
+  developer: UserRole.DataScientist,
+  operator: UserRole.Operator,
+};
+
+export function normalizeRole(role: string): string {
+  const normalized = role.toLowerCase().replace(/\s+/g, "_");
+  if (LEGACY_ROLE_MAP[normalized]) return LEGACY_ROLE_MAP[normalized];
+  if (Object.values(UserRole).includes(normalized as UserRole)) return normalized;
   return UserRole.Operator;
 }
 
@@ -34,34 +259,54 @@ export function getDefaultRouteForRole(role: string): string {
 }
 
 export function canAccessRoute(role: string, path: string): boolean {
-  if (path.startsWith("/eaf") || path === "/") return true;
   const normalizedRole = normalizeRole(role);
-  const restricted = Object.entries(ROUTE_ROLE_ACCESS).find(([route]) =>
-    path === route || path.startsWith(`${route}/`)
-  );
-  if (!restricted) return true;
+  if (normalizedRole === UserRole.Admin) return true;
+
+  // Core open paths for authenticated users
+  if (path === "/" || path === "/eaf/about" || path === "/unauthorized") return true;
+
+  const restricted = Object.entries(ROUTE_ROLE_ACCESS)
+    .filter(([route]) => path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`))
+    .sort((a, b) => b[0].length - a[0].length)[0];
+
+  if (!restricted) {
+    // Unlisted /eaf routes: allow operator-level production roles by default
+    if (path.startsWith("/eaf")) {
+      return [
+        UserRole.Operator,
+        UserRole.ShiftEngineer,
+        UserRole.ProductionManager,
+        UserRole.PlantManager,
+        UserRole.QualityEngineer,
+        UserRole.MaintenanceEngineer,
+        UserRole.DataScientist,
+        UserRole.Viewer,
+      ].includes(normalizedRole as UserRole);
+    }
+    return true;
+  }
   return restricted[1].includes(normalizedRole);
 }
 
 export function canApprove(role: string): boolean {
-  const normalizedRole = normalizeRole(role);
-  return [
-    UserRole.ShiftIncharge,
-    UserRole.ProductionManager,
-    UserRole.PlantHead,
-    UserRole.Administrator,
-  ].includes(normalizedRole);
+  return [UserRole.ShiftEngineer, UserRole.ProductionManager, UserRole.PlantManager, UserRole.Admin].includes(
+    normalizeRole(role) as UserRole
+  );
 }
 
 export function canAccessLabs(role: string): boolean {
-  return canAccessRoute(role, "/labs/optimization");
+  return canAccessRoute(role, "/eaf/research");
 }
 
 export function canManageUsers(role: string): boolean {
-  return normalizeRole(role) === UserRole.Administrator;
+  return normalizeRole(role) === UserRole.Admin;
 }
 
 export function canExport(role: string): boolean {
-  const normalizedRole = normalizeRole(role);
-  return normalizedRole !== UserRole.Operator;
+  return normalizeRole(role) !== UserRole.Operator;
+}
+
+export function hasPermission(permissions: string[] | undefined, code: string): boolean {
+  if (!permissions?.length) return false;
+  return permissions.includes(code);
 }

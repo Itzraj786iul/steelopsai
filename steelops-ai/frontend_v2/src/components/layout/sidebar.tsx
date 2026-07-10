@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pin, Search, Star } from "lucide-react";
 
@@ -12,8 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { usePermissions } from "@/hooks/use-auth";
 import { usePlantContext } from "@/hooks/use-plant-context";
 import { APP_NAME } from "@/lib/constants";
-import { ALL_NAV_ITEMS, PRIMARY_NAV, flattenNavItems, type NavDefinition } from "@/lib/navigation";
 import { industrialEase } from "@/lib/motion";
+import { PRODUCTION_NAV, RESEARCH_NAV, ENTERPRISE_NAV, TOOLS_NAV, ADMIN_NAV, flattenNavItems, type NavDefinition } from "@/lib/navigation";
+import { isNavItemActive } from "@/lib/nav-utils";
 import { cn } from "@/lib/utils";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useNavRecentStore } from "@/stores/nav-recent-store";
@@ -24,7 +25,7 @@ interface SidebarProps {
 }
 
 function resolveNavLabel(href: string) {
-  return flattenNavItems(ALL_NAV_ITEMS).find((item) => item.href === href)?.label ?? href.replace(/^\//, "");
+  return flattenNavItems([...PRODUCTION_NAV, ...ADMIN_NAV, ...ENTERPRISE_NAV, ...RESEARCH_NAV, ...TOOLS_NAV]).find((item) => item.href.split("?")[0] === href.split("?")[0])?.label ?? href.replace(/^\//, "");
 }
 
 function NavLink({
@@ -73,6 +74,7 @@ function NavSection({
   items,
   collapsed,
   pathname,
+  searchParams,
   badges,
   canAccess,
 }: {
@@ -80,6 +82,7 @@ function NavSection({
   items: NavDefinition[];
   collapsed: boolean;
   pathname: string;
+  searchParams: URLSearchParams;
   badges?: SidebarProps["badges"];
   canAccess: (href: string) => boolean;
 }) {
@@ -91,7 +94,7 @@ function NavSection({
     <div className="space-y-1">
       {title && !collapsed ? <p className="px-3 py-2 text-label">{title}</p> : null}
       {visibleItems.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = isNavItemActive(pathname, searchParams, item.href);
         const children = item.children?.filter((child) => canAccess(child.href));
 
         return (
@@ -124,13 +127,14 @@ function NavSection({
 
 export function Sidebar({ badges }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { collapsed, toggleCollapsed } = useSidebarStore();
   const { setOpen } = useCommandPaletteStore();
   const { recent, pinned } = useNavRecentStore();
   const { canAccessRoute } = usePermissions();
   const { plant } = usePlantContext();
 
-  const flatNav = flattenNavItems(ALL_NAV_ITEMS);
+  const flatNav = flattenNavItems([...PRODUCTION_NAV, ...ADMIN_NAV, ...ENTERPRISE_NAV, ...RESEARCH_NAV, ...TOOLS_NAV]);
 
   const pinnedItems = pinned
     .map((href) => flatNav.find((item) => item.href === href))
@@ -145,7 +149,7 @@ export function Sidebar({ badges }: SidebarProps) {
     <motion.aside
       animate={{ width: collapsed ? 64 : 260 }}
       transition={industrialEase}
-      className="hidden h-screen shrink-0 flex-col border-r border-border glass-panel-strong lg:flex"
+      className="hidden h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-border glass-panel-strong lg:flex"
     >
       <div className="flex h-header items-center justify-between border-b border-border/60 px-3">
         {!collapsed ? (
@@ -171,9 +175,13 @@ export function Sidebar({ badges }: SidebarProps) {
         </div>
       ) : null}
 
-      <ScrollArea className="flex-1 px-3 pb-3">
+      <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
         <div className="space-y-4">
-          <NavSection items={PRIMARY_NAV} collapsed={collapsed} pathname={pathname} badges={badges} canAccess={() => true} />
+          <NavSection title="Production" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
+          <NavSection title="Management" items={ADMIN_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
+          <NavSection title="Enterprise" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
+          <NavSection title="Research" items={RESEARCH_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
+          <NavSection title="Tools" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
 
           {!collapsed && pinnedItems.length > 0 ? (
             <>

@@ -48,3 +48,5 @@ catboost_info/
 # Generated validation artifacts
 backend/_phase_29_1_results.json
 backend/data/phase_33/
+backend/data/heat_history/
+backend/data/enterprise/

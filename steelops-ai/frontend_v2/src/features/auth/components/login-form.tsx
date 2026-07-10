@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,30 +11,34 @@ import { ActionButton } from "@/components/data-display/action-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authApi } from "@/lib/api/auth";
-import { isGuestAuthMode } from "@/lib/auth/guest-auth";
+import { authApi, type EnterpriseLoginResponse } from "@/lib/api/auth";
 import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
+
+const DEMO_ACCOUNTS = [
+  { email: "admin@jspl.local", password: "Admin@123", role: "Admin" },
+  { email: "operator@jspl.local", password: "Oper@123", role: "Operator" },
+  { email: "plant.manager@jspl.local", password: "Plant@123", role: "Plant Manager" },
+];
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setTokens, setUser } = useAuthStore();
-  const needsWelcome = useOnboardingStore((s) => s.needsWelcome);
   const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -45,20 +48,13 @@ export function LoginForm() {
     setError(null);
     try {
       const tokenResponse = await authApi.login(values);
-      setTokens(tokenResponse.data.access_token, tokenResponse.data.refresh_token, tokenResponse.data.expires_in);
-      const userResponse = await authApi.me();
-      setUser(userResponse.data);
+      const data = tokenResponse.data as EnterpriseLoginResponse;
+      setTokens(data.access_token, data.refresh_token, data.expires_in);
+      const user = data.user ?? (await authApi.me()).data;
+      setUser(user);
       const next = searchParams.get("next");
-      const nextPath = next && next.startsWith("/eaf") ? next : null;
-      if (needsWelcome() && !isGuestAuthMode()) {
-        router.replace("/onboarding");
-      } else if (nextPath) {
-        router.replace(nextPath);
-      } else if (isGuestAuthMode()) {
-        router.replace("/eaf/dashboard");
-      } else {
-        router.replace(getDefaultRouteForRole(userResponse.data.role));
-      }
+      const nextPath = next && next.startsWith("/") ? next : null;
+      router.replace(nextPath || getDefaultRouteForRole(user.role));
     } catch (err) {
       setError(getApiErrorMessage(err, "Invalid email or password"));
     }
@@ -71,7 +67,7 @@ export function LoginForm() {
           <Flame className="h-6 w-6 text-primary" />
         </div>
         <CardTitle className="text-2xl">Sign in to JSPL EAF</CardTitle>
-        <CardDescription>Tap-to-Tap prediction and optimization platform</CardDescription>
+        <CardDescription>Enterprise authentication with role-based access</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -81,12 +77,7 @@ export function LoginForm() {
             {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
             {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
           </div>
@@ -95,12 +86,24 @@ export function LoginForm() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </ActionButton>
         </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          No account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </p>
+
+        <div className="mt-6 space-y-2 rounded-lg border border-dashed p-3">
+          <p className="text-xs font-medium text-muted-foreground">Demo accounts</p>
+          {DEMO_ACCOUNTS.map((a) => (
+            <button
+              key={a.email}
+              type="button"
+              className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
+              onClick={() => {
+                setValue("email", a.email);
+                setValue("password", a.password);
+              }}
+            >
+              <span className="font-medium">{a.role}</span>
+              <span className="text-muted-foreground"> — {a.email}</span>
+            </button>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

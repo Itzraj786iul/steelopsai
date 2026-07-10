@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
+import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
+import { RecommendationAcceptanceBadge } from "@/features/eaf/components/recommendation-acceptance-panel";
 import {
   APP_VERSION,
   PRODUCTION_MODEL_PHASE,
@@ -39,6 +41,7 @@ async function downloadFromSession(
       hybrid: active.hybrid,
       optimizer: active.optimizer,
       optimizer_v2: active.optimizerV2,
+      recommendationAcceptance: active.recommendationAcceptance,
       validation: active.validation,
       confidence: active.confidence,
       warnings: active.warnings,
@@ -69,8 +72,17 @@ async function downloadFromSession(
 export function ReportsView() {
   const active = useCurrentHeatStore((s) => s.active);
   const sessionHistory = useCurrentHeatStore((s) => s.sessionHistory);
+  const recordReportExport = useCurrentHeatStore((s) => s.recordReportExport);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [daily, setDaily] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    eafApi
+      .heatsDailyReport()
+      .then(({ data }) => setDaily(data as Record<string, unknown>))
+      .catch(() => setDaily(null));
+  }, []);
 
   const handleDownload = async (format: "json" | "csv" | "pdf") => {
     if (!active?.prediction) return;
@@ -78,6 +90,7 @@ export function ReportsView() {
     setError(null);
     try {
       await downloadFromSession(format, active);
+      recordReportExport();
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "Report export failed"));
     } finally {
@@ -85,16 +98,78 @@ export function ReportsView() {
     }
   };
 
+  const exportDb = async (format: "csv" | "json" | "excel" | "pdf") => {
+    setDownloading(`db-${format}`);
+    try {
+      const { data } = await eafApi.heatsExport({ format, period: "today" });
+      const blob =
+        format === "json"
+          ? new Blob([typeof data === "string" ? data : JSON.stringify(data)], { type: "application/json" })
+          : (data as Blob);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `daily_production.${format === "excel" ? "xlsx" : format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, "Database export failed"));
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const summary = (daily?.production_summary || {}) as Record<string, number | string | null>;
+
   return (
     <PageContainer
       title="Reports"
-      description="Export the current heat session — recipe, prediction, optimizer, and hybrid results"
+      description="Current heat exports and production database reports"
     >
-      <CurrentHeatBanner />
+      {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
 
-      {!active?.prediction ? null : (
+      <SectionCard title="Daily production report (database)" className="mt-2">
+        {daily ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Badge>Date {String(daily.date ?? "—")}</Badge>
+              <Badge variant="outline">Heats {String(summary.total_heats ?? 0)}</Badge>
+              <Badge variant="outline">Avg TTT {summary.average_ttt != null ? Number(summary.average_ttt).toFixed(2) : "—"}</Badge>
+              <Badge variant="outline">Avg Error {summary.average_error != null ? Number(summary.average_error).toFixed(2) : "—"}</Badge>
+              <Badge variant="outline">Avg Saving {summary.average_saving != null ? Number(summary.average_saving).toFixed(2) : "—"}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Generated from permanent HeatRecord rows — not the browser session.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => void exportDb("csv")} disabled={!!downloading}>
+                Export today CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void exportDb("excel")} disabled={!!downloading}>
+                Export today Excel
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void exportDb("json")} disabled={!!downloading}>
+                Export today JSON
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void exportDb("pdf")} disabled={!!downloading}>
+                Export today PDF
+              </Button>
+              <Button size="sm" variant="ghost" asChild>
+                <Link href="/eaf/heat-history">Open Heat History</Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No database report available yet. Run a prediction to create records.</p>
+        )}
+      </SectionCard>
+
+      {active?.prediction ? (
         <>
-          <SectionCard title="Current heat export" className="mt-6">
+          <div className="mb-4 mt-6 flex flex-wrap gap-2">
+            <RecommendationAcceptanceBadge />
+          </div>
+          <SectionCard title="Current heat export">
             <div className="flex flex-wrap gap-2">
               <Badge>Heat {active.heatNumber || "—"}</Badge>
               <Badge variant="outline">Shift {active.shift}</Badge>
@@ -148,7 +223,7 @@ export function ReportsView() {
             )}
           </SectionCard>
         </>
-      )}
+      ) : null}
     </PageContainer>
   );
 }

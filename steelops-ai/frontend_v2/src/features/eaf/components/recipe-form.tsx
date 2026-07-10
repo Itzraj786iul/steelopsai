@@ -40,7 +40,7 @@ export function RecipeForm({ recipe, onChange, charge, historicalVariables }: Re
 
   return (
     <SectionCard
-      title="Heat Recipe"
+      title="Burden Composition"
       description={`Total charge: ${charge.toFixed(1)} t · Historical median ${chargeAssessment.bounds.median.toFixed(0)} t (P5–P95: ${chargeAssessment.bounds.p5.toFixed(0)}–${chargeAssessment.bounds.p95.toFixed(0)} t)`}
     >
       <ValidationBanner messages={chargeAssessment.warnings} />

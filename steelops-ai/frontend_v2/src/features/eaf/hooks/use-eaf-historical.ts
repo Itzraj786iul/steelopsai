@@ -6,7 +6,7 @@ import { eafApi, type EafRecipe, type HistoricalResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 
 /** Historical comparison — manual fetch only (no API calls on page navigation). */
-export function useEafHistorical(_recipe?: EafRecipe) {
+export function useEafHistorical() {
   const [data, setData] = useState<HistoricalResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

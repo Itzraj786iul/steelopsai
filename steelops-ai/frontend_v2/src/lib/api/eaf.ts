@@ -337,6 +337,16 @@ export const eafClient = axios.create({
   timeout: 60_000,
 });
 
+eafClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 export const eafApi = {
   health: () => eafClient.get<{ status: string; model_loaded: boolean }>("/health"),
   modelInfo: () => eafClient.get<ModelInfoResponse>("/model-info"),
@@ -367,4 +377,169 @@ export const eafApi = {
       { recipe, format, include_optimization: true },
       { responseType: format === "pdf" ? "blob" : "text" }
     ),
+
+  // ── Heat History (production database) ──────────────────────────────
+  heatsList: (params?: Record<string, string | number | undefined>) =>
+    eafClient.get<HeatListResponse>("/heats", { params }),
+  heatGet: (id: string) => eafClient.get<HeatRecord>("/heats/" + encodeURIComponent(id)),
+  heatGetByNumber: (heatNumber: string) =>
+    eafClient.get<HeatRecord>("/heats/by-number/" + encodeURIComponent(heatNumber)),
+  heatFromPrediction: (body: {
+    heat_number?: string;
+    session_id?: string;
+    operator_name?: string;
+    operator_id?: string;
+    furnace_id?: string;
+    plant?: string;
+    supervisor_id?: string;
+    predicted_by?: string;
+    recipe_inputs: EafRecipe | Record<string, unknown>;
+    prediction: PredictResponse | Record<string, unknown>;
+    hybrid?: HybridTrustResponse | Record<string, unknown> | null;
+  }) => eafClient.post<HeatRecord>("/heats/from-prediction", body),
+  heatFromOptimizer: (body: {
+    heat_number?: string;
+    session_id?: string;
+    recipe_inputs?: EafRecipe | Record<string, unknown>;
+    optimizer?: OptimizeResponse | Record<string, unknown> | null;
+    optimizer_v2?: OptimizeV2Response | Record<string, unknown> | null;
+    recommendation_status?: "Accepted" | "Modified" | "Rejected" | null;
+    optimized_by?: string;
+    approved_by?: string;
+  }) => eafClient.post<HeatRecord>("/heats/from-optimizer", body),
+  heatFromValidation: (body: {
+    heat_number?: string;
+    session_id?: string;
+    predicted_ttt?: number;
+    actual_ttt?: number | string | null;
+    operator_comments?: string;
+    recommendation_status?: "Accepted" | "Modified" | "Rejected" | null;
+    actual_recipe?: Record<string, unknown> | null;
+    mark_completed?: boolean;
+    validated_by?: string;
+    furnace_id?: string;
+    supervisor_id?: string;
+    plant?: string;
+  }) => eafClient.post<HeatRecord>("/heats/from-validation", body),
+  heatSetStatus: (id: string, status: HeatLifecycleStatus) =>
+    eafClient.patch<HeatRecord>(`/heats/${encodeURIComponent(id)}/status`, { status }),
+  heatArchive: (id: string) => eafClient.post<HeatRecord>(`/heats/${encodeURIComponent(id)}/archive`),
+  heatsDashboard: (params?: { period?: string; date_from?: string; date_to?: string }) =>
+    eafClient.get<HeatDashboardResponse>("/heats/dashboard", { params }),
+  heatsAnalytics: (params?: { period?: string; date_from?: string; date_to?: string }) =>
+    eafClient.get("/heats/analytics", { params }),
+  heatsDailyReport: (day?: string) => eafClient.get("/heats/reports/daily", { params: { day } }),
+  heatsWeeklyReport: (anchor?: string) => eafClient.get("/heats/reports/weekly", { params: { anchor } }),
+  heatsMonthlyReport: (anchor?: string) => eafClient.get("/heats/reports/monthly", { params: { anchor } }),
+  heatsValidationMetrics: () =>
+    eafClient.get<ValidationListResponse["metrics"]>("/heats/validation-metrics"),
+  heatsExport: (body: {
+    format: "csv" | "json" | "excel" | "pdf";
+    ids?: string[];
+    q?: string;
+    shift?: string;
+    status?: string;
+    period?: string;
+    date_from?: string;
+    date_to?: string;
+  }) =>
+    eafClient.post("/heats/export", body, {
+      responseType: body.format === "json" ? "text" : "blob",
+    }),
 };
+
+export type HeatLifecycleStatus =
+  | "Draft"
+  | "Predicted"
+  | "Optimized"
+  | "Accepted"
+  | "Running"
+  | "Completed"
+  | "Validated"
+  | "Archived";
+
+export interface HeatRecord {
+  id: string;
+  heat_number: string;
+  date: string;
+  time: string;
+  shift: string;
+  status: HeatLifecycleStatus | string;
+  operator_name?: string;
+  operator_id?: string;
+  recipe_inputs?: EafRecipe | Record<string, unknown> | null;
+  HM?: number | null;
+  DRI?: number | null;
+  HBI?: number | null;
+  Bucket?: number | null;
+  LIME?: number | null;
+  DOLO?: number | null;
+  CPC?: number | null;
+  OXY?: number | null;
+  Electrical_Energy_kWh?: number | null;
+  Target_Oxygen_Program?: number | null;
+  Target_Carbon_Program?: number | null;
+  Power_Restriction?: number | null;
+  predicted_ttt?: number | null;
+  prediction_interval_low?: number | null;
+  prediction_interval_high?: number | null;
+  confidence?: string | null;
+  historical_similarity?: number | null;
+  risk_level?: string | null;
+  optimized_recipe?: EafRecipe | Record<string, unknown> | null;
+  optimized_ttt?: number | null;
+  expected_saving?: number | null;
+  v2_recipe?: EafRecipe | Record<string, unknown> | null;
+  v2_ttt?: number | null;
+  v2_saving?: number | null;
+  reliability_index?: number | null;
+  physics_confidence?: number | null;
+  industrial_confidence?: number | null;
+  ai_confidence?: number | null;
+  consensus?: string | null;
+  actual_ttt?: number | null;
+  prediction_error?: number | null;
+  optimizer_result?: OptimizeResponse | Record<string, unknown> | null;
+  actual_recipe?: Record<string, unknown> | null;
+  recommendation_status?: "Accepted" | "Modified" | "Rejected" | string | null;
+  operator_comments?: string | null;
+  explainability?: PredictionExplainability | Record<string, unknown> | null;
+  session_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HeatListResponse {
+  items: HeatRecord[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
+export interface HeatDashboardResponse {
+  period: { from?: string | null; to?: string | null };
+  cards: {
+    total_heats: number;
+    completed: number;
+    pending_validation: number;
+    average_ttt?: number | null;
+    average_error?: number | null;
+    average_saving?: number | null;
+    acceptance_rate?: number | null;
+    reliability?: number | null;
+    prediction_confidence?: string | null;
+    optimization_success?: number | null;
+    validation_rate?: number | null;
+  };
+  pie: {
+    shift_distribution: { name: string; value: number }[];
+    recommendation_acceptance: { name: string; value: number }[];
+    confidence_distribution: { name: string; value: number }[];
+  };
+  trends: {
+    ttt_vs_heat: { heat_number?: string; predicted_ttt?: number; actual_ttt?: number | null }[];
+    saving_vs_heat: { heat_number?: string; expected_saving?: number | null }[];
+    error_vs_heat: { heat_number?: string; prediction_error?: number | null }[];
+  };
+}

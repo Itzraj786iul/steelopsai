@@ -28,10 +28,9 @@ function toPublicUser(stored: StoredGuestUser): User {
 }
 
 export function isGuestAuthMode(): boolean {
-  if (process.env.NEXT_PUBLIC_AUTH_MODE === "api") return false;
-  if (process.env.NEXT_PUBLIC_AUTH_MODE === "guest") return true;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  return !apiUrl || apiUrl.includes("localhost");
+  // Enterprise JWT against EAF backend is the default.
+  // Opt into local guest mode only with NEXT_PUBLIC_AUTH_MODE=guest
+  return process.env.NEXT_PUBLIC_AUTH_MODE === "guest";
 }
 
 export function guestTokens(): TokenResponse {

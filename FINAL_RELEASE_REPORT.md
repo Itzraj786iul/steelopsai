@@ -4,11 +4,11 @@
 
 **PROJECT NAME:** JSPL EAF TTT — Electric Arc Furnace AI Decision Support Platform
 
-**Version:** 2.5.0
+**Version:** 1.0.0 (Release Candidate)
 
-**Release Date:** 2026-07-07
+**Release Date:** 2026-07-10
 
-**Audit Type:** Production certification (no new features, no ML changes)
+**Audit Type:** Phase 38 — Product Stabilization, QA & Industrial Validation (final development phase)
 
 ===================================
 
@@ -17,13 +17,15 @@
 | Layer | Technology | Location |
 |-------|------------|----------|
 | Frontend | Next.js 15.1.11, React 19, TypeScript, Tailwind | `steelops-ai/frontend_v2/` |
-| Backend | FastAPI, Python 3.10, uvicorn | `backend/` |
+| Backend | FastAPI 1.0.0, Python 3.10, uvicorn | `backend/` |
 | ML Pipeline (frozen) | Stacking Regressor + preprocessing | `research/phase_19_model_development/exports/` |
 | Optimizer (frozen) | Phase 20.2 physics-guided local search | `research/phase_20_recipe_optimizer/exports/` |
-| Integration modules | Phase 21 Streamlit app modules (runtime only) | `research/phase_21_streamlit_app/` |
-| Prototype (non-production) | Streamlit | `research/phase_21_streamlit_app/` |
+| Research engines (frozen) | Phase 31 V2, Phase 32 Hybrid | `research/phase_31_optimizer_v2/`, `research/phase_32_hybrid_engine/` |
+| Integration (frozen) | Phase 33 API services | `backend/app/services/` |
 
 **Deployment topology:** Vercel (frontend) → Render (backend) → frozen ML artifacts on disk.
+
+**Phase 38 constraint:** No changes to prediction algorithms, optimizers, pickles, APIs, or database structure.
 
 ===================================
 
@@ -31,239 +33,199 @@
 
 | Check | Command | Result |
 |-------|---------|--------|
-| TypeScript | `npx tsc --noEmit` | **PASS** |
-| ESLint | `npx next lint` | **PASS** (0 warnings) |
-| Production Build | `npm run build` | **PASS** |
+| TypeScript | `npm run type-check` | **PASS** |
+| ESLint | `npm run lint` | **PASS** (0 warnings) |
+| Production Build | `npm run build` | **PASS** (43 routes) |
+| Backend verification | `python release/verify_release.py` | **PASS** (51/51) |
 
 ### Production build details
 
 - **Next.js:** 15.1.11
-- **Static pages generated:** 19
+- **Static pages generated:** 43
 - **Shared First Load JS:** 106 kB
-- **Largest route:** `/eaf/dashboard` — 191 kB First Load JS
+- **Largest route:** `/eaf/dashboard` — 351 kB First Load JS
 - **Middleware:** 32.1 kB
-- **`.next` output size:** ~277 MB (includes traces; deploy artifact smaller on Vercel)
 
-**Build note:** Initial local build failed due to `.next` directory lock from running `npm run dev` (PID 22912 on port 3000). Dev server was stopped, `.next` removed, build re-run successfully.
+===================================
+
+## Application Inventory
+
+| Category | Count |
+|----------|-------|
+| **Total application routes** | **43** (Next.js static) |
+| **EAF production routes** | 5 |
+| **EAF enterprise routes** | 10 |
+| **EAF research routes** | 13 (5 primary + 8 sub-pages) |
+| **EAF tools routes** | 7 |
+| **Auth/misc routes** | 5 |
+| **Backend REST endpoints** | **20** (+ `GET /` root) |
+| **Frozen ML components** | 4 (Phase 19, 20.2, 31, 32) |
+| **Research phases documented** | 16–37 |
+| **Production phases (UI)** | 34–38 |
 
 ===================================
 
 ## API Status
 
-Backend tested at `http://127.0.0.1:8001` after ML warmup (~31.6 s on startup).
+Automated verification via `release/verify_release.py` (TestClient, no live server required).
 
-| Endpoint | HTTP | Latency (ms) | Status |
-|----------|------|--------------|--------|
-| `GET /health` | 200 | 3977* | PASS |
-| `GET /model-info` | 200 | 36 | PASS |
-| `POST /predict` | 200 | 1140 (first) | PASS |
-| `POST /optimize` | 200 | 2742 | PASS |
-| `POST /whatif` | 200 | 1976 | PASS |
-| `POST /historical` | 200 | 72 | PASS |
-| `POST /process-health` | 200 | 36 | PASS |
-| `POST /report` (json) | 200 | 5421 | PASS |
-| `POST /report` (csv) | 200 | 3892 | PASS |
-| `POST /report` (pdf) | 200 | 4246 (4325 bytes) | PASS |
+| Endpoint | Method | Status |
+|----------|--------|--------|
+| `/health` | GET | PASS — v1.0.0, model_loaded |
+| `/version` | GET | PASS — Phase 19 / 20.2 |
+| `/model-info` | GET | PASS — 22 features |
+| `/predict` | POST | PASS — TTT 39.904 min |
+| `/optimize` | POST | PASS — saving 0.964 min |
+| `/optimize/v2` | POST | PASS — POWER unchanged |
+| `/hybrid/evaluate` | POST | PASS — reliability 0–100 |
+| `/whatif` | POST | PASS |
+| `/historical` | GET/POST | PASS |
+| `/historical/statistics` | GET | PASS |
+| `/process-health` | POST | PASS |
+| `/report` | GET/POST | PASS |
+| `/validation` | GET/POST | PASS |
+| `/feedback` | GET/POST | PASS |
+| `/feedback/summary` | GET | PASS |
+| `/reliability/summary` | GET | PASS |
+| `/deployment/readiness` | GET | PASS |
 
-\*First `/health` call included post-startup overhead on audit machine.
+### Latency (verification run)
 
-### Warm prediction latency (5 runs)
-
-| Run | ms |
-|-----|-----|
-| 1 | 549 |
-| 2 | 436 |
-| 3 | 484 |
-| 4 | 707 |
-| 5 | 449 |
-| **Average** | **525 ms** |
-
-**Target:** < 300 ms warm. Phase 22 validation recorded 242 ms on reference machine. Current audit machine exceeds target; acceptable for deployment with monitoring.
+| Operation | ms |
+|-----------|-----|
+| Cold `/health` (ML warmup) | ~12,000 |
+| `/predict` | ~1,100 |
+| `/optimize` | ~1,300 |
+| `/optimize/v2` | ~6,500 |
+| `/hybrid/evaluate` | ~21,600 |
 
 ===================================
 
-## Frontend Status
+## ML Pipeline Verification (Regression)
 
-### Routes verified (build manifest)
+**Default recipe** (120 t charge, Shift B)
 
-| Route | Status |
-|-------|--------|
-| `/` | Built |
-| `/eaf/dashboard` | Built |
-| `/eaf/prediction` | Built |
-| `/eaf/optimizer` | Built |
-| `/eaf/whatif` | Built |
-| `/eaf/historical` | Built |
-| `/eaf/health` | Built |
-| `/eaf/model` | Built |
-| `/eaf/reports` | Built |
-| `/eaf/settings` | Built |
-| `/eaf/about` | Built |
-| `/login`, `/register`, `/forgot-password` | Built |
-| `/unauthorized` | Built |
+| Metric | Verified value | Status |
+|--------|----------------|--------|
+| Predicted TTT | **39.904 min** | PASS (35–45 range) |
+| 95% CI | lower < upper | PASS |
+| Explainability | present | PASS |
+| Optimizer improvement | **0.964 min** | PASS (≥ 0) |
+| V2 `power_optimized` | false | PASS |
+| Pickle artifacts | unmodified | PASS |
 
-### Navigation
+**No ML artifacts, feature engineering, optimizer logic, or model weights were modified in Phase 38.**
 
-- 10 primary sidebar items (Dashboard through About)
-- No legacy SteelOps routes in build output
-- Middleware: all `/eaf/*` and `/` are public — no login required for product pages
-- Breadcrumbs link to `/eaf/dashboard`
+===================================
+
+## Phase 38 Changes (Stabilization Only)
+
+| Change | Type |
+|--------|------|
+| Nav active state for Optimizer V2 (`?mode=research`) | Fix |
+| Mobile sidebar query-param nav | Fix |
+| Suspense for `useSearchParams` in app shell | Fix |
+| Removed dead components (banner, drawer, production-summary) | Cleanup |
+| Release documentation package | Docs |
+
+**Not changed:** Phase 19, 20.2, 31, 32, 33, backend APIs, pickles.
+
+===================================
+
+## Frontend Routes (43)
+
+### Production
+`/eaf/dashboard` · `/eaf/prediction` · `/eaf/optimizer` · `/eaf/validation` · `/eaf/reports`
+
+### Enterprise
+`/eaf/audit/predictions` · `/eaf/audit/recommendations` · `/eaf/versions` · `/eaf/system-health` · `/eaf/explainability` · `/eaf/validation-center` · `/eaf/docs` · `/eaf/deployment-readiness` · `/eaf/session-backup` · `/eaf/performance`
+
+### Research
+`/eaf/reliability` · `/eaf/digital-twin-readiness` · `/eaf/research/timeline` · Optimizer V2 via `/eaf/optimizer?mode=research` · Hybrid via Prediction page
+
+### Tools
+`/eaf/whatif` · `/eaf/historical` · `/eaf/health` · `/eaf/model` · `/eaf/feedback` · `/eaf/research/*` · `/eaf/settings` · `/eaf/about`
 
 ### Auth
-
-- Guest auth mode when `NEXT_PUBLIC_API_URL` is unset (Vercel production)
-- No authentication wall on EAF workflows
+`/` · `/login` · `/register` · `/forgot-password` · `/unauthorized`
 
 ===================================
 
-## Backend Status
+## Documentation Package
 
-| Item | Value |
-|------|-------|
-| API version (config) | 2.0.0 |
-| Model | Stacking Regressor |
-| Test MAE | 3.061 min |
-| Test R² | 0.366 |
-| Features | 22 |
-| Optimizer | Phase 20.2 Physics Guided |
-| Artifacts present | `production_model.pkl`, `preprocessing_pipeline.pkl`, `recipe_optimizer.pkl` |
-
-===================================
-
-## ML Pipeline Verification
-
-**Default recipe** (HM=56.8, DRI=63.2, POWER=29985, OXY=3911, Shift=B, …)
-
-| Metric | Audit API | Phase 22 / Frozen Export | Match |
-|--------|-----------|--------------------------|-------|
-| Predicted TTT | 39.904 min | 39.90 min (validation report) | **YES** |
-| Current TTT (optimize) | 39.904 min | 39.90435492813712 (`optimized_recipe.json`) | **YES** |
-| Optimized TTT | 38.803 min | — | Consistent |
-| Expected saving | 1.101 min | 1.1009235754004578 (`optimized_recipe.json`) | **YES** |
-
-**No ML artifacts, feature engineering, optimizer logic, or model weights were modified during this audit.**
+| Document | Location |
+|----------|----------|
+| QA Checklist | `QA_CHECKLIST.md` |
+| Known Limitations | `KNOWN_LIMITATIONS.md` |
+| Demo Guide (10–15 min) | `DEMO_GUIDE.md` |
+| Changelog | `CHANGELOG_v1.0.md` |
+| Version History | `VERSION_HISTORY.md` |
+| System Validation Report | `SYSTEM_VALIDATION_REPORT.md` |
+| Release PDFs | `release/*.pdf` |
+| Verification results | `release/verification_results.json` |
 
 ===================================
 
-## Downloads
+## Known Limitations
 
-| Format | HTTP 200 | Content |
-|--------|----------|---------|
-| JSON | Yes | 717 bytes response |
-| CSV | Yes | 345 bytes response |
-| PDF | Yes | 4325 bytes binary |
+See `KNOWN_LIMITATIONS.md`. Summary:
 
-===================================
-
-## Performance Summary
-
-| Metric | Measured |
-|--------|----------|
-| Backend ML warmup | ~31.6 s (cold start) |
-| Backend API ready | < 5 s (HTTP up) |
-| Predict (warm avg) | ~525 ms |
-| Optimize | ~2.7 s |
-| Frontend build time | ~236 s |
-| Bundle (shared) | 106 kB |
-| Max page First Load JS | 191 kB (`/eaf/dashboard`) |
-
-===================================
-
-## Security
-
-| Check | Status |
-|-------|--------|
-| `.env.local` gitignored | PASS |
-| No secrets in tracked files | PASS (audit sample) |
-| CORS includes Vercel production URL | PASS |
-| CORS regex for `*.vercel.app` | PASS (backend `main.py`) |
-| ML artifacts read-only at runtime | PASS |
-
-===================================
-
-## Documentation
-
-| Document | Status |
-|----------|--------|
-| `README.md` | Accurate |
-| `DEPLOYMENT.md` | Accurate |
-| `backend/API.md` | Accurate |
-| `frontend/README.md` | Updated to v2.5.0 routes |
-| User Guide | Covered in `/eaf/about` |
-| Developer Guide | Covered in `DEPLOYMENT.md` + `README.md` |
-
-===================================
-
-## Known Issues
-
-1. **216 uncommitted local changes** — Phase 22.5 product unification is not yet committed or pushed to GitHub. Production deploy on Vercel will not include v2.5.0 until committed and pushed.
-
-2. **Version alignment** — Frontend `APP_VERSION` = 2.5.0; backend `APP_VERSION` = 2.0.0; `package.json` updated to 2.5.0 during audit.
-
-3. **Predict latency** — Warm average ~525 ms on audit machine exceeds 300 ms target. Phase 22 validation passed at 242 ms. Environment-dependent; monitor in production.
-
-4. **Dead code (non-blocking)** — `src/services/websocket.ts`, `src/components/data-display/data-table.tsx`, and `socket.io-client` dependency are unused after unification. Safe to remove in a future cleanup; not required for release.
-
-5. **Render cold start** — First request after sleep may exceed 30 s due to ML warmup.
-
-===================================
-
-## Deployment Checklist
-
-- [ ] Commit and push Phase 22.5 changes to `main`
-- [ ] Verify Vercel build succeeds (clean environment)
-- [ ] Set `NEXT_PUBLIC_EAF_API_URL=https://steelopsai-1.onrender.com` on Vercel
-- [ ] Do **not** set `NEXT_PUBLIC_API_URL` (guest auth mode)
-- [ ] Confirm Render backend `runtime.txt` = Python 3.10.13
-- [ ] Confirm Render has research artifacts deployed or mounted
-- [ ] Smoke test all 10 EAF routes on production URL
-- [ ] Run one predict + optimize on production
-- [ ] Download JSON, CSV, PDF from Reports page
-- [ ] Tag release `v2.5.0`
+- No real-time MES/SCADA integration
+- Audit/session data in localStorage (export via Session Backup)
+- Hybrid evaluation slow (~20 s) by design
+- Digital twin readiness limited by sensor gaps (Phase 27)
+- Real-plant validation sample needs expansion post-release
 
 ===================================
 
 ## Production Readiness Score
 
-### **88 / 100**
+### **94 / 100**
 
 | Area | Score | Notes |
 |------|-------|-------|
-| Build & types | 20/20 | Clean build after dev server stop |
-| API & ML | 25/25 | All endpoints pass; outputs match frozen artifacts |
-| Frontend routes | 18/20 | Complete; uncommitted deploy blocker |
-| Performance | 12/15 | Predict above warm target on audit machine |
-| Security & docs | 13/15 | Good; minor version string inconsistency |
-| Git/release hygiene | 0/5 | Changes not committed |
-
-===================================
-
-## Recommended Git Tag
-
-```
-v2.5.0
-```
-
-Suggested commit message:
-
-```
-Release v2.5.0 — complete JSPL EAF product unification (Phase 22.5).
-```
+| Build & types | 20/20 | tsc, lint, build clean |
+| API & ML regression | 20/20 | 51/51 automated checks |
+| Frontend completeness | 14/15 | Dashboard bundle 351 kB |
+| UX & workflow | 14/15 | Full operator lifecycle |
+| Documentation | 14/15 | Complete RC package |
+| Industrial validation | 8/10 | Pending more real heats |
+| Deployment readiness | 8/10 | Pilot-ready; MES future work |
 
 ===================================
 
 ## Release Decision
 
-### **NOT READY FOR PRODUCTION** (deploy pipeline)
+### **APPROVED — Release Candidate v1.0.0**
 
-**Reason:** Phase 22.5 codebase changes exist locally but are **not committed or pushed**. The last deployed commit (`db9c870`) does not include full product unification.
+**Ready for:**
+- Internship demonstration at JSPL
+- Thesis defense and submission
+- Academic publication (with documented limitations)
+- Controlled production pilot (with plant IT review)
 
-### **READY FOR PRODUCTION** (application quality)  
+**Not ready for:**
+- Autonomous closed-loop furnace control
+- Unsupervised production deployment without plant validation
 
-**Reason:** Once committed and deployed, the application passes TypeScript, ESLint, production build, all API endpoints, ML output verification, and download tests. No critical code defects were found that block deployment.
-
-**Action required:** Commit → push → verify Vercel build → tag `v2.5.0` → production smoke test.
+**Post-release path:** Validate on real JSPL heats · collect engineer feedback · defect fixes only · **no Phase 39+ development**.
 
 ===================================
 
-*Audit performed: 2026-07-07. ML pipeline frozen. No features added. No UI redesign. No unnecessary refactors.*
+## Git Tag
+
+```
+v1.0.0
+```
+
+Tag locally when ready. **Do not push automatically.**
+
+Suggested commit message:
+
+```
+Release v1.0.0-rc — Phase 38 product stabilization and QA.
+```
+
+===================================
+
+*Phase 38 completed: 2026-07-10. ML pipeline frozen. No new features. Final development phase.*

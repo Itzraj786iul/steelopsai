@@ -6,7 +6,7 @@ import { Bar, BarChart, CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveC
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
-import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
+import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { useEafHistorical } from "@/features/eaf/hooks/use-eaf-historical";
 import { useEafRecipe } from "@/features/eaf/hooks/use-eaf";
@@ -18,6 +18,7 @@ export default function EafHistoricalPage() {
   const { recipe, update, charge } = useEafRecipe();
   const { data, loading, error, refresh } = useEafHistorical();
   const cachedPrediction = useCurrentHeatStore((s) => s.active?.prediction?.predicted_ttt ?? null);
+  const hasActiveHeat = useCurrentHeatStore((s) => s.hasActiveHeat());
   const [pred, setPred] = useState<number | null>(cachedPrediction);
 
   useEffect(() => {
@@ -54,8 +55,8 @@ export default function EafHistoricalPage() {
   }, []);
 
   return (
-    <PageContainer title="Historical Analysis" description="Compare current heat recipe against plant operating history">
-      <CurrentHeatBanner />
+    <PageContainer title="Historical Analysis" description="Compare current heat burden composition against plant operating history">
+      {!hasActiveHeat ? <EmptyHeatState className="mb-6" /> : null}
       <div className="mt-4">
         <Button variant="outline" onClick={() => refresh(recipe)} disabled={loading}>
           {loading ? "Loading…" : "Load historical bands"}

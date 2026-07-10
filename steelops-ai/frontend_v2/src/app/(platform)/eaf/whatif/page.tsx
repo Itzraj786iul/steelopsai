@@ -8,7 +8,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
+import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { eafApi, type EafRecipe } from "@/lib/api/eaf";
 import { formatVariableLabel } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
@@ -82,8 +82,8 @@ export default function EafWhatIfPage() {
 
   if (!activeRecipe) {
     return (
-      <PageContainer title="What-if Analysis" description="Sensitivity analysis on the current heat session">
-        <CurrentHeatBanner />
+      <PageContainer title="What-if Analysis" description="Sensitivity analysis on the current heat">
+        <EmptyHeatState />
       </PageContainer>
     );
   }
@@ -92,7 +92,6 @@ export default function EafWhatIfPage() {
 
   return (
     <PageContainer title="What-if Analysis" description="Working copy — changes do not overwrite Current Heat until applied">
-      <CurrentHeatBanner />
       <SectionCard title="Live Prediction (working copy)" className="mt-6">
         <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
         <div className="mt-4 flex flex-wrap gap-2">

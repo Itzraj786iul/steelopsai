@@ -1,21 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CurrentHeatBanner } from "@/features/eaf/components/current-heat-banner";
 import { DigitalTwinReadinessCard } from "@/features/eaf/components/digital-twin-readiness-card";
+import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { FullRecommendationExplanation } from "@/features/eaf/components/full-recommendation-explanation";
+import { HeatLifecycleTimeline } from "@/features/eaf/components/heat-lifecycle-timeline";
+import { OptimizerChangeCards } from "@/features/eaf/components/optimizer-change-cards";
+import { RecommendationAcceptancePanel } from "@/features/eaf/components/recommendation-acceptance-panel";
 import { RecommendationAlternativesPanel } from "@/features/eaf/components/recommendation-alternatives-panel";
 import { RecommendationValidationTable } from "@/features/eaf/components/recommendation-validation-table";
-import { SimilarHeatsPanel } from "@/features/eaf/components/similar-heats-panel";
+import { SimilarHistoricalHeatCard } from "@/features/eaf/components/similar-historical-heat-card";
 import { OptimizerDisclaimer } from "@/features/eaf/components/validation-banner";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { useEafOptimize, useEafOptimizeV2, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
-import { eafApi, type EafRecipe } from "@/lib/api/eaf";
+import type { EafRecipe } from "@/lib/api/eaf";
 import { formatVariableLabel } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
@@ -23,14 +27,21 @@ import { useCurrentHeatStore } from "@/stores/current-heat-store";
 type OptimizerMode = "production" | "research" | "compare";
 
 export default function EafOptimizerPage() {
+  const searchParams = useSearchParams();
   const { recipe, update, charge } = useEafRecipe();
   const { optimize, loading: prodLoading, error: prodError, result: prodResult } = useEafOptimize();
   const { optimizeV2, loading: v2Loading, error: v2Error, result: v2Result } = useEafOptimizeV2();
+  const active = useCurrentHeatStore((s) => s.active);
   const cachedHybrid = useCurrentHeatStore((s) => s.active?.hybrid);
-  const [mode, setMode] = useState<OptimizerMode>("compare");
+  const [mode, setMode] = useState<OptimizerMode>("production");
   const hybridReliability = cachedHybrid?.reliability_index ?? null;
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const param = searchParams.get("mode");
+    if (param === "research") setMode("research");
+  }, [searchParams]);
 
   const explain = prodResult?.explainability;
   const v2Best = v2Result?.recommendations?.[0];
@@ -61,9 +72,12 @@ export default function EafOptimizerPage() {
   const showV2 = mode === "research" || mode === "compare";
 
   return (
-    <PageContainer title="Recipe Optimizer" description="Current heat recipe loads automatically — no duplicate entry">
-      <CurrentHeatBanner />
+    <PageContainer title="Optimizer" description="Current heat burden composition loads automatically — no duplicate entry">
+      {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
       <OptimizerDisclaimer className="mb-6" />
+      {mode === "research" ? (
+        <Badge className="mb-4 border-amber-500/40 bg-amber-500/10 text-amber-700">Research Tool — Phase 31 V2</Badge>
+      ) : null}
       <div className="mb-4 flex flex-wrap gap-2">
         {(["production", "research", "compare"] as const).map((m) => (
           <Button key={m} variant={mode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
@@ -72,7 +86,7 @@ export default function EafOptimizerPage() {
         ))}
       </div>
       <RecipeForm recipe={recipe} onChange={update} charge={charge} />
-      <Button className="mt-6" onClick={runOptimization} disabled={loading}>
+      <Button className="mt-6" onClick={runOptimization} disabled={loading || !active?.prediction}>
         {loading ? "Running…" : "Run Optimizer"}
       </Button>
       {error ? (
@@ -106,7 +120,7 @@ export default function EafOptimizerPage() {
           <div className="mt-4 flex flex-wrap gap-2 text-sm">
             <Badge variant="outline">20.2 physics: {prodResult.physics_compliant ? "YES" : "NO"}</Badge>
             <Badge variant="outline">V2 physics: {v2Result.physics_compliant ? "YES" : "NO"}</Badge>
-            <Badge variant="outline">V2 never optimizes POWER</Badge>
+            <Badge variant="outline">V2 never optimizes Electrical Energy</Badge>
             <Badge variant="secondary">Confidence: {explain?.recommendation_confidence ?? v2Best?.confidence ?? "—"}</Badge>
           </div>
         </SectionCard>
@@ -128,20 +142,23 @@ export default function EafOptimizerPage() {
             <SectionCard title="Recommendation Confidence">
               <p className="text-2xl font-semibold">{explain?.recommendation_confidence ?? "—"}</p>
             </SectionCard>
-            <SectionCard title="Recipe Stability">
+            <SectionCard title="Burden Stability">
               <p className="text-2xl font-semibold">{explain?.recommendation_stability ?? "—"}</p>
             </SectionCard>
           </div>
           {mode === "production" ? (
             <>
+              <OptimizerChangeCards
+                rows={explain?.validated_recommendations ?? prodResult.comparison}
+                physicsCompliant={prodResult.physics_compliant}
+              />
+              <RecommendationAcceptancePanel />
               <FullRecommendationExplanation explanation={explain?.recommendation_narrative ? { narrative_lines: explain.recommendation_narrative } : undefined} />
               <RecommendationValidationTable rows={explain?.validated_recommendations ?? prodResult.comparison} />
-              <SectionCard title="Recipe Comparison">
-                <ComparisonTable rows={prodResult.comparison} physicsCompliant={prodResult.physics_compliant} />
-              </SectionCard>
               <RecommendationAlternativesPanel alternatives={explain?.top5_alternatives ?? []} />
-              <SimilarHeatsPanel heats={explain?.similar_heats ?? []} />
+              <SimilarHistoricalHeatCard heats={explain?.similar_heats ?? []} predictedTtt={prodResult.optimized_ttt} />
               <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
+              {active ? <HeatLifecycleTimeline active={active} /> : null}
             </>
           ) : null}
         </div>
@@ -156,12 +173,11 @@ export default function EafOptimizerPage() {
           />
           <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
           {mode === "research" ? (
-            <SectionCard title="Best recommendation recipe">
-              <ComparisonTable
-                rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
-                physicsCompliant={v2Result.physics_compliant}
-              />
-            </SectionCard>
+            <OptimizerChangeCards
+              rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
+              physicsCompliant={v2Result.physics_compliant}
+              title="V2 Recommended Burden Changes"
+            />
           ) : null}
         </div>
       ) : null}
@@ -180,56 +196,8 @@ function buildV2Comparison(current: EafRecipe, optimized: EafRecipe) {
       optimized: optimized[v] ?? 0,
       difference: (optimized[v] ?? 0) - (current[v] ?? 0),
       pct_change: current[v] ? (((optimized[v] ?? 0) - current[v]) / current[v]) * 100 : 0,
+      arrow: "",
       reason: "Phase 31 V2 planning adjustment",
       physics_status: "feasible",
     }));
-}
-
-function ComparisonTable({
-  rows,
-  physicsCompliant,
-}: {
-  rows: { variable: string; display_name?: string; current: number; optimized: number; difference: number; pct_change: number; reason: string; physics_status: string }[];
-  physicsCompliant: boolean;
-}) {
-  return (
-  <>
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2">Variable</th>
-            <th>Current</th>
-            <th>Optimized</th>
-            <th>Diff</th>
-            <th>%</th>
-            <th>Reason</th>
-            <th>Physics</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows?.map((row) => (
-            <tr key={row.variable} className="border-b border-border/50 align-top">
-              <td className="py-2 font-medium">{row.display_name ?? formatVariableLabel(row.variable)}</td>
-              <td className="font-mono">{row.current.toFixed(2)}</td>
-              <td className="font-mono">{row.optimized.toFixed(2)}</td>
-              <td className="font-mono">
-                {row.difference >= 0 ? "+" : ""}
-                {row.difference.toFixed(2)}
-              </td>
-              <td className="font-mono">{row.pct_change.toFixed(1)}%</td>
-              <td className="max-w-xs text-xs text-muted-foreground">{row.reason}</td>
-              <td>
-                <Badge variant="outline">{row.physics_status}</Badge>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <p className="mt-4 text-sm text-muted-foreground">
-      Physics compliant: <strong>{physicsCompliant ? "YES" : "NO"}</strong>
-    </p>
-  </>
-  );
 }

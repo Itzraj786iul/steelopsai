@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Flame, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
 export function NewHeatButton({ variant = "outline" as const, size = "sm" as const }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const clearHeat = useCurrentHeatStore((s) => s.clearHeat);
   const hasActiveHeat = useCurrentHeatStore((s) => s.hasActiveHeat);
@@ -16,13 +17,15 @@ export function NewHeatButton({ variant = "outline" as const, size = "sm" as con
   const startNew = () => {
     clearHeat();
     setOpen(false);
+    router.push("/eaf/prediction");
   };
 
   return (
     <>
       <Button variant={variant} size={size} onClick={() => (hasActiveHeat() ? setOpen(true) : startNew())}>
         <Flame className="mr-2 h-4 w-4" />
-        New Heat
+        <span className="hidden sm:inline">New Heat</span>
+        <span className="sr-only sm:hidden">New Heat</span>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -45,19 +48,19 @@ export function NewHeatButton({ variant = "outline" as const, size = "sm" as con
 }
 
 export function LoadDifferentHeatLink() {
-  const setDrawerOpen = useCurrentHeatStore((s) => s.setDrawerOpen);
+  const setMobileSheetOpen = useCurrentHeatStore((s) => s.setMobileSheetOpen);
+  const setPanelCollapsed = useCurrentHeatStore((s) => s.setPanelCollapsed);
   return (
-    <Button variant="ghost" size="sm" onClick={() => setDrawerOpen(true)}>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        setPanelCollapsed(false);
+        setMobileSheetOpen(true);
+      }}
+    >
       <RotateCcw className="mr-2 h-4 w-4" />
       Load Different Heat
-    </Button>
-  );
-}
-
-export function GoToPredictionLink() {
-  return (
-    <Button asChild variant="default" size="sm">
-      <Link href="/eaf/prediction">Go to Prediction</Link>
     </Button>
   );
 }

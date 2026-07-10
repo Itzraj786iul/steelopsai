@@ -13,7 +13,15 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import APP_NAME, APP_VERSION, CORS_ORIGINS, LOGS_DIR
 from app.core.version_registry import get_version_registry
+from app.middleware.enterprise_auth import EnterpriseAuthMiddleware
 from app.routers.api import router
+from app.routers.enterprise import router as enterprise_router
+from app.routers.heat_history import router as heat_history_router
+from app.routers.ops import router as ops_router
+from app.routers.mes import router as mes_router
+from app.services.enterprise_auth import seed_enterprise
+from app.services.enterprise_db import ensure_enterprise_db
+from app.services.heat_db import ensure_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("eaf.api")
@@ -26,8 +34,12 @@ async def lifespan(app: FastAPI):
     from app.services.ml_service import get_historical_stats, get_optimizer_engine, get_prediction_engine
 
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_db()
+    ensure_enterprise_db()
+    seed_enterprise()
     registry = get_version_registry()
     logger.info("Starting %s v%s (model %s)", APP_NAME, APP_VERSION, registry["model_phase"])
+    logger.info("Heat History + Enterprise RBAC databases ready")
 
     async def _warm_ml() -> None:
         loop = asyncio.get_running_loop()
@@ -60,9 +72,14 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_tags=[
         {"name": "default", "description": "Prediction, optimization, historical analysis, and reporting"},
+        {"name": "Enterprise Auth", "description": "JWT authentication, RBAC, users, audit, delays, alerts"},
+        {"name": "Heat History", "description": "Production HeatRecord database"},
+        {"name": "Production Operations", "description": "Shifts, furnaces, queue, handover, approvals, tasks"},
+        {"name": "MES Production Planning", "description": "Daily plans, heat scheduler, live board, KPI wall"},
     ],
 )
 
+app.add_middleware(EnterpriseAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -73,6 +90,10 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(heat_history_router)
+app.include_router(enterprise_router)
+app.include_router(ops_router)
+app.include_router(mes_router)
 
 
 @app.middleware("http")

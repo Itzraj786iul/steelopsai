@@ -8,6 +8,9 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   APP_NAME,
   APP_VERSION,
@@ -19,10 +22,12 @@ import {
 } from "@/lib/constants";
 import { eafApi } from "@/lib/api/eaf";
 import { useEafModelInfo } from "@/features/eaf/hooks/use-eaf";
+import { usePlantConfigStore } from "@/stores/plant-config-store";
 
 export function SettingsView() {
   const { theme, setTheme } = useTheme();
   const { info } = useEafModelInfo();
+  const config = usePlantConfigStore();
   const [apiStatus, setApiStatus] = useState<"loading" | "online" | "offline">("loading");
   const [modelLoaded, setModelLoaded] = useState(false);
 
@@ -66,6 +71,57 @@ export function SettingsView() {
             </div>
             <p className="break-all font-mono text-xs text-muted-foreground">{EAF_API_URL}</p>
           </div>
+        </SectionCard>
+
+        <SectionCard title="Plant Configuration" description="Operational thresholds and export defaults — no ML parameters">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="charge-min">Historical Charge Min (t)</Label>
+              <Input id="charge-min" type="number" className="mt-1" value={config.chargeMin} onChange={(e) => config.setConfig({ chargeMin: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <Label htmlFor="charge-max">Historical Charge Max (t)</Label>
+              <Input id="charge-max" type="number" className="mt-1" value={config.chargeMax} onChange={(e) => config.setConfig({ chargeMax: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <Label htmlFor="conf-high">Confidence High Threshold (%)</Label>
+              <Input id="conf-high" type="number" className="mt-1" value={config.confidenceHighThreshold} onChange={(e) => config.setConfig({ confidenceHighThreshold: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <Label htmlFor="conf-low">Confidence Low Threshold (%)</Label>
+              <Input id="conf-low" type="number" className="mt-1" value={config.confidenceLowThreshold} onChange={(e) => config.setConfig({ confidenceLowThreshold: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <Label>Default Export Format</Label>
+              <Select value={config.defaultExportFormat} onValueChange={(v) => config.setConfig({ defaultExportFormat: v as "json" | "csv" | "pdf" })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Units</Label>
+              <Select value={config.unitSystem} onValueChange={(v) => config.setConfig({ unitSystem: v as "metric" | "imperial" })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="metric">Metric (t, kWh)</SelectItem>
+                  <SelectItem value="imperial">Imperial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="branding">Report Branding</Label>
+              <Input id="branding" className="mt-1" value={config.reportBranding} onChange={(e) => config.setConfig({ reportBranding: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="footer">Report Footer</Label>
+              <Input id="footer" className="mt-1" value={config.reportFooter} onChange={(e) => config.setConfig({ reportFooter: e.target.value })} />
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => config.resetConfig()}>Reset to defaults</Button>
         </SectionCard>
 
         <SectionCard title="Version Registry" className="lg:col-span-2">
