@@ -1,4 +1,10 @@
-import { canAccessRoute, canApprove, getDefaultRouteForRole, normalizeRole } from "@/lib/rbac/permissions";
+import {
+  canAccessRoute,
+  canApprove,
+  getDefaultRouteForRole,
+  isNavItemVisible,
+  normalizeRole,
+} from "@/lib/rbac/permissions";
 import { UserRole } from "@/lib/enums";
 
 describe("permissions", () => {
@@ -22,5 +28,24 @@ describe("permissions", () => {
   it("allows approval for shift engineer", () => {
     expect(canApprove("shift_engineer")).toBe(true);
     expect(canApprove("operator")).toBe(false);
+  });
+
+  it("hides operator floor tools from admin nav", () => {
+    expect(isNavItemVisible("admin", { href: "/eaf/prediction", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
+      false
+    );
+    expect(isNavItemVisible("admin", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
+      false
+    );
+    expect(isNavItemVisible("admin", { href: "/eaf/users", roles: [UserRole.Admin] })).toBe(true);
+  });
+
+  it("shows operator board only to floor roles", () => {
+    expect(isNavItemVisible("operator", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
+      true
+    );
+    expect(isNavItemVisible("plant_manager", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
+      false
+    );
   });
 });

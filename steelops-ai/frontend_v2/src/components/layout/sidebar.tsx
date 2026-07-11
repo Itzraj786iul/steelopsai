@@ -13,7 +13,16 @@ import { usePermissions } from "@/hooks/use-auth";
 import { usePlantContext } from "@/hooks/use-plant-context";
 import { APP_NAME } from "@/lib/constants";
 import { industrialEase } from "@/lib/motion";
-import { PRODUCTION_NAV, RESEARCH_NAV, ENTERPRISE_NAV, TOOLS_NAV, ADMIN_NAV, flattenNavItems, type NavDefinition } from "@/lib/navigation";
+import {
+  PRODUCTION_NAV,
+  RESEARCH_NAV,
+  ENTERPRISE_NAV,
+  TOOLS_NAV,
+  ADMIN_NAV,
+  OPERATIONS_NAV,
+  flattenNavItems,
+  type NavDefinition,
+} from "@/lib/navigation";
 import { isNavItemActive } from "@/lib/nav-utils";
 import { cn } from "@/lib/utils";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
@@ -24,8 +33,13 @@ interface SidebarProps {
   badges?: Partial<Record<NonNullable<NavDefinition["badgeKey"]>, number>>;
 }
 
+const ALL_SECTIONS = [...PRODUCTION_NAV, ...OPERATIONS_NAV, ...ADMIN_NAV, ...ENTERPRISE_NAV, ...RESEARCH_NAV, ...TOOLS_NAV];
+
 function resolveNavLabel(href: string) {
-  return flattenNavItems([...PRODUCTION_NAV, ...ADMIN_NAV, ...ENTERPRISE_NAV, ...RESEARCH_NAV, ...TOOLS_NAV]).find((item) => item.href.split("?")[0] === href.split("?")[0])?.label ?? href.replace(/^\//, "");
+  return (
+    flattenNavItems(ALL_SECTIONS).find((item) => item.href.split("?")[0] === href.split("?")[0])?.label ??
+    href.replace(/^\//, "")
+  );
 }
 
 function NavLink({
@@ -76,7 +90,7 @@ function NavSection({
   pathname,
   searchParams,
   badges,
-  canAccess,
+  canShow,
 }: {
   title?: string;
   items: NavDefinition[];
@@ -84,9 +98,9 @@ function NavSection({
   pathname: string;
   searchParams: URLSearchParams;
   badges?: SidebarProps["badges"];
-  canAccess: (href: string) => boolean;
+  canShow: (item: NavDefinition) => boolean;
 }) {
-  const visibleItems = items.filter((item) => canAccess(item.href));
+  const visibleItems = items.filter(canShow);
 
   if (!visibleItems.length) return null;
 
@@ -95,10 +109,10 @@ function NavSection({
       {title && !collapsed ? <p className="px-3 py-2 text-label">{title}</p> : null}
       {visibleItems.map((item) => {
         const active = isNavItemActive(pathname, searchParams, item.href);
-        const children = item.children?.filter((child) => canAccess(child.href));
+        const children = item.children?.filter(canShow);
 
         return (
-          <div key={item.href} className="space-y-1">
+          <div key={`${item.href}-${item.label}`} className="space-y-1">
             <NavLink
               item={item}
               collapsed={collapsed}
@@ -131,17 +145,21 @@ export function Sidebar({ badges }: SidebarProps) {
   const { collapsed, toggleCollapsed } = useSidebarStore();
   const { setOpen } = useCommandPaletteStore();
   const { recent, pinned } = useNavRecentStore();
-  const { canAccessRoute } = usePermissions();
+  const { canShowNavItem } = usePermissions();
   const { plant } = usePlantContext();
 
-  const flatNav = flattenNavItems([...PRODUCTION_NAV, ...ADMIN_NAV, ...ENTERPRISE_NAV, ...RESEARCH_NAV, ...TOOLS_NAV]);
+  const flatNav = flattenNavItems(ALL_SECTIONS);
 
   const pinnedItems = pinned
     .map((href) => flatNav.find((item) => item.href === href))
-    .filter((item): item is NavDefinition => Boolean(item && canAccessRoute(item.href)));
+    .filter((item): item is NavDefinition => Boolean(item && canShowNavItem(item)));
 
   const recentItems = recent
-    .filter((href) => !pinned.includes(href) && canAccessRoute(href))
+    .filter((href) => {
+      const item = flatNav.find((n) => n.href === href);
+      return item ? canShowNavItem(item) : false;
+    })
+    .filter((href) => !pinned.includes(href))
     .slice(0, 4)
     .map((href) => ({ href, label: resolveNavLabel(href) }));
 
@@ -177,11 +195,12 @@ export function Sidebar({ badges }: SidebarProps) {
 
       <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
         <div className="space-y-4">
-          <NavSection title="Production" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
-          <NavSection title="Management" items={ADMIN_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
-          <NavSection title="Enterprise" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
-          <NavSection title="Research" items={RESEARCH_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
-          <NavSection title="Tools" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canAccess={canAccessRoute} />
+          <NavSection title="Production" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Operations" items={OPERATIONS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Administration" items={ADMIN_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Enterprise" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Research" items={RESEARCH_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Tools" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
 
           {!collapsed && pinnedItems.length > 0 ? (
             <>

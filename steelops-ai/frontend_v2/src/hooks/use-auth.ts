@@ -1,8 +1,15 @@
 "use client";
 
 import { useAuthContext } from "@/providers/auth-provider";
-import { canAccessRoute, canApprove, canExport, canManageUsers, canAccessLabs } from "@/lib/rbac/permissions";
-import { normalizeRole } from "@/lib/rbac/permissions";
+import {
+  canAccessRoute,
+  canApprove,
+  canExport,
+  canManageUsers,
+  canAccessLabs,
+  isNavItemVisible,
+  normalizeRole,
+} from "@/lib/rbac/permissions";
 
 export function useAuth() {
   return useAuthContext();
@@ -15,6 +22,7 @@ export function usePermissions() {
   return {
     role: normalizeRole(role),
     canAccessRoute: (path: string) => canAccessRoute(role, path),
+    canShowNavItem: (item: { href: string; roles?: string[] }) => isNavItemVisible(role, item),
     canApprove: () => canApprove(role),
     canExport: () => canExport(role),
     canManageUsers: () => canManageUsers(role),

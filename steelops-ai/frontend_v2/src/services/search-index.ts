@@ -1,15 +1,12 @@
 import { flattenNavItems, ALL_NAV_ITEMS, QUICK_ACTIONS } from "@/lib/navigation";
-import { canAccessRoute } from "@/lib/rbac/permissions";
+import { isNavItemVisible } from "@/lib/rbac/permissions";
 import type { CommandPaletteItem } from "@/types";
 
 export function buildNavigationItems(role: string): CommandPaletteItem[] {
   return flattenNavItems(ALL_NAV_ITEMS)
-    .filter((item) => {
-      if (!item.roles || item.roles.length === 0) return canAccessRoute(role, item.href);
-      return item.roles.some((allowedRole) => canAccessRoute(allowedRole, item.href));
-    })
+    .filter((item) => isNavItemVisible(role, item))
     .map((item) => ({
-      id: `nav-${item.href}`,
+      id: `nav-${item.href}-${item.label}`,
       label: item.label,
       href: item.href,
       group: "navigation" as const,
@@ -17,8 +14,8 @@ export function buildNavigationItems(role: string): CommandPaletteItem[] {
     }));
 }
 
-export function buildQuickActionItems(): CommandPaletteItem[] {
-  return QUICK_ACTIONS.map((action) => ({
+export function buildQuickActionItems(role: string): CommandPaletteItem[] {
+  return QUICK_ACTIONS.filter((action) => isNavItemVisible(role, action)).map((action) => ({
     id: action.id,
     label: action.label,
     href: action.href,

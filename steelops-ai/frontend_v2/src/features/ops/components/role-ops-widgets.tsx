@@ -35,10 +35,10 @@ const ROLE_WIDGETS: Record<string, { title: string; href: string; kpi: string }[
     { title: "Announcements", href: "/eaf/announcements", kpi: "Comms" },
   ],
   [UserRole.Admin]: [
-    { title: "Shifts", href: "/eaf/shifts", kpi: "Shifts" },
-    { title: "Furnaces", href: "/eaf/furnaces", kpi: "Assets" },
     { title: "Users", href: "/eaf/users", kpi: "RBAC" },
-    { title: "Search", href: "/eaf/search", kpi: "Search" },
+    { title: "Audit log", href: "/eaf/audit-log", kpi: "Compliance" },
+    { title: "Furnaces", href: "/eaf/furnaces", kpi: "Assets" },
+    { title: "Shifts", href: "/eaf/shifts", kpi: "Roster" },
   ],
 };
 

@@ -33,7 +33,7 @@ export function CommandPalette() {
 
   const baseItems = useMemo(() => {
     const role = user?.role ?? "operator";
-    return [...buildQuickActionItems(), ...buildNavigationItems(role)];
+    return [...buildQuickActionItems(role), ...buildNavigationItems(role)];
   }, [user?.role]);
 
   const items = filterCommandItems(baseItems, debouncedQuery);

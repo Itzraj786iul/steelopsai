@@ -288,6 +288,14 @@ export function canAccessRoute(role: string, path: string): boolean {
   return restricted[1].includes(normalizedRole);
 }
 
+/** Sidebar / command palette visibility — role-curated, independent of deep-link access. */
+export function isNavItemVisible(role: string, item: { href: string; roles?: string[] }): boolean {
+  const normalizedRole = normalizeRole(role);
+  if (!canAccessRoute(normalizedRole, item.href)) return false;
+  if (!item.roles?.length) return true;
+  return item.roles.includes(normalizedRole);
+}
+
 export function canApprove(role: string): boolean {
   return [UserRole.ShiftEngineer, UserRole.ProductionManager, UserRole.PlantManager, UserRole.Admin].includes(
     normalizeRole(role) as UserRole

@@ -4,32 +4,49 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePermissions } from "@/hooks/use-auth";
 import { APP_NAME } from "@/lib/constants";
-import { PRODUCTION_NAV, RESEARCH_NAV, ENTERPRISE_NAV, TOOLS_NAV, type NavDefinition } from "@/lib/navigation";
+import {
+  PRODUCTION_NAV,
+  RESEARCH_NAV,
+  ENTERPRISE_NAV,
+  TOOLS_NAV,
+  ADMIN_NAV,
+  OPERATIONS_NAV,
+  type NavDefinition,
+} from "@/lib/navigation";
 import { isNavItemActive } from "@/lib/nav-utils";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
 function MobileNavSection({
+  title,
   items,
   pathname,
   searchParams,
   onNavigate,
+  canShow,
 }: {
+  title: string;
   items: NavDefinition[];
   pathname: string;
   searchParams: URLSearchParams;
   onNavigate: () => void;
+  canShow: (item: NavDefinition) => boolean;
 }) {
+  const visible = items.filter(canShow);
+  if (!visible.length) return null;
+
   return (
     <div className="space-y-1">
-      {items.map((item) => {
+      <p className="px-3 text-label">{title}</p>
+      {visible.map((item) => {
         const Icon = item.icon;
         const active = isNavItemActive(pathname, searchParams, item.href);
-        const children = item.children;
+        const children = item.children?.filter(canShow);
 
         return (
-          <div key={item.href} className="space-y-1">
+          <div key={`${item.href}-${item.label}`} className="space-y-1">
             <Link
               href={item.href}
               onClick={onNavigate}
@@ -74,6 +91,8 @@ export function MobileSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { mobileOpen, setMobileOpen } = useSidebarStore();
+  const { canShowNavItem } = usePermissions();
+  const close = () => setMobileOpen(false);
 
   return (
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -83,14 +102,12 @@ export function MobileSidebar() {
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)] px-3 py-4">
           <div className="space-y-4">
-            <p className="px-3 text-label">Production</p>
-            <MobileNavSection items={PRODUCTION_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
-            <p className="px-3 text-label">Enterprise</p>
-            <MobileNavSection items={ENTERPRISE_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
-            <p className="px-3 text-label">Research</p>
-            <MobileNavSection items={RESEARCH_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
-            <p className="px-3 text-label">Tools</p>
-            <MobileNavSection items={TOOLS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={() => setMobileOpen(false)} />
+            <MobileNavSection title="Production" items={PRODUCTION_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Operations" items={OPERATIONS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Administration" items={ADMIN_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Enterprise" items={ENTERPRISE_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Research" items={RESEARCH_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Tools" items={TOOLS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
           </div>
         </ScrollArea>
       </SheetContent>
