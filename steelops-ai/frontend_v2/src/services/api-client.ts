@@ -106,10 +106,16 @@ apiClient.interceptors.response.use(
 export function getApiErrorMessage(error: unknown, fallback = "Something went wrong"): string {
   if (axios.isAxiosError(error)) {
     if (error.code === "ECONNABORTED") {
-      return "Request timed out. The model may still be loading — please try again in a moment.";
+      return (
+        "Request timed out. On Vercel, set NEXT_PUBLIC_EAF_API_URL to your public FastAPI URL " +
+        "(not localhost). Login does not need the ML model — this usually means the API is unreachable."
+      );
     }
     if (!error.response) {
-      return "Cannot reach the API. Verify the backend is running and your network connection is stable.";
+      return (
+        "Cannot reach the API. Locally run the backend on port 8001. " +
+        "On Vercel, set NEXT_PUBLIC_EAF_API_URL to a deployed backend (Render/Railway) and redeploy."
+      );
     }
     const data = error.response.data as ApiError & {
       detail?: string | Array<{ msg?: string; loc?: string[] }>;

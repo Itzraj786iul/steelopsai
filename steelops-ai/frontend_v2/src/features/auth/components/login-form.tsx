@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Flame } from "lucide-react";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authApi, type EnterpriseLoginResponse } from "@/lib/api/auth";
+import { EAF_API_URL } from "@/lib/constants";
 import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useAuthStore } from "@/stores/auth-store";
@@ -29,10 +30,28 @@ const DEMO_ACCOUNTS = [
   { email: "plant.manager@jspl.local", password: "Plant@123", role: "Plant Manager" },
 ];
 
+function useApiConfigWarning(): string | null {
+  return useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const apiIsLocal = /localhost|127\.0\.0\.1/.test(EAF_API_URL);
+    const pageIsRemote =
+      window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+    if (apiIsLocal && pageIsRemote) {
+      return (
+        `Vercel is calling ${EAF_API_URL}, which only works on your PC. ` +
+        "In Vercel → Project → Settings → Environment Variables, set NEXT_PUBLIC_EAF_API_URL " +
+        "to your public FastAPI URL (e.g. https://your-api.onrender.com), then Redeploy."
+      );
+    }
+    return null;
+  }, []);
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const { setTokens, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const configWarning = useApiConfigWarning();
 
   const {
     register,
@@ -54,7 +73,6 @@ export function LoginForm() {
       const next = searchParams.get("next");
       const nextPath = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
       const destination = nextPath || getDefaultRouteForRole(user.role);
-      // Full navigation so middleware sees the auth cookie (soft replace can leave you on /login).
       window.location.assign(destination);
     } catch (err) {
       setError(getApiErrorMessage(err, "Invalid email or password"));
@@ -71,6 +89,11 @@ export function LoginForm() {
         <CardDescription>Enterprise authentication with role-based access</CardDescription>
       </CardHeader>
       <CardContent>
+        {configWarning ? (
+          <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-left text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+            {configWarning}
+          </p>
+        ) : null}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -83,7 +106,7 @@ export function LoginForm() {
             {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <ActionButton type="submit" className="w-full" disabled={isSubmitting}>
+          <ActionButton type="submit" className="w-full" disabled={isSubmitting || !!configWarning}>
             {isSubmitting ? "Signing in…" : "Sign in"}
           </ActionButton>
         </form>
