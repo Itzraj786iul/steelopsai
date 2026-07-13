@@ -8,13 +8,19 @@ import { PredictionNextActions } from "@/features/eaf/components/prediction-next
 import type { PredictResponse } from "@/lib/api/eaf";
 import { INDUSTRIAL_STATUS, confidenceStatus } from "@/lib/industrial-colors";
 import { cn } from "@/lib/utils";
+import type { HeatSessionSnapshot } from "@/stores/current-heat-store";
 
 interface PredictionCompleteDashboardProps {
   result: PredictResponse;
   historicalSimilarityPct?: number | null;
+  active?: HeatSessionSnapshot | null;
 }
 
-export function PredictionCompleteDashboard({ result, historicalSimilarityPct }: PredictionCompleteDashboardProps) {
+export function PredictionCompleteDashboard({
+  result,
+  historicalSimilarityPct,
+  active = null,
+}: PredictionCompleteDashboardProps) {
   const confidence =
     result.confidence ??
     result.operator_summary?.confidence ??
@@ -31,7 +37,7 @@ export function PredictionCompleteDashboard({ result, historicalSimilarityPct }:
     <div className="space-y-4">
       <SectionCard
         title="Prediction Complete"
-        description="Recipe saved to the current heat session — open related pages below or from each result section"
+        description="Heat session saved — use the Operator Heat Console below for every next step"
         className={INDUSTRIAL_STATUS.prediction.className}
       >
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -62,7 +68,7 @@ export function PredictionCompleteDashboard({ result, historicalSimilarityPct }:
         </div>
       </SectionCard>
 
-      <PredictionNextActions />
+      <PredictionNextActions active={active} />
     </div>
   );
 }

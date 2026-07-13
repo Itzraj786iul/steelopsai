@@ -36,7 +36,7 @@ export default function EafPredictionPage() {
       .map((w) => w.message) ?? [];
 
   return (
-    <PageContainer title="Prediction" description="Enter burden composition once — results flow to Optimizer, What-if, and Reports">
+    <PageContainer title="Prediction" description="Operator heat workflow — predict once, then continue Optimize → Validate → Feedback from this page">
       <SectionCard title="Heat identification" className="mt-6">
         <div className="max-w-xs space-y-2">
           <Label htmlFor="heat-number">Heat Number</Label>
@@ -57,14 +57,23 @@ export default function EafPredictionPage() {
         </Button>
         {result ? (
           <>
+            <Button asChild>
+              <Link href="/eaf/optimizer">Next → Optimizer</Link>
+            </Button>
             <Button asChild variant="secondary">
-              <Link href="/eaf/optimizer">Go to Optimizer</Link>
+              <Link href="/eaf/validation">Validation</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/eaf/historical">Historical Analysis</Link>
+              <Link href="/eaf/feedback">Feedback</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/eaf/historical">Historical</Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/eaf/whatif">What-if</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/eaf/reports">Reports</Link>
             </Button>
           </>
         ) : null}
@@ -79,6 +88,7 @@ export default function EafPredictionPage() {
           <PredictionCompleteDashboard
             result={result}
             historicalSimilarityPct={explain?.historical_similarity_pct}
+            active={active}
           />
 
           <div className="flex flex-wrap gap-2">
