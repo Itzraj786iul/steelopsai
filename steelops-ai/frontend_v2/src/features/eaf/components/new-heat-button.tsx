@@ -22,10 +22,10 @@ export function NewHeatButton({ variant = "outline" as const, size = "sm" as con
 
   return (
     <>
-      <Button variant={variant} size={size} onClick={() => (hasActiveHeat() ? setOpen(true) : startNew())}>
-        <Flame className="mr-2 h-4 w-4" />
+      <Button variant={variant} size={size} className="shrink-0 px-2 sm:px-3" onClick={() => (hasActiveHeat() ? setOpen(true) : startNew())}>
+        <Flame className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">New Heat</span>
-        <span className="sr-only sm:hidden">New Heat</span>
+        <span className="sr-only">New Heat</span>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

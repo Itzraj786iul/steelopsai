@@ -541,9 +541,9 @@ function MiniStat({
   large?: boolean;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={cn(large ? "text-2xl" : "text-base", "font-semibold", mono && "font-mono", highlight === "validated" && "text-emerald-700 dark:text-emerald-400", highlight === "prediction" && "text-blue-700 dark:text-blue-400")}>
+      <p className={cn(large ? "text-xl sm:text-2xl" : "text-base", "break-words font-semibold", mono && "font-mono", highlight === "validated" && "text-emerald-700 dark:text-emerald-400", highlight === "prediction" && "text-blue-700 dark:text-blue-400")}>
         {value}
       </p>
     </div>

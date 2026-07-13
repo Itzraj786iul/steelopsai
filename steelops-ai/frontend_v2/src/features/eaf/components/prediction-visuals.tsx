@@ -62,16 +62,16 @@ export function TttComparisonBars({
       : null;
 
   return (
-    <div className={cn("rounded-lg border border-border/60 bg-background/60 p-4", className)}>
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <div>
+    <div className={cn("min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3 sm:p-4", className)}>
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">TTT comparison</p>
           <p className="text-sm text-muted-foreground">Where this heat sits vs history and optimizer</p>
         </div>
         {predVsHist != null ? (
           <p
             className={cn(
-              "font-mono text-sm font-semibold",
+              "break-words font-mono text-xs font-semibold sm:text-sm",
               predVsHist > 0.15
                 ? "text-amber-700 dark:text-amber-400"
                 : predVsHist < -0.15
@@ -89,10 +89,10 @@ export function TttComparisonBars({
         {rows.map((row, index) => {
           const pct = row.value != null && Number.isFinite(row.value) ? Math.max(4, (row.value / max) * 100) : 0;
           return (
-            <div key={row.key}>
+            <div key={row.key} className="min-w-0">
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                <span className="text-muted-foreground">{row.label}</span>
-                <span className={cn("font-mono font-semibold", row.textClass)}>
+                <span className="min-w-0 truncate text-muted-foreground">{row.label}</span>
+                <span className={cn("shrink-0 font-mono font-semibold", row.textClass)}>
                   {row.value != null && Number.isFinite(row.value) ? `${row.value.toFixed(2)} min` : "—"}
                 </span>
               </div>
@@ -201,10 +201,10 @@ export function BurdenMixCompare({
   const hasOpt = burdenTotals(optParts).total > 0;
 
   return (
-    <div className={cn("rounded-lg border border-border/60 bg-background/60 p-4", className)}>
-      <div className="mb-3">
+    <div className={cn("min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3 sm:p-4", className)}>
+      <div className="mb-3 min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Burden mix</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="break-words text-sm text-muted-foreground">
           Metallic charge share — current vs historical
           {hasOpt ? " vs optimized" : ""}
           {similarHeat?.heat_id ? ` (#${similarHeat.heat_id})` : ""}
@@ -260,9 +260,9 @@ export function TrustMeterGauge({
     score == null ? "stroke-muted" : score >= 70 ? "stroke-emerald-500" : score >= 45 ? "stroke-amber-500" : "stroke-red-500";
 
   const inner = (
-    <div className={cn("rounded-lg border border-border/60 bg-background/60 p-4", className)}>
+    <div className={cn("min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3 sm:p-4", className)}>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="relative mx-auto mt-2 h-24 w-44">
+      <div className="relative mx-auto mt-2 h-24 w-full max-w-[11rem]">
         <svg viewBox="0 0 180 100" className="h-full w-full" aria-hidden>
           <path
             d="M 20 90 A 70 70 0 0 1 160 90"
@@ -283,7 +283,7 @@ export function TrustMeterGauge({
             transition={{ ...industrialEase, duration: 0.55 }}
           />
         </svg>
-        <div className="absolute inset-x-0 bottom-1 text-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-1 text-center">
           <p className={cn("font-mono text-2xl font-bold", tone)}>
             {score != null ? score.toFixed(1) : "—"}
           </p>

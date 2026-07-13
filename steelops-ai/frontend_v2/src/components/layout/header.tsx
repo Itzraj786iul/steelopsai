@@ -35,14 +35,14 @@ export function HeaderBar() {
   };
 
   return (
-    <header className="z-[1200] flex h-header shrink-0 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur md:px-6">
-      <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+    <header className="z-[1200] flex h-header shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-background/90 px-3 backdrop-blur sm:gap-3 md:px-6">
+      <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu className="h-5 w-5" />
       </Button>
 
       <BreadcrumbBar />
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
         <NewHeatButton />
         <Select value={plantId} onValueChange={setPlantId}>
           <SelectTrigger className="hidden w-[160px] md:flex">

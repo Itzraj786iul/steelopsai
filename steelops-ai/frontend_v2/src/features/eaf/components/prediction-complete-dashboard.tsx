@@ -46,36 +46,37 @@ export function PredictionCompleteDashboard({
     null;
 
   return (
-    <motion.div className="space-y-4" variants={staggerContainer} initial="initial" animate="animate">
-      <motion.div variants={fadeUp}>
+    <motion.div className="min-w-0 space-y-4" variants={staggerContainer} initial="initial" animate="animate">
+      <motion.div variants={fadeUp} className="min-w-0">
         <HeatWorkflowStrip active={active} currentPage="predict" />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="min-w-0">
         <SectionCard
           title="Prediction Complete"
           description="Heat session saved — compare TTT and trust, then follow the workflow strip"
           className={INDUSTRIAL_STATUS.prediction.className}
         >
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+            <div className="min-w-0">
               <p className="text-xs uppercase text-muted-foreground">Predicted TTT</p>
-              <p className="font-mono text-4xl font-bold text-blue-700 dark:text-blue-400">
-                {result.predicted_ttt.toFixed(2)} min
+              <p className="break-words font-mono text-3xl font-bold text-blue-700 dark:text-blue-400 sm:text-4xl">
+                {result.predicted_ttt.toFixed(2)}{" "}
+                <span className="text-lg font-semibold sm:text-xl">min</span>
               </p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs uppercase text-muted-foreground">95% Interval</p>
-              <p className="font-mono text-xl font-semibold">
+              <p className="break-words font-mono text-lg font-semibold sm:text-xl">
                 {result.ci_lower_95.toFixed(1)} – {result.ci_upper_95.toFixed(1)} min
               </p>
             </div>
-            <Link href="/eaf/reliability" className="rounded-lg focus-ring">
+            <Link href="/eaf/reliability" className="min-w-0 rounded-lg focus-ring">
               <p className="text-xs uppercase text-muted-foreground">Confidence</p>
               <Badge className={cn("mt-1", INDUSTRIAL_STATUS[confKey].className)}>{confidence}</Badge>
               <p className="mt-1 text-xs text-primary">Open reliability →</p>
             </Link>
-            <Link href="/eaf/historical" className="rounded-lg focus-ring">
+            <Link href="/eaf/historical" className="min-w-0 rounded-lg focus-ring">
               <p className="text-xs uppercase text-muted-foreground">Historical Similarity</p>
               <p className="font-mono text-xl font-semibold">
                 {similarity != null ? `${similarity.toFixed(0)}%` : "—"}
@@ -84,20 +85,22 @@ export function PredictionCompleteDashboard({
             </Link>
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
               <TttComparisonBars
                 historicalActual={histActual}
                 predicted={result.predicted_ttt}
                 optimized={active?.optimizer?.optimized_ttt ?? null}
               />
             </div>
-            <TrustMeterGauge value={reliability} />
+            <div className="min-w-0">
+              <TrustMeterGauge value={reliability} />
+            </div>
           </div>
         </SectionCard>
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="min-w-0">
         <PredictionNextActions active={active} />
       </motion.div>
     </motion.div>

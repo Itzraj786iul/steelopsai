@@ -68,21 +68,21 @@ export function SimilarHistoricalHeatCard({
       description="Side-by-side burden and TTT comparison — historical reference vs current heat vs optimizer"
       actions={<OpenPageLink href="/eaf/historical" label="Historical Analysis" />}
     >
-      <div className={`rounded-lg border p-4 ${INDUSTRIAL_STATUS.historical.className}`}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`min-w-0 overflow-hidden rounded-lg border p-3 sm:p-4 ${INDUSTRIAL_STATUS.historical.className}`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="grid min-w-0 flex-1 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Metric label="Historical Heat No." value={best.heat_id} mono />
             <Metric label="Shift" value={best.shift} />
             <Metric label="Similarity" value={`${best.similarity_pct.toFixed(0)}%`} highlight="validated" />
             <Metric label="Charge (hist)" value={`${fmtNum(best.charge_t, 1)} t`} mono />
           </div>
-          <Badge variant="outline" className="gap-1">
+          <Badge variant="outline" className="w-fit shrink-0 gap-1">
             <Database className="h-3 w-3" aria-hidden />
             Historical Reference
           </Badge>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Outcome
             label="Historical Actual TTT"
             value={histActual != null ? `${fmtNum(histActual, 2)} min` : "—"}
@@ -123,21 +123,25 @@ export function SimilarHistoricalHeatCard({
           />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <TttComparisonBars
-            historicalActual={histActual}
-            predicted={currentPredicted}
-            optimized={optimizedTtt}
-          />
-          <BurdenMixCompare
-            currentRecipe={currentRecipe}
-            similarHeat={best}
-            optimizedRecipe={optimizedRecipe}
-          />
+        <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-2">
+          <div className="min-w-0">
+            <TttComparisonBars
+              historicalActual={histActual}
+              predicted={currentPredicted}
+              optimized={optimizedTtt}
+            />
+          </div>
+          <div className="min-w-0">
+            <BurdenMixCompare
+              currentRecipe={currentRecipe}
+              similarHeat={best}
+              optimizedRecipe={optimizedRecipe}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-border/60">
+      <div className="mt-4 -mx-1 overflow-x-auto rounded-lg border border-border/60 sm:mx-0">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -274,11 +278,11 @@ function Metric({
   highlight?: "validated" | "prediction";
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs uppercase text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "text-lg font-semibold",
+          "break-words text-base font-semibold sm:text-lg",
           mono && "font-mono",
           highlight === "validated" && "text-emerald-700 dark:text-emerald-400",
           highlight === "prediction" && "text-blue-700 dark:text-blue-400"
@@ -304,11 +308,11 @@ function Outcome({
   muted?: boolean;
 }) {
   return (
-    <div className="rounded-md border border-border/50 bg-background/70 px-3 py-2">
+    <div className="min-w-0 rounded-md border border-border/50 bg-background/70 px-3 py-2">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "mt-1 font-mono text-lg font-semibold",
+          "mt-1 break-words font-mono text-base font-semibold sm:text-lg",
           muted && "text-muted-foreground",
           !muted && tone === "historical" && "text-emerald-700 dark:text-emerald-400",
           !muted && tone === "prediction" && "text-blue-700 dark:text-blue-400",
@@ -317,7 +321,7 @@ function Outcome({
       >
         {value}
       </p>
-      {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="mt-0.5 break-words text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

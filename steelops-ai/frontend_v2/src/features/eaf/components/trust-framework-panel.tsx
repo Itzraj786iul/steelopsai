@@ -36,19 +36,19 @@ function MetricRow({
   highlight?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border/50 py-3 last:border-0">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>{label}</span>
+    <div className="flex min-w-0 items-center justify-between gap-3 border-b border-border/50 py-3 last:border-0 sm:gap-4">
+      <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+        <span className="break-words">{label}</span>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" className="text-muted-foreground/70 hover:text-foreground">
+            <button type="button" className="shrink-0 text-muted-foreground/70 hover:text-foreground">
               <Info className="h-3.5 w-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">{METRIC_HELP[label] ?? label}</TooltipContent>
         </Tooltip>
       </div>
-      <span className={`font-mono text-sm ${highlight ? "text-lg font-semibold text-primary" : ""}`}>
+      <span className={`shrink-0 font-mono text-sm ${highlight ? "text-base font-semibold text-primary sm:text-lg" : ""}`}>
         {value}
         {suffix}
       </span>
@@ -75,7 +75,7 @@ export function TrustFrameworkPanel({ trust }: { trust: HybridTrustResponse }) {
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Predicted TTT</p>
-            <p className="font-mono text-3xl font-bold text-primary">{trust.predicted_ttt.toFixed(2)} min</p>
+            <p className="break-words font-mono text-2xl font-bold text-primary sm:text-3xl">{trust.predicted_ttt.toFixed(2)} min</p>
           </div>
           <Badge variant={consensusVariant(trust.consensus)}>{trust.consensus}</Badge>
           <Badge variant="outline">{trust.reliability_tier}</Badge>

@@ -10,9 +10,7 @@ import {
   Flame,
   LineChart,
   Shield,
-  Sparkles,
   Target,
-  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,32 +25,31 @@ import { fadeUp, industrialEase, staggerContainer } from "@/lib/motion";
 const NAV_LINKS = [
   { href: "#plant", label: "Plant" },
   { href: "#capabilities", label: "Capabilities" },
-  { href: "#workflow", label: "Operator flow" },
-  { href: "#trust", label: "Trust" },
+  { href: "#workflow", label: "Workflow" },
+  { href: "#trust", label: "Governance" },
 ] as const;
 
 export function EafLandingHero() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,122,26,0.18),transparent_50%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,122,26,0.08),transparent_45%)]" />
+    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_at_top_left,rgba(255,122,26,0.14),transparent_55%)]" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="flex min-w-0 items-center gap-2.5 focus-ring rounded-md">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
-              <Flame className="h-5 w-5 text-primary" />
+      {/* Header — auth only once */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5 rounded-md focus-ring">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10">
+              <Flame className="h-4 w-4 text-primary" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold tracking-tight">{APP_NAME}</span>
-              <span className="block truncate text-[11px] text-muted-foreground">
-                JSPL Raigarh · SMS-3
+              <span className="block text-sm font-semibold tracking-tight">{APP_NAME}</span>
+              <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                Raigarh SMS-3
               </span>
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex" aria-label="Homepage">
+          <nav className="hidden items-center gap-7 md:flex" aria-label="Homepage">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
@@ -64,128 +61,137 @@ export function EafLandingHero() {
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/register">Sign up</Link>
-            </Button>
-          </div>
+          <Button asChild size="sm" className="shrink-0">
+            <Link href="/login">
+              Sign in
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Link>
+          </Button>
         </div>
       </header>
 
       {/* Hero */}
       <section className="relative border-b border-border/40">
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:pb-20 lg:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={industrialEase}
-            className="max-w-3xl"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              JSPL Raigarh · Steel Melting Shop 3 (SMS-3)
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              JSPL Raigarh · Steel Melting Shop 3
             </p>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-              {APP_NAME}
-              <span className="mt-2 block text-primary">
-                Electric Arc Furnace Tap-to-Tap Decision Support
+            <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
+              EAF tap-to-tap decision support
+              <span className="mt-2 block text-xl font-semibold text-muted-foreground sm:text-2xl">
+                for SMS-3 furnace operations
               </span>
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Predict tap-to-tap time, optimize burden with physics constraints, validate on the floor,
-              and close the heat — built for Raigarh SMS-3 operators on the frozen {PRODUCTION_MODEL_PHASE}{" "}
-              production model.
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Predict cycle time, optimize burden under physics constraints, and close heats with
+              validation — advisory AI on the frozen {PRODUCTION_MODEL_PHASE} production model.
+              Operators stay in control.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg">
-                <Link href="/login?next=/eaf/prediction">
-                  Sign in to predict
+                <Link href="/login">
+                  Enter plant system
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/register">Create account</Link>
-              </Button>
-              <Button asChild variant="secondary" size="lg">
-                <Link href="/login?next=/eaf/dashboard">Open dashboard</Link>
+                <a href="#capabilities">View capabilities</a>
               </Button>
             </div>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              Already authenticated? Go directly to{" "}
-              <Link href="/eaf/prediction" className="font-medium text-primary hover:underline">
-                Prediction
-              </Link>{" "}
-              or{" "}
-              <Link href="/eaf/dashboard" className="font-medium text-primary hover:underline">
-                Dashboard
-              </Link>
-              .
+            <p className="mt-3 text-xs text-muted-foreground">
+              Need an account? Contact your plant administrator — self-signup is disabled in enterprise mode.
             </p>
           </motion.div>
 
-          <motion.div
-            className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
+          <motion.aside
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...industrialEase, delay: 0.08 }}
+            className="rounded-xl border border-border/70 bg-card/70 p-5 shadow-elevation-sm"
           >
-            {[
-              { icon: LineChart, title: "Prediction", desc: `Stacking model · ${PRODUCTION_MODEL_PHASE}` },
-              { icon: Cpu, title: "Optimization", desc: `Physics-guided · ${OPTIMIZER_PHASE}` },
-              { icon: Zap, title: "Floor workflow", desc: "Predict → Optimize → Validate" },
-              { icon: Sparkles, title: "Industrial ML", desc: "Explainability & trust" },
-            ].map(({ icon: Icon, title, desc }) => (
-              <motion.div
-                key={title}
-                variants={fadeUp}
-                className="rounded-xl border border-border/70 bg-card/80 p-4 text-left shadow-elevation-sm"
-              >
-                <Icon className="h-5 w-5 text-primary" />
-                <h3 className="mt-2 text-sm font-semibold">{title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Deployment profile
+            </p>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex items-start justify-between gap-4 border-b border-border/50 pb-3">
+                <dt className="text-muted-foreground">Plant</dt>
+                <dd className="text-right font-medium">JSPL Raigarh · SMS-3</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 border-b border-border/50 pb-3">
+                <dt className="text-muted-foreground">Production model</dt>
+                <dd className="text-right font-medium">{PRODUCTION_MODEL_PHASE}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 border-b border-border/50 pb-3">
+                <dt className="text-muted-foreground">Optimizer</dt>
+                <dd className="text-right font-medium">{OPTIMIZER_PHASE}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 border-b border-border/50 pb-3">
+                <dt className="text-muted-foreground">Mode</dt>
+                <dd className="text-right font-medium text-primary">Advisory · RBAC</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <dt className="text-muted-foreground">Release</dt>
+                <dd className="text-right font-mono text-xs">{APP_VERSION}</dd>
+              </div>
+            </dl>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              {[
+                { icon: LineChart, label: "Predict TTT" },
+                { icon: Cpu, label: "Optimize" },
+                { icon: Target, label: "Validate" },
+                { icon: Shield, label: "Audit trail" },
+              ].map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/20 px-2.5 py-2 text-xs font-medium"
+                >
+                  <Icon className="h-3.5 w-3.5 text-primary" />
+                  {label}
+                </div>
+              ))}
+            </div>
+          </motion.aside>
         </div>
       </section>
 
       {/* Plant */}
-      <section id="plant" className="scroll-mt-20 border-b border-border/40 py-16 sm:py-20">
+      <section id="plant" className="scroll-mt-20 border-b border-border/40 py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Plant context</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            Built for JSPL Raigarh SMS-3
-          </h2>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            Steel Melting Shop 3 electric arc furnace operations — heat-level prediction and operator
-            decision support aligned to plant practice.
-          </p>
-
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Plant</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight">JSPL Raigarh SMS-3</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Steel Melting Shop 3 EAF operations — heat-level decision support aligned to plant practice
+              and shift workflow.
+            </p>
+          </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {[
               {
                 icon: Factory,
-                title: "Site",
-                body: "JSPL Raigarh · Steel Melting Shop 3 (SMS-3)",
+                title: "Site scope",
+                body: "Raigarh SMS-3 electric arc furnace line for planning and floor review.",
               },
               {
                 icon: Target,
-                title: "Use case",
-                body: "Tap-to-tap time prediction, recipe optimization, and heat validation on the floor.",
+                title: "Operating focus",
+                body: "Tap-to-tap prediction, burden optimization, and post-heat validation.",
               },
               {
                 icon: Shield,
-                title: "Model posture",
-                body: `Frozen ${PRODUCTION_MODEL_PHASE} production engine — advisory support, operator remains in control.`,
+                title: "Control posture",
+                body: "Frozen production model. Recommendations are advisory; furnace control stays with the crew.",
               },
             ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-xl border border-border/70 bg-card/60 p-5">
+              <div key={title} className="border border-border/60 bg-card/50 p-5">
                 <Icon className="h-5 w-5 text-primary" />
-                <h3 className="mt-3 font-semibold">{title}</h3>
+                <h3 className="mt-3 text-sm font-semibold">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
               </div>
             ))}
@@ -194,81 +200,85 @@ export function EafLandingHero() {
       </section>
 
       {/* Capabilities */}
-      <section id="capabilities" className="scroll-mt-20 border-b border-border/40 py-16 sm:py-20">
+      <section id="capabilities" className="scroll-mt-20 border-b border-border/40 py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Capabilities</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">What operators get</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {[
-              "Predict tap-to-tap from burden and energy inputs",
-              "Physics-guided optimizer with industrial constraints",
-              "Historical similarity and side-by-side heat comparison",
-              "Operator heat console — next steps without navbar hunting",
-              "Validation, feedback, reports, and heat history",
-              "Role-based access for operators, engineers, and managers",
-            ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <p className="text-sm leading-relaxed">{item}</p>
-              </div>
-            ))}
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Capabilities</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight">What the platform delivers</h2>
           </div>
+          <motion.ul
+            className="mt-8 grid gap-3 sm:grid-cols-2"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-40px" }}
+          >
+            {[
+              "Tap-to-tap prediction from burden and energy inputs",
+              `Physics-guided optimizer (${OPTIMIZER_PHASE})`,
+              "Historical similarity and heat comparison",
+              "Operator heat console for next-step workflow",
+              "Validation, feedback, and heat history",
+              "Role-based access for floor and management",
+            ].map((item) => (
+              <motion.li
+                key={item}
+                variants={fadeUp}
+                className="flex gap-3 border border-border/50 bg-muted/15 px-4 py-3"
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="text-sm leading-relaxed">{item}</span>
+              </motion.li>
+            ))}
+          </motion.ul>
         </div>
       </section>
 
       {/* Workflow */}
-      <section id="workflow" className="scroll-mt-20 border-b border-border/40 py-16 sm:py-20">
+      <section id="workflow" className="scroll-mt-20 border-b border-border/40 py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Operator flow</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">One heat, clear path</h2>
-          <ol className="mt-8 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Workflow</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight">Standard heat path</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              One session carries recipe and results across prediction, optimization, and validation.
+            </p>
+          </div>
+          <ol className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { n: "1", t: "Sign in", d: "Use your plant account" },
-              { n: "2", t: "Predict", d: "Enter burden · get TTT" },
-              { n: "3", t: "Optimize", d: "Review recommended changes" },
-              { n: "4", t: "Validate", d: "Record actual TTT & feedback" },
+              { n: "01", t: "Predict", d: "Enter burden · forecast TTT" },
+              { n: "02", t: "Optimize", d: "Review physics-safe changes" },
+              { n: "03", t: "Decide", d: "Accept, modify, or reject" },
+              { n: "04", t: "Validate", d: "Record actual TTT & close" },
             ].map((step) => (
-              <li key={step.n} className="rounded-xl border border-border/70 bg-card/70 p-5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                  {step.n}
-                </span>
-                <p className="mt-3 font-semibold">{step.t}</p>
+              <li key={step.n} className="border border-border/60 bg-card/40 p-5">
+                <span className="font-mono text-xs text-primary">{step.n}</span>
+                <p className="mt-2 text-sm font-semibold">{step.t}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{step.d}</p>
               </li>
             ))}
           </ol>
-          <div className="mt-8">
-            <Button asChild>
-              <Link href="/login?next=/eaf/prediction">
-                Start operator workflow
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
         </div>
       </section>
 
-      {/* Trust */}
-      <section id="trust" className="scroll-mt-20 py-16 sm:py-20">
+      {/* Governance */}
+      <section id="trust" className="scroll-mt-20 py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Trust & deployment</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              Advisory AI for industrial control
+          <div className="border border-border/60 bg-card/40 px-5 py-8 sm:px-8">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Governance</p>
+            <h2 className="mt-2 max-w-xl text-2xl font-bold tracking-tight">
+              Advisory support for industrial operations
             </h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Recommendations support the melt shop; operators and engineers remain accountable for final
-              furnace decisions. Production ML artifacts stay frozen for stability.
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Outputs assist melt-shop decisions. Final furnace actions remain with operators and
+              engineers. Production ML artifacts are frozen for deployment stability.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6">
               <Button asChild>
-                <Link href="/login">Sign in</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/register">Sign up</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link href="/eaf/about">About the system</Link>
+                <Link href="/login">
+                  Sign in to continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -276,31 +286,46 @@ export function EafLandingHero() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/60 bg-muted/20">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
+      <footer className="border-t border-border/60 bg-muted/15">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-3">
           <div>
-            <p className="font-semibold">{APP_NAME}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              JSPL Raigarh · SMS-3 · EAF Tap-to-Tap Decision Support
+            <p className="text-sm font-semibold">{APP_NAME}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              JSPL Raigarh · SMS-3
+              <br />
+              EAF Tap-to-Tap Decision Support
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">Version {APP_VERSION}</p>
+            <p className="mt-3 font-mono text-xs text-muted-foreground">v{APP_VERSION}</p>
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <Link href="/login" className="hover:text-foreground">
-              Sign in
-            </Link>
-            <Link href="/register" className="hover:text-foreground">
-              Sign up
-            </Link>
-            <Link href="/eaf/prediction" className="hover:text-foreground">
-              Prediction
-            </Link>
-            <Link href="/eaf/dashboard" className="hover:text-foreground">
-              Dashboard
-            </Link>
-            <Link href="/eaf/about" className="hover:text-foreground">
-              About
-            </Link>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sections</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {NAV_LINKS.map((l) => (
+                <li key={l.href}>
+                  <a href={l.href} className="hover:text-foreground">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+              <li>
+                <Link href="/eaf/about" className="hover:text-foreground">
+                  About
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Access</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <Link href="/login" className="hover:text-foreground">
+                  Sign in
+                </Link>
+              </li>
+              <li className="text-xs leading-relaxed">
+                Accounts are provisioned by plant IT / admin. Self-registration is not enabled for production.
+              </li>
+            </ul>
           </div>
         </div>
         <div className="border-t border-border/40">

@@ -156,21 +156,21 @@ function ActionTile({ item }: { item: ActionItem }) {
     <Link
       href={item.href}
       className={cn(
-        "group flex h-full flex-col gap-2 rounded-lg border px-3 py-3 transition-colors focus-ring",
+        "group flex h-full min-w-0 flex-col gap-2 rounded-lg border px-3 py-3 transition-colors focus-ring",
         item.emphasize
           ? "border-primary/45 bg-primary/8 hover:bg-primary/12"
           : "border-border/60 bg-background/70 hover:bg-muted/50",
         item.status === "done" && "border-emerald-500/30 bg-emerald-500/5"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
           <Icon className={cn("h-4 w-4 shrink-0", item.emphasize ? "text-primary" : "text-muted-foreground")} />
-          {item.label}
+          <span className="break-words">{item.label}</span>
         </span>
-        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+        <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100 sm:opacity-0" />
       </div>
-      <p className="text-xs leading-snug text-muted-foreground">{item.description}</p>
+      <p className="break-words text-xs leading-snug text-muted-foreground">{item.description}</p>
       {item.status === "needed" ? (
         <span className="mt-auto text-[11px] font-medium text-amber-700 dark:text-amber-400">Action needed</span>
       ) : item.status === "done" ? (
@@ -340,13 +340,13 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
         ) : null
       }
     >
-      <div className="mb-5 rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+      <div className="mb-5 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-3 sm:px-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400">
               Recommended heat path
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 break-words text-sm text-muted-foreground">
               Heat {active?.heatNumber || "—"} · Shift {active?.shift || recipeShiftFallback(active)} · Recipe stays
               linked across all pages
             </p>
@@ -355,9 +355,9 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
             <motion.div
               animate={{ boxShadow: ["0 0 0 0 rgba(37,99,235,0.45)", "0 0 0 10px rgba(37,99,235,0)", "0 0 0 0 rgba(37,99,235,0)"] }}
               transition={{ duration: 1.6, repeat: 2 }}
-              className="rounded-md"
+              className="w-full rounded-md sm:w-auto"
             >
-              <Button asChild>
+              <Button asChild className="w-full sm:w-auto">
                 <Link href={nextStep.href} className="gap-2">
                   Continue → {nextStep.action}
                 </Link>
@@ -397,17 +397,17 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
         </div>
 
         <motion.ol
-          className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3"
+          className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3"
           variants={staggerContainer}
           initial="initial"
           animate="animate"
         >
           {steps.map((step) => (
-            <motion.li key={step.step} variants={fadeUp}>
+            <motion.li key={step.step} variants={fadeUp} className="min-w-0">
               <Link
                 href={step.href}
                 className={cn(
-                  "flex h-full items-start gap-3 rounded-lg border px-3 py-3 transition-colors focus-ring",
+                  "flex h-full min-w-0 items-start gap-3 rounded-lg border px-3 py-3 transition-colors focus-ring",
                   step.status === "next" && "border-blue-500/50 bg-background shadow-sm ring-2 ring-blue-500/20",
                   step.status === "done" && "border-emerald-500/30 bg-emerald-500/5",
                   step.status === "todo" && "border-border/50 bg-background/50 opacity-80",
@@ -432,13 +432,13 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
                 </motion.span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold">{step.title}</span>
+                    <span className="break-words text-sm font-semibold">{step.title}</span>
                     {statusBadge(step.status)}
                   </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{step.detail}</span>
+                  <span className="mt-0.5 block break-words text-xs text-muted-foreground">{step.detail}</span>
                   <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary">
                     {step.action}
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-3 w-3 shrink-0" />
                   </span>
                 </span>
               </Link>
@@ -472,7 +472,7 @@ function ActionGroup({
   return (
     <div className={className}>
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => (
           <ActionTile key={item.href + item.label} item={item} />
         ))}

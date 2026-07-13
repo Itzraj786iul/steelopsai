@@ -136,9 +136,9 @@ function Row({
           : undefined;
 
   return (
-    <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("text-right font-medium", mono && "font-mono", colorClass)}>{value}</span>
+    <div className="flex justify-between gap-3">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className={cn("min-w-0 break-words text-right font-medium", mono && "font-mono", colorClass)}>{value}</span>
     </div>
   );
 }
@@ -224,22 +224,22 @@ export function StickyCurrentHeatMobileBar() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-[1100] border-t border-border bg-background/95 p-2 backdrop-blur md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-[1100] border-t border-border bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
         <Button
           variant="outline"
-          className="w-full justify-between"
+          className="w-full justify-between gap-2"
           onClick={() => setMobileSheetOpen(true)}
         >
-          <span className="flex items-center gap-2">
-            <Flame className="h-4 w-4 text-blue-600" />
-            Current Heat
+          <span className="flex min-w-0 items-center gap-2">
+            <Flame className="h-4 w-4 shrink-0 text-blue-600" />
+            <span className="truncate">Current Heat</span>
           </span>
           {active?.prediction ? (
-            <span className="font-mono text-sm text-primary">
+            <span className="shrink-0 font-mono text-sm text-primary">
               {active.prediction.predicted_ttt.toFixed(1)} min
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground">No active heat</span>
+            <span className="shrink-0 text-xs text-muted-foreground">No active heat</span>
           )}
         </Button>
       </div>
@@ -261,5 +261,5 @@ export function StickyCurrentHeatMobileBar() {
 export function EafContentPadding() {
   const pathname = usePathname();
   if (!pathname.startsWith("/eaf")) return null;
-  return <div className="h-14 md:hidden" aria-hidden />;
+  return <div className="h-16 md:hidden" aria-hidden />;
 }

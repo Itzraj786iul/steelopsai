@@ -27,9 +27,9 @@ export function ContributorList({
       {items.length ? (
         <ul className="space-y-2 text-sm">
           {items.map((c) => (
-            <li key={c.feature} className="flex items-center justify-between border-b border-border/50 py-2 last:border-0">
-              <span>{formatContributorLabel(c.feature, c.display_name)}</span>
-              <span className="font-mono text-muted-foreground">{c.contribution?.toFixed(3)}</span>
+            <li key={c.feature} className="flex min-w-0 items-start justify-between gap-3 border-b border-border/50 py-2 last:border-0">
+              <span className="min-w-0 break-words">{formatContributorLabel(c.feature, c.display_name)}</span>
+              <span className="shrink-0 font-mono text-muted-foreground">{c.contribution?.toFixed(3)}</span>
             </li>
           ))}
         </ul>

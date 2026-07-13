@@ -80,17 +80,17 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md border-border/80 bg-card/95 shadow-elevation-md backdrop-blur">
-      <CardHeader className="space-y-1 text-center">
+    <Card className="w-full max-w-md min-w-0 border-border/80 bg-card/95 shadow-elevation-md backdrop-blur">
+      <CardHeader className="space-y-1 px-4 text-center sm:px-6">
         <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
           <Flame className="h-6 w-6 text-primary" />
         </div>
-        <CardTitle className="text-2xl">Sign in to JSPL EAF</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl">Sign in to JSPL EAF</CardTitle>
         <CardDescription>Enterprise authentication with role-based access</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         {configWarning ? (
-          <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-left text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+          <p className="mb-4 break-words rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-left text-xs leading-relaxed text-amber-800 dark:text-amber-200">
             {configWarning}
           </p>
         ) : null}
@@ -124,7 +124,7 @@ export function LoginForm() {
               }}
             >
               <span className="font-medium">{a.role}</span>
-              <span className="text-muted-foreground"> — {a.email}</span>
+              <span className="break-all text-muted-foreground"> — {a.email}</span>
             </button>
           ))}
         </div>

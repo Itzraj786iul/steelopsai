@@ -88,7 +88,7 @@ export default function EafPredictionPage() {
       {result ? (
         <motion.div
           key={result.predicted_ttt + String(result.ci_lower_95)}
-          className="mt-8 space-y-6"
+          className="mt-8 min-w-0 space-y-6"
           variants={staggerContainer}
           initial="initial"
           animate="animate"

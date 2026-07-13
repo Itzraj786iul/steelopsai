@@ -49,7 +49,7 @@ export function AppShell({ children }: AppShellProps) {
             initial={pageTransition.initial}
             animate={pageTransition.animate}
             transition={industrialEase}
-            className="min-h-0 min-w-0 flex-1 overflow-y-auto"
+            className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
           >
             {children}
             {isEaf ? <EafContentPadding /> : null}

@@ -132,8 +132,8 @@ export default function EafOptimizerPage() {
       {showProd && prodResult ? (
         <div className="mt-8 space-y-6">
           {mode !== "compare" ? <h2 className="text-lg font-semibold">Production — Phase 20.2</h2> : null}
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
               <TttComparisonBars
                 historicalActual={
                   explain?.similar_heats?.length
@@ -144,23 +144,25 @@ export default function EafOptimizerPage() {
                 optimized={prodResult.optimized_ttt}
               />
             </div>
-            <TrustMeterGauge value={hybridReliability} />
+            <div className="min-w-0">
+              <TrustMeterGauge value={hybridReliability} />
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             <SectionCard title="Current">
-              <p className="font-mono text-3xl">{prodResult.current_ttt.toFixed(2)} min</p>
+              <p className="break-words font-mono text-2xl sm:text-3xl">{prodResult.current_ttt.toFixed(2)} min</p>
             </SectionCard>
             <SectionCard title="Optimized">
-              <p className="font-mono text-3xl text-primary">{prodResult.optimized_ttt.toFixed(2)} min</p>
+              <p className="break-words font-mono text-2xl text-primary sm:text-3xl">{prodResult.optimized_ttt.toFixed(2)} min</p>
             </SectionCard>
             <SectionCard title="Expected Saving">
-              <p className="font-mono text-3xl text-green-600">{prodResult.improvement_min.toFixed(2)} min</p>
+              <p className="break-words font-mono text-2xl text-green-600 sm:text-3xl">{prodResult.improvement_min.toFixed(2)} min</p>
             </SectionCard>
             <SectionCard title="Recommendation Confidence">
-              <p className="text-2xl font-semibold">{explain?.recommendation_confidence ?? "—"}</p>
+              <p className="text-xl font-semibold sm:text-2xl">{explain?.recommendation_confidence ?? "—"}</p>
             </SectionCard>
             <SectionCard title="Burden Stability">
-              <p className="text-2xl font-semibold">{explain?.recommendation_stability ?? "—"}</p>
+              <p className="text-xl font-semibold sm:text-2xl">{explain?.recommendation_stability ?? "—"}</p>
             </SectionCard>
           </div>
           {mode === "production" ? (

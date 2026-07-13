@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 export function EnterpriseTable({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-x-auto rounded-lg border border-border/60", className)}>
-      <table className="enterprise-table w-full text-sm">{children}</table>
+    <div className={cn("-mx-1 max-w-full overflow-x-auto rounded-lg border border-border/60 sm:mx-0", className)}>
+      <table className="enterprise-table w-full min-w-[32rem] text-sm">{children}</table>
     </div>
   );
 }
