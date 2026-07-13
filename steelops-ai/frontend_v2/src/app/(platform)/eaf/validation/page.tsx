@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { HeatLifecycleTimeline } from "@/features/eaf/components/heat-lifecycle-timeline";
+import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { RecommendationAcceptanceBadge } from "@/features/eaf/components/recommendation-acceptance-panel";
+import { TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import { ValidationMetricsPanel } from "@/features/eaf/components/validation-metrics-panel";
 import { eafApi, type ValidationEntry, type ValidationListResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
@@ -96,10 +98,30 @@ export default function EafValidationPage() {
   return (
     <PageContainer title="Validation" description="Plant validation linked to the current heat">
       {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
+      <HeatWorkflowStrip active={active} currentPage="validate" className="mb-6" />
 
       <div className="mt-2 flex flex-wrap gap-2">
         <RecommendationAcceptanceBadge />
       </div>
+
+      {active?.prediction ? (
+        <div className="mt-6">
+          <TttComparisonBars
+            historicalActual={
+              active.prediction.explainability?.similar_heats?.length
+                ? [...active.prediction.explainability.similar_heats].sort(
+                    (a, b) => b.similarity_pct - a.similarity_pct
+                  )[0]?.actual_ttt
+                : null
+            }
+            predicted={active.prediction.predicted_ttt}
+            optimized={active.optimizer?.optimized_ttt ?? null}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">
+            Enter actual TTT below to close the loop against predicted / optimized values.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-4">
         <MetricCard label="Records" value={metrics?.count ?? 0} />

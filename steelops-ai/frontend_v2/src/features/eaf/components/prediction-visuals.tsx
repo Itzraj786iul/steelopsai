@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 import type { EafRecipe, SimilarHeatItem } from "@/lib/api/eaf";
 import { RECIPE_FIELD_LABELS } from "@/lib/eaf-labels";
@@ -164,12 +165,18 @@ function StackedBurdenBar({
 interface BurdenMixCompareProps {
   currentRecipe?: EafRecipe | null;
   similarHeat?: SimilarHeatItem | null;
+  optimizedRecipe?: EafRecipe | null;
   className?: string;
 }
 
-/** Stacked burden mix — current vs most similar historical heat. */
-export function BurdenMixCompare({ currentRecipe, similarHeat, className }: BurdenMixCompareProps) {
-  if (!currentRecipe && !similarHeat) return null;
+/** Stacked burden mix — current vs historical similar (+ optimized when available). */
+export function BurdenMixCompare({
+  currentRecipe,
+  similarHeat,
+  optimizedRecipe,
+  className,
+}: BurdenMixCompareProps) {
+  if (!currentRecipe && !similarHeat && !optimizedRecipe) return null;
 
   const histParts: Partial<Record<BurdenKey, number | null | undefined>> = {
     HM: similarHeat?.HM,
@@ -183,15 +190,23 @@ export function BurdenMixCompare({ currentRecipe, similarHeat, className }: Burd
     HBI: currentRecipe?.HBI,
     Bucket: currentRecipe?.Bucket,
   };
+  const optParts: Partial<Record<BurdenKey, number | null | undefined>> = {
+    HM: optimizedRecipe?.HM,
+    DRI: optimizedRecipe?.DRI,
+    HBI: optimizedRecipe?.HBI,
+    Bucket: optimizedRecipe?.Bucket,
+  };
 
   const hasHist = burdenTotals(histParts).total > 0;
+  const hasOpt = burdenTotals(optParts).total > 0;
 
   return (
     <div className={cn("rounded-lg border border-border/60 bg-background/60 p-4", className)}>
       <div className="mb-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Burden mix</p>
         <p className="text-sm text-muted-foreground">
-          Metallic charge share — current heat vs similar historical
+          Metallic charge share — current vs historical
+          {hasOpt ? " vs optimized" : ""}
           {similarHeat?.heat_id ? ` (#${similarHeat.heat_id})` : ""}
         </p>
       </div>
@@ -201,8 +216,9 @@ export function BurdenMixCompare({ currentRecipe, similarHeat, className }: Burd
         <StackedBurdenBar
           label={hasHist ? "Historical similar" : "Historical similar (recipe unavailable — re-predict)"}
           parts={histParts}
-          delay={0.2}
+          delay={0.15}
         />
+        {hasOpt ? <StackedBurdenBar label="Optimized recipe" parts={optParts} delay={0.28} /> : null}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
@@ -216,3 +232,73 @@ export function BurdenMixCompare({ currentRecipe, similarHeat, className }: Burd
     </div>
   );
 }
+
+interface TrustMeterGaugeProps {
+  value?: number | null;
+  label?: string;
+  href?: string;
+  className?: string;
+}
+
+/** Semi-circle reliability / trust meter (0–100). */
+export function TrustMeterGauge({
+  value,
+  label = "Reliability Index",
+  href = "/eaf/reliability",
+  className,
+}: TrustMeterGaugeProps) {
+  const score = value != null && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : null;
+  const tone =
+    score == null
+      ? "text-muted-foreground"
+      : score >= 70
+        ? "text-emerald-600 dark:text-emerald-400"
+        : score >= 45
+          ? "text-amber-600 dark:text-amber-400"
+          : "text-red-600 dark:text-red-400";
+  const stroke =
+    score == null ? "stroke-muted" : score >= 70 ? "stroke-emerald-500" : score >= 45 ? "stroke-amber-500" : "stroke-red-500";
+
+  const inner = (
+    <div className={cn("rounded-lg border border-border/60 bg-background/60 p-4", className)}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="relative mx-auto mt-2 h-24 w-44">
+        <svg viewBox="0 0 180 100" className="h-full w-full" aria-hidden>
+          <path
+            d="M 20 90 A 70 70 0 0 1 160 90"
+            fill="none"
+            strokeWidth="12"
+            className="stroke-muted/70"
+            strokeLinecap="round"
+          />
+          <motion.path
+            d="M 20 90 A 70 70 0 0 1 160 90"
+            fill="none"
+            strokeWidth="12"
+            className={stroke}
+            strokeLinecap="round"
+            pathLength={1}
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: score != null ? score / 100 : 0 }}
+            transition={{ ...industrialEase, duration: 0.55 }}
+          />
+        </svg>
+        <div className="absolute inset-x-0 bottom-1 text-center">
+          <p className={cn("font-mono text-2xl font-bold", tone)}>
+            {score != null ? score.toFixed(1) : "—"}
+          </p>
+          <p className="text-[11px] text-muted-foreground">/ 100</p>
+        </div>
+      </div>
+      {href ? <p className="mt-1 text-center text-xs text-primary">Open reliability →</p> : null}
+    </div>
+  );
+
+  if (!href) return inner;
+  return (
+    <Link href={href} className="block rounded-lg focus-ring">
+      {inner}
+    </Link>
+  );
+}
+

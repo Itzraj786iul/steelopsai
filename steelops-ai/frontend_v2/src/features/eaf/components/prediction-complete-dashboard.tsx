@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
+import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { PredictionNextActions } from "@/features/eaf/components/prediction-next-actions";
-import { TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
+import { TrustMeterGauge, TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import type { PredictResponse } from "@/lib/api/eaf";
 import { INDUSTRIAL_STATUS, confidenceStatus } from "@/lib/industrial-colors";
 import { fadeUp, staggerContainer } from "@/lib/motion";
@@ -39,13 +40,21 @@ export function PredictionCompleteDashboard({
     (a, b) => b.similarity_pct - a.similarity_pct
   )[0];
   const histActual = bestSimilar?.actual_ttt ?? null;
+  const reliability =
+    active?.hybrid?.reliability_index ??
+    (result as { hybrid_trust?: { reliability_index?: number } }).hybrid_trust?.reliability_index ??
+    null;
 
   return (
     <motion.div className="space-y-4" variants={staggerContainer} initial="initial" animate="animate">
       <motion.div variants={fadeUp}>
+        <HeatWorkflowStrip active={active} currentPage="predict" />
+      </motion.div>
+
+      <motion.div variants={fadeUp}>
         <SectionCard
           title="Prediction Complete"
-          description="Heat session saved — compare TTT below, then follow the Operator Heat Console"
+          description="Heat session saved — compare TTT and trust, then follow the workflow strip"
           className={INDUSTRIAL_STATUS.prediction.className}
         >
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -75,12 +84,15 @@ export function PredictionCompleteDashboard({
             </Link>
           </div>
 
-          <div className="mt-5">
-            <TttComparisonBars
-              historicalActual={histActual}
-              predicted={result.predicted_ttt}
-              optimized={active?.optimizer?.optimized_ttt ?? null}
-            />
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <TttComparisonBars
+                historicalActual={histActual}
+                predicted={result.predicted_ttt}
+                optimized={active?.optimizer?.optimized_ttt ?? null}
+              />
+            </div>
+            <TrustMeterGauge value={reliability} />
           </div>
         </SectionCard>
       </motion.div>

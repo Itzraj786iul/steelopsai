@@ -11,11 +11,13 @@ import { DigitalTwinReadinessCard } from "@/features/eaf/components/digital-twin
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { FullRecommendationExplanation } from "@/features/eaf/components/full-recommendation-explanation";
 import { HeatLifecycleTimeline } from "@/features/eaf/components/heat-lifecycle-timeline";
+import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { OptimizerChangeCards } from "@/features/eaf/components/optimizer-change-cards";
 import { RecommendationAcceptancePanel } from "@/features/eaf/components/recommendation-acceptance-panel";
 import { RecommendationAlternativesPanel } from "@/features/eaf/components/recommendation-alternatives-panel";
 import { RecommendationValidationTable } from "@/features/eaf/components/recommendation-validation-table";
 import { SimilarHistoricalHeatCard } from "@/features/eaf/components/similar-historical-heat-card";
+import { TrustMeterGauge, TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import { OptimizerDisclaimer } from "@/features/eaf/components/validation-banner";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { useEafOptimize, useEafOptimizeV2, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
@@ -74,6 +76,7 @@ export default function EafOptimizerPage() {
   return (
     <PageContainer title="Optimizer" description="Current heat burden composition loads automatically — no duplicate entry">
       {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
+      <HeatWorkflowStrip active={active} currentPage="optimize" className="mb-6" />
       <OptimizerDisclaimer className="mb-6" />
       {mode === "research" ? (
         <Badge className="mb-4 border-amber-500/40 bg-amber-500/10 text-amber-700">Research Tool — Phase 31 V2</Badge>
@@ -129,6 +132,20 @@ export default function EafOptimizerPage() {
       {showProd && prodResult ? (
         <div className="mt-8 space-y-6">
           {mode !== "compare" ? <h2 className="text-lg font-semibold">Production — Phase 20.2</h2> : null}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <TttComparisonBars
+                historicalActual={
+                  explain?.similar_heats?.length
+                    ? [...explain.similar_heats].sort((a, b) => b.similarity_pct - a.similarity_pct)[0]?.actual_ttt
+                    : null
+                }
+                predicted={prodResult.current_ttt}
+                optimized={prodResult.optimized_ttt}
+              />
+            </div>
+            <TrustMeterGauge value={hybridReliability} />
+          </div>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <SectionCard title="Current">
               <p className="font-mono text-3xl">{prodResult.current_ttt.toFixed(2)} min</p>

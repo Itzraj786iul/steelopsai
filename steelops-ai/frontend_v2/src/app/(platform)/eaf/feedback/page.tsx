@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { eafApi } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
+import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
 export default function EafFeedbackPage() {
+  const active = useCurrentHeatStore((s) => s.active);
   const [status, setStatus] = useState<"Accepted" | "Modified" | "Rejected">("Accepted");
   const [heat, setHeat] = useState("");
   const [optimizer, setOptimizer] = useState("Phase 20.2");
@@ -21,6 +24,13 @@ export default function EafFeedbackPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!active) return;
+    setHeat((h) => active.heatNumber || h);
+    setOptimizer(active.optimizerV2 ? "Phase 31 V2" : active.optimizer ? "Phase 20.2" : "Phase 20.2");
+    if (active.recommendationAcceptance) setStatus(active.recommendationAcceptance);
+  }, [active]);
 
   const submit = async () => {
     setSaving(true);
@@ -50,6 +60,7 @@ export default function EafFeedbackPage() {
 
   return (
     <PageContainer title="Operator Feedback" description="Review optimizer recommendations — stored for research only">
+      <HeatWorkflowStrip active={active} currentPage="feedback" className="mb-6" />
       <SectionCard title="Recommendation review">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -64,7 +75,13 @@ export default function EafFeedbackPage() {
             <Label>Decision</Label>
             <div className="mt-2 flex flex-wrap gap-2">
               {(["Accepted", "Modified", "Rejected"] as const).map((s) => (
-                <Button key={s} type="button" variant={status === s ? "default" : "outline"} size="sm" onClick={() => setStatus(s)}>
+                <Button
+                  key={s}
+                  type="button"
+                  variant={status === s ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatus(s)}
+                >
                   {s}
                 </Button>
               ))}
@@ -90,7 +107,7 @@ export default function EafFeedbackPage() {
         <Button className="mt-4" onClick={submit} disabled={saving}>
           {saving ? "Submitting…" : "Submit feedback"}
         </Button>
-        {message ? <p className="mt-3 text-sm text-green-600">{message}</p> : null}
+        {message ? <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">{message}</p> : null}
         {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
     </PageContainer>

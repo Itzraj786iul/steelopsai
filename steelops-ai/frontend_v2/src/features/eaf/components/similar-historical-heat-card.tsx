@@ -129,7 +129,11 @@ export function SimilarHistoricalHeatCard({
             predicted={currentPredicted}
             optimized={optimizedTtt}
           />
-          <BurdenMixCompare currentRecipe={currentRecipe} similarHeat={best} />
+          <BurdenMixCompare
+            currentRecipe={currentRecipe}
+            similarHeat={best}
+            optimizedRecipe={optimizedRecipe}
+          />
         </div>
       </div>
 
