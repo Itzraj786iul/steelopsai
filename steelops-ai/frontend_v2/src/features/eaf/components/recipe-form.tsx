@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,12 +32,40 @@ const FIELDS: { key: keyof EafRecipe; step?: string }[] = [
   { key: "OXY", step: "1" },
 ];
 
+type NumericRecipeKey = (typeof FIELDS)[number]["key"];
+
 export function RecipeForm({ recipe, onChange, charge, historicalVariables }: RecipeFormProps) {
   const chargeAssessment = assessCharge(charge, historicalVariables);
+  // Keep raw text while editing so Backspace can clear the field (empty ≠ forced 0).
+  const [drafts, setDrafts] = useState<Partial<Record<NumericRecipeKey, string>>>({});
 
-  const handleNumericChange = (key: keyof EafRecipe, raw: string) => {
-    const value = parseRecipeNumber(raw, 0);
-    onChange(key, value as EafRecipe[typeof key]);
+  const displayValue = (key: NumericRecipeKey) => {
+    if (Object.prototype.hasOwnProperty.call(drafts, key)) return drafts[key] ?? "";
+    const n = recipe[key] as number;
+    return Number.isFinite(n) ? String(n) : "";
+  };
+
+  const handleNumericChange = (key: NumericRecipeKey, raw: string) => {
+    setDrafts((prev) => ({ ...prev, [key]: raw }));
+    if (raw.trim() === "" || raw === "-" || raw === "." || raw === "-.") {
+      onChange(key, 0 as EafRecipe[typeof key]);
+      return;
+    }
+    const value = parseFloat(raw);
+    if (Number.isFinite(value)) {
+      onChange(key, value as EafRecipe[typeof key]);
+    }
+  };
+
+  const commitNumeric = (key: NumericRecipeKey) => {
+    const raw = drafts[key];
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    if (raw === undefined) return;
+    onChange(key, parseRecipeNumber(raw, 0) as EafRecipe[typeof key]);
   };
 
   return (
@@ -51,10 +81,12 @@ export function RecipeForm({ recipe, onChange, charge, historicalVariables }: Re
             <Input
               id={key}
               type="number"
+              inputMode="decimal"
               step={step}
               min={0}
-              value={Number.isFinite(recipe[key] as number) ? (recipe[key] as number) : ""}
+              value={displayValue(key)}
               onChange={(e) => handleNumericChange(key, e.target.value)}
+              onBlur={() => commitNumeric(key)}
             />
           </div>
         ))}
