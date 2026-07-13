@@ -24,8 +24,8 @@ const DEFAULT_CONFIG: PlantConfig = {
   theme: "system",
   unitSystem: "metric",
   defaultExportFormat: "json",
-  reportBranding: "JSPL EAF Tap-to-Tap Decision Support",
-  reportFooter: "Confidential — Plant Operations Use Only",
+  reportBranding: "JSPL Raigarh SMS-3 EAF Tap-to-Tap Decision Support",
+  reportFooter: "Confidential — JSPL Raigarh SMS-3 Operations Use Only",
 };
 
 interface PlantConfigState extends PlantConfig {

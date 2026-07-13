@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
@@ -20,6 +21,7 @@ import { ValidationBanner } from "@/features/eaf/components/validation-banner";
 import { useEafPredict, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import type { HybridTrustResponse } from "@/lib/api/eaf";
 import { assessCharge } from "@/lib/charge-validation";
+import { fadeUp, staggerContainer } from "@/lib/motion";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
 export default function EafPredictionPage() {
@@ -84,34 +86,58 @@ export default function EafPredictionPage() {
         </p>
       ) : null}
       {result ? (
-        <div className="mt-8 space-y-6">
-          <PredictionCompleteDashboard
-            result={result}
-            historicalSimilarityPct={explain?.historical_similarity_pct}
-            active={active}
-          />
+        <motion.div
+          key={result.predicted_ttt + String(result.ci_lower_95)}
+          className="mt-8 space-y-6"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
+          <motion.div variants={fadeUp}>
+            <PredictionCompleteDashboard
+              result={result}
+              historicalSimilarityPct={explain?.historical_similarity_pct}
+              active={active}
+            />
+          </motion.div>
 
-          <div className="flex flex-wrap gap-2">
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
             <PredictionQualityBadge quality={explain?.prediction_quality} />
             {hybrid ? (
               <span className="text-sm text-muted-foreground">
                 Reliability Index: {hybrid.reliability_index.toFixed(1)} / 100
               </span>
             ) : null}
-          </div>
+          </motion.div>
 
-          {hybrid ? <TrustFrameworkPanel trust={hybrid} /> : null}
-          <SimilarHistoricalHeatCard
-            heats={explain?.similar_heats ?? []}
-            predictedTtt={result.predicted_ttt}
-            currentRecipe={recipe}
-            optimizer={active?.optimizer ?? null}
-          />
-          <ContributorList contributors={result.top_contributors ?? []} />
-          <ShapInterpretations contributors={explain?.contributor_interpretations ?? result.top_contributors ?? []} />
-          <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
-          {active ? <HeatLifecycleTimeline active={active} /> : null}
-        </div>
+          {hybrid ? (
+            <motion.div variants={fadeUp}>
+              <TrustFrameworkPanel trust={hybrid} />
+            </motion.div>
+          ) : null}
+          <motion.div variants={fadeUp}>
+            <SimilarHistoricalHeatCard
+              heats={explain?.similar_heats ?? []}
+              predictedTtt={result.predicted_ttt}
+              currentRecipe={recipe}
+              optimizer={active?.optimizer ?? null}
+            />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <ContributorList contributors={result.top_contributors ?? []} />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <ShapInterpretations contributors={explain?.contributor_interpretations ?? result.top_contributors ?? []} />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
+          </motion.div>
+          {active ? (
+            <motion.div variants={fadeUp}>
+              <HeatLifecycleTimeline active={active} />
+            </motion.div>
+          ) : null}
+        </motion.div>
       ) : null}
     </PageContainer>
   );

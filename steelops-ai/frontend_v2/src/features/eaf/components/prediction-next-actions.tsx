@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   Activity,
   AlertTriangle,
@@ -25,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/layout/section-card";
+import { fadeUp, industrialEase, staggerContainer } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { HeatSessionSnapshot } from "@/stores/current-heat-store";
 
@@ -314,6 +316,9 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
     },
   ];
 
+  const doneCount = steps.filter((s) => s.status === "done").length;
+  const progressPct = Math.round((doneCount / Math.max(steps.length, 1)) * 100);
+
   return (
     <SectionCard
       title="Operator Heat Console"
@@ -321,12 +326,17 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
       className={className}
       actions={
         nextStep ? (
-          <Button asChild size="sm" className="gap-1.5">
-            <Link href={nextStep.href}>
-              Next: {nextStep.title}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          <motion.div
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ duration: 1.4, repeat: 2, ease: "easeInOut" }}
+          >
+            <Button asChild size="sm" className="gap-1.5 shadow-md shadow-primary/20">
+              <Link href={nextStep.href}>
+                Do next: {nextStep.title}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </motion.div>
         ) : null
       }
     >
@@ -342,37 +352,84 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
             </p>
           </div>
           {nextStep ? (
-            <Button asChild>
-              <Link href={nextStep.href} className="gap-2">
-                Continue → {nextStep.action}
-              </Link>
-            </Button>
+            <motion.div
+              animate={{ boxShadow: ["0 0 0 0 rgba(37,99,235,0.45)", "0 0 0 10px rgba(37,99,235,0)", "0 0 0 0 rgba(37,99,235,0)"] }}
+              transition={{ duration: 1.6, repeat: 2 }}
+              className="rounded-md"
+            >
+              <Button asChild>
+                <Link href={nextStep.href} className="gap-2">
+                  Continue → {nextStep.action}
+                </Link>
+              </Button>
+            </motion.div>
           ) : null}
         </div>
 
-        <ol className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {/* Progress rail — teaches the path at a glance */}
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>Heat progress</span>
+            <span className="font-mono">{progressPct}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted/80">
+            <motion.div
+              className="h-full rounded-full bg-blue-600"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ ...industrialEase, duration: 0.5 }}
+            />
+          </div>
+          <div className="mt-3 flex gap-1">
+            {steps.map((step) => (
+              <div
+                key={`rail-${step.step}`}
+                className={cn(
+                  "h-1.5 flex-1 rounded-full transition-colors",
+                  step.status === "done" && "bg-emerald-500",
+                  step.status === "next" && "bg-blue-500 animate-pulse",
+                  (step.status === "todo" || step.status === "optional") && "bg-border"
+                )}
+                title={step.title}
+              />
+            ))}
+          </div>
+        </div>
+
+        <motion.ol
+          className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           {steps.map((step) => (
-            <li key={step.step}>
+            <motion.li key={step.step} variants={fadeUp}>
               <Link
                 href={step.href}
                 className={cn(
                   "flex h-full items-start gap-3 rounded-lg border px-3 py-3 transition-colors focus-ring",
-                  step.status === "next" && "border-blue-500/50 bg-background shadow-sm",
+                  step.status === "next" && "border-blue-500/50 bg-background shadow-sm ring-2 ring-blue-500/20",
                   step.status === "done" && "border-emerald-500/30 bg-emerald-500/5",
                   step.status === "todo" && "border-border/50 bg-background/50 opacity-80",
                   step.status === "optional" && "border-dashed border-border/60 bg-background/40"
                 )}
               >
-                <span
+                <motion.span
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                     step.status === "done" && "bg-emerald-600 text-white",
                     step.status === "next" && "bg-blue-600 text-white",
                     (step.status === "todo" || step.status === "optional") && "bg-muted text-muted-foreground"
                   )}
+                  animate={
+                    step.status === "next"
+                      ? { scale: [1, 1.12, 1], boxShadow: ["0 0 0 0 rgba(37,99,235,0.5)", "0 0 0 8px rgba(37,99,235,0)", "0 0 0 0 rgba(37,99,235,0)"] }
+                      : undefined
+                  }
+                  transition={step.status === "next" ? { duration: 1.5, repeat: 2 } : undefined}
                 >
                   {step.status === "done" ? "✓" : step.step}
-                </span>
+                </motion.span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold">{step.title}</span>
@@ -385,9 +442,9 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
                   </span>
                 </span>
               </Link>
-            </li>
+            </motion.li>
           ))}
-        </ol>
+        </motion.ol>
       </div>
 
       <ActionGroup title="Act now — decide & close the heat" items={actNow} />

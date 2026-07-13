@@ -52,7 +52,7 @@ export async function guestRegister(payload: RegisterRequest): Promise<User> {
     email: payload.email,
     full_name: payload.full_name,
     role: "operator",
-    tenant_id: payload.tenant_slug ?? "jspl-angul",
+    tenant_id: payload.tenant_slug ?? "jspl",
     is_active: true,
     password: payload.password,
   };

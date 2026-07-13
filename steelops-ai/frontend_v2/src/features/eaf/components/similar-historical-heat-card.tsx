@@ -5,6 +5,7 @@ import { Database } from "lucide-react";
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
 import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
+import { BurdenMixCompare, TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import type { EafRecipe, OptimizeResponse, SimilarHeatItem } from "@/lib/api/eaf";
 import { RECIPE_FIELD_LABELS } from "@/lib/eaf-labels";
 import { INDUSTRIAL_STATUS } from "@/lib/industrial-colors";
@@ -120,6 +121,15 @@ export function SimilarHistoricalHeatCard({
             tone="optimized"
             muted={optimizer == null}
           />
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <TttComparisonBars
+            historicalActual={histActual}
+            predicted={currentPredicted}
+            optimized={optimizedTtt}
+          />
+          <BurdenMixCompare currentRecipe={currentRecipe} similarHeat={best} />
         </div>
       </div>
 

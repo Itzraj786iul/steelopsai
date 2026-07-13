@@ -20,22 +20,22 @@ export const metadata: Metadata = {
     template: "%s · JSPL EAF TTT",
   },
   description:
-    "AI-powered Electric Arc Furnace Tap-to-Tap prediction, physics-guided optimization, and industrial decision support.",
+    "JSPL Raigarh SMS-3 AI-powered Electric Arc Furnace Tap-to-Tap prediction, physics-guided optimization, and industrial decision support.",
   applicationName: "JSPL EAF TTT",
   icons: {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
   },
   openGraph: {
-    title: "JSPL EAF TTT",
-    description: "JSPL Electric Arc Furnace Tap-to-Tap Time prediction system",
+    title: "JSPL EAF TTT · Raigarh SMS-3",
+    description: "JSPL Raigarh SMS-3 Electric Arc Furnace Tap-to-Tap Time prediction system",
     type: "website",
     siteName: "JSPL EAF TTT",
   },
   twitter: {
     card: "summary_large_image",
-    title: "JSPL EAF TTT",
-    description: "JSPL Electric Arc Furnace Tap-to-Tap Time prediction system",
+    title: "JSPL EAF TTT · Raigarh SMS-3",
+    description: "JSPL Raigarh SMS-3 Electric Arc Furnace Tap-to-Tap Time prediction system",
   },
 };
 

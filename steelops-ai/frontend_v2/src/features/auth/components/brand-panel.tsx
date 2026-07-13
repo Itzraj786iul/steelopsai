@@ -19,12 +19,13 @@ export function BrandPanel() {
           </div>
         </div>
         <div className="max-w-md space-y-4">
-          <h1 className="text-4xl font-semibold tracking-tight">Electric Arc Furnace tap-to-tap intelligence.</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">Raigarh SMS-3 EAF tap-to-tap intelligence.</h1>
           <p className="text-white/75">
-            Predict cycle time, optimize recipes with physics constraints, and export industrial decision reports.
+            Predict cycle time, optimize recipes with physics constraints, and export industrial decision reports for
+            Steel Melting Shop 3.
           </p>
         </div>
-        <p className="text-sm text-white/50">JSPL Angul · EAF #1</p>
+        <p className="text-sm text-white/50">JSPL Raigarh · SMS-3</p>
       </div>
     </div>
   );

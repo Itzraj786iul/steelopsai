@@ -22,7 +22,7 @@ export function AboutView() {
     >
       <SectionCard title="Project Objective">
         <p className="text-sm leading-relaxed text-muted-foreground">
-          {APP_NAME} helps JSPL Angul operators and engineers predict Electric Arc Furnace tap-to-tap time, evaluate
+          {APP_NAME} helps JSPL Raigarh SMS-3 operators and engineers predict Electric Arc Furnace tap-to-tap time, evaluate
           heat recipes against historical plant practice, run physics-guided optimization, and export decision-support
           reports — while maintaining a clear separation between the deployed production model and experimental
           research pipelines (Phases 23–27).

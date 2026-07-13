@@ -14,7 +14,7 @@ export interface InstallationConfig {
 }
 
 const defaultInstallation: InstallationConfig = {
-  plantName: "JSPL Angul",
+  plantName: "JSPL Raigarh SMS-3",
   furnaces: 3,
   shifts: ["A", "B", "C"],
   materials: ["DRI", "Scrap", "Lime", "Ferro alloys"],
