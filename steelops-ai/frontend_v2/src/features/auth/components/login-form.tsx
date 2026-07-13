@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -30,7 +30,6 @@ const DEMO_ACCOUNTS = [
 ];
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { setTokens, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +52,10 @@ export function LoginForm() {
       const user = data.user ?? (await authApi.me()).data;
       setUser(user);
       const next = searchParams.get("next");
-      const nextPath = next && next.startsWith("/") ? next : null;
-      router.replace(nextPath || getDefaultRouteForRole(user.role));
+      const nextPath = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      const destination = nextPath || getDefaultRouteForRole(user.role);
+      // Full navigation so middleware sees the auth cookie (soft replace can leave you on /login).
+      window.location.assign(destination);
     } catch (err) {
       setError(getApiErrorMessage(err, "Invalid email or password"));
     }
@@ -83,7 +84,7 @@ export function LoginForm() {
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <ActionButton type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? "Signing in…" : "Sign in"}
           </ActionButton>
         </form>
 

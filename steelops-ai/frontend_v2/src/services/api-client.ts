@@ -22,8 +22,9 @@ export function setAuthTokens(accessToken: string, refreshToken: string, maxAgeS
   if (typeof window === "undefined") return;
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  const maxAge = maxAgeSeconds ?? 60 * 60 * 8;
-  document.cookie = `${AUTH_COOKIE_KEY}=1; path=/; max-age=${maxAge}; SameSite=Lax`;
+  const maxAge = Math.max(60, maxAgeSeconds ?? 60 * 60 * 8);
+  // Explicit attributes so Next.js middleware reliably sees the session flag after login.
+  document.cookie = `${AUTH_COOKIE_KEY}=1; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
 }
 
 export function clearAuthTokens(): void {

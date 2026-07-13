@@ -46,7 +46,7 @@ export function PredictionAuditView() {
   };
 
   return (
-    <PageContainer title="Prediction Audit" description="Permanent audit trail for every prediction — client-side store">
+    <PageContainer title="Prediction Audit" description="Permane  nt audit trail for every prediction — client-side store">
       <SectionCard title="Search & Filters">
         <div className="grid gap-3 sm:grid-cols-3">
           <div>

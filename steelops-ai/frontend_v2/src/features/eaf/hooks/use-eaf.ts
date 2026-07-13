@@ -83,18 +83,16 @@ export function useEafPredict() {
       setError(null);
       const start = performance.now();
       try {
-        const [{ data }, hybridRes] = await Promise.all([
-          eafApi.predict(recipe),
-          eafApi.hybridEvaluate(recipe, heatId).catch(() => null),
-        ]);
-        const hybrid = hybridRes?.data ?? null;
-        const merged = hybrid ? { ...data, hybrid_trust: hybrid } : data;
+        // Show core prediction as soon as ML returns — don't block on hybrid trust.
+        const { data } = await eafApi.predict(recipe);
         const warnings =
           data.validation_warnings?.filter((w) => w.level !== "error").map((w) => w.message) ?? [];
-        updatePrediction(data, hybrid, warnings);
+        updatePrediction(data, null, warnings);
+        setResult(data as PredictResponse & { hybrid_trust?: HybridTrustResponse });
+        setLoading(false);
+
         const elapsed = performance.now() - start;
         usePerformanceStore.getState().record({ type: "prediction", ms: elapsed });
-        if (hybrid) usePerformanceStore.getState().record({ type: "hybrid", ms: elapsed * 0.3 });
 
         const active = useCurrentHeatStore.getState().active;
         if (active) {
@@ -117,14 +115,27 @@ export function useEafPredict() {
 
         void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterPrediction());
 
-        setResult(merged as PredictResponse & { hybrid_trust?: HybridTrustResponse });
-        return merged;
+        void eafApi
+          .hybridEvaluate(recipe, heatId)
+          .then((hybridRes) => {
+            const hybrid = hybridRes.data;
+            const hybridElapsed = performance.now() - start;
+            usePerformanceStore.getState().record({ type: "hybrid", ms: hybridElapsed });
+            updatePrediction(data, hybrid, warnings);
+            setResult({ ...data, hybrid_trust: hybrid } as PredictResponse & {
+              hybrid_trust?: HybridTrustResponse;
+            });
+          })
+          .catch(() => {
+            /* hybrid is optional enrichment */
+          });
+
+        return data;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Prediction failed");
         setError(msg);
-        throw e;
-      } finally {
         setLoading(false);
+        throw e;
       }
     },
     [updatePrediction]

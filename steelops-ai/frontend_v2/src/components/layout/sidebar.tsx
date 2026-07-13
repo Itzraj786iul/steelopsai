@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pin, Search, Star } from "lucide-react";
+import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,7 @@ function NavSection({
 
 export function Sidebar({ badges }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { collapsed, toggleCollapsed } = useSidebarStore();
   const { setOpen } = useCommandPaletteStore();
@@ -149,6 +151,13 @@ export function Sidebar({ badges }: SidebarProps) {
   const { plant } = usePlantContext();
 
   const flatNav = flattenNavItems(ALL_SECTIONS);
+
+  // Prefetch common production routes so first click isn't waiting on compile/chunk load.
+  useEffect(() => {
+    for (const item of flattenNavItems(PRODUCTION_NAV)) {
+      if (canShowNavItem(item)) router.prefetch(item.href.split("?")[0]);
+    }
+  }, [canShowNavItem, router]);
 
   const pinnedItems = pinned
     .map((href) => flatNav.find((item) => item.href === href))

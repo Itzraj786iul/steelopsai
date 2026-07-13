@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect } from "react";
 
 import { authApi } from "@/lib/api/auth";
@@ -22,17 +21,16 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const { user, isAuthenticated, isHydrated, setUser, clearAuth } = useAuthStore();
 
-  const { isLoading } = useQuery({
+  const { isLoading: isMeLoading, isFetching } = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: async () => {
       const response = await authApi.me();
       setUser(response.data);
       return response.data;
     },
-    enabled: isHydrated && !!getAccessToken() && !isGuestAuthMode(),
+    enabled: isHydrated && !!getAccessToken() && !isGuestAuthMode() && !user,
     retry: false,
   });
 
@@ -49,15 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // proceed with local logout
     }
     clearAuth();
-    router.push("/login");
+    window.location.assign("/login");
   };
+
+  // Don't flip back into a blocking loading state after login already set the user.
+  const isLoading = !isHydrated || ((isMeLoading || isFetching) && !user && !!getAccessToken());
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated,
-        isLoading: !isHydrated || isLoading,
+        isAuthenticated: isAuthenticated || !!user || !!getAccessToken(),
+        isLoading,
         logout,
       }}
     >

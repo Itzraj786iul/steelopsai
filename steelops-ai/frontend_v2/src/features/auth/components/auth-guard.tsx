@@ -16,11 +16,13 @@ interface AuthGuardProps {
 export function AuthGuard({ children, pathname }: AuthGuardProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const hasToken = typeof window !== "undefined" && !!getAccessToken();
+  const authed = isAuthenticated || hasToken;
 
   useEffect(() => {
     if (isLoading) return;
 
-    if (!isAuthenticated || !getAccessToken()) {
+    if (!authed || !getAccessToken()) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
@@ -28,9 +30,9 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
     if (user && pathname.startsWith("/eaf") && !canAccessRoute(user.role, pathname)) {
       router.replace("/unauthorized");
     }
-  }, [isAuthenticated, isLoading, pathname, router, user]);
+  }, [authed, isLoading, pathname, router, user]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !authed) {
     return (
       <div className="p-6">
         <PageLoadingSkeleton />
