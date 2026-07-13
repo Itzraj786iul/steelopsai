@@ -2,6 +2,7 @@
 
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
+import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
 import type { ContributorItem } from "@/lib/api/eaf";
 import { formatContributorLabel } from "@/lib/eaf-labels";
 
@@ -14,7 +15,11 @@ export function ShapInterpretations({ contributors, title = "Feature Interpretat
   if (!contributors.length) return null;
 
   return (
-    <SectionCard title={title} description="Plain-language metallurgical explanation for each driver">
+    <SectionCard
+      title={title}
+      description="Plain-language metallurgical explanation for each driver"
+      actions={<OpenPageLink href="/eaf/explainability" label="Explainability" />}
+    >
       <ul className="space-y-3 text-sm">
         {contributors.slice(0, 8).map((c) => (
           <li key={c.feature} className="rounded-lg border border-border/60 bg-muted/10 p-3">

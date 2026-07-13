@@ -47,7 +47,12 @@ export function ExplainabilityCenterView() {
           </div>
         </SectionCard>
 
-        <SimilarHistoricalHeatCard heats={explain?.similar_heats ?? []} predictedTtt={prediction.predicted_ttt} />
+        <SimilarHistoricalHeatCard
+          heats={explain?.similar_heats ?? []}
+          predictedTtt={prediction.predicted_ttt}
+          currentRecipe={active.recipe}
+          optimizer={optimizer}
+        />
 
         {hybrid ? <TrustFrameworkPanel trust={hybrid} /> : null}
 

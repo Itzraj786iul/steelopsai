@@ -156,7 +156,12 @@ export default function EafOptimizerPage() {
               <FullRecommendationExplanation explanation={explain?.recommendation_narrative ? { narrative_lines: explain.recommendation_narrative } : undefined} />
               <RecommendationValidationTable rows={explain?.validated_recommendations ?? prodResult.comparison} />
               <RecommendationAlternativesPanel alternatives={explain?.top5_alternatives ?? []} />
-              <SimilarHistoricalHeatCard heats={explain?.similar_heats ?? []} predictedTtt={prodResult.optimized_ttt} />
+              <SimilarHistoricalHeatCard
+                heats={explain?.similar_heats ?? []}
+                predictedTtt={prodResult.current_ttt}
+                currentRecipe={recipe}
+                optimizer={prodResult}
+              />
               <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
               {active ? <HeatLifecycleTimeline active={active} /> : null}
             </>

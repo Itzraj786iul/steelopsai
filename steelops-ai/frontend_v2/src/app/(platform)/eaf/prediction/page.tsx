@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -49,10 +51,23 @@ export default function EafPredictionPage() {
 
       <RecipeForm recipe={recipe} onChange={update} charge={charge} />
       <ValidationBanner messages={[...chargeAssessment.warnings, ...apiWarnings]} />
-      <div className="mt-6 flex gap-4">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Button onClick={() => predict(recipe, heatNumber)} disabled={loading}>
           {loading ? "Predicting…" : "Predict TTT"}
         </Button>
+        {result ? (
+          <>
+            <Button asChild variant="secondary">
+              <Link href="/eaf/optimizer">Go to Optimizer</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/eaf/historical">Historical Analysis</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/eaf/whatif">What-if</Link>
+            </Button>
+          </>
+        ) : null}
       </div>
       {error ? (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -76,7 +91,12 @@ export default function EafPredictionPage() {
           </div>
 
           {hybrid ? <TrustFrameworkPanel trust={hybrid} /> : null}
-          <SimilarHistoricalHeatCard heats={explain?.similar_heats ?? []} predictedTtt={result.predicted_ttt} />
+          <SimilarHistoricalHeatCard
+            heats={explain?.similar_heats ?? []}
+            predictedTtt={result.predicted_ttt}
+            currentRecipe={recipe}
+            optimizer={active?.optimizer ?? null}
+          />
           <ContributorList contributors={result.top_contributors ?? []} />
           <ShapInterpretations contributors={explain?.contributor_interpretations ?? result.top_contributors ?? []} />
           <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />

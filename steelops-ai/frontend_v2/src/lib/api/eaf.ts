@@ -39,6 +39,16 @@ export interface SimilarHeatItem {
   ttt_difference?: number | null;
   similarity_pct: number;
   distance: number;
+  HM?: number | null;
+  DRI?: number | null;
+  HBI?: number | null;
+  Bucket?: number | null;
+  LIME?: number | null;
+  DOLO?: number | null;
+  CPC?: number | null;
+  POWER?: number | null;
+  OXY?: number | null;
+  Power_Restriction?: number | null;
 }
 
 export interface IndustrialObservation {

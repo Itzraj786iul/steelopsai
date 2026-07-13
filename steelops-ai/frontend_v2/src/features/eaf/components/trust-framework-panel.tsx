@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { SectionCard } from "@/components/layout/section-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
 import { Info } from "lucide-react";
 import type { HybridTrustResponse } from "@/lib/api/eaf";
 
@@ -66,7 +67,11 @@ function consensusVariant(consensus: string): "default" | "secondary" | "outline
 export function TrustFrameworkPanel({ trust }: { trust: HybridTrustResponse }) {
   return (
     <TooltipProvider>
-      <SectionCard title="Phase 32 Trust Framework" description="Hybrid physics + AI decision support metrics">
+      <SectionCard
+        title="Phase 32 Trust Framework"
+        description="Hybrid physics + AI decision support metrics"
+        actions={<OpenPageLink href="/eaf/reliability" label="Reliability" />}
+      >
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Predicted TTT</p>

@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
+import { PredictionNextActions } from "@/features/eaf/components/prediction-next-actions";
 import type { PredictResponse } from "@/lib/api/eaf";
 import { INDUSTRIAL_STATUS, confidenceStatus } from "@/lib/industrial-colors";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ export function PredictionCompleteDashboard({ result, historicalSimilarityPct }:
     <div className="space-y-4">
       <SectionCard
         title="Prediction Complete"
-        description="Recipe saved to the current heat session"
+        description="Recipe saved to the current heat session — open related pages below or from each result section"
         className={INDUSTRIAL_STATUS.prediction.className}
       >
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -46,23 +47,22 @@ export function PredictionCompleteDashboard({ result, historicalSimilarityPct }:
               {result.ci_lower_95.toFixed(1)} – {result.ci_upper_95.toFixed(1)} min
             </p>
           </div>
-          <div>
+          <Link href="/eaf/reliability" className="rounded-lg focus-ring">
             <p className="text-xs uppercase text-muted-foreground">Confidence</p>
             <Badge className={cn("mt-1", INDUSTRIAL_STATUS[confKey].className)}>{confidence}</Badge>
-          </div>
-          <div>
+            <p className="mt-1 text-xs text-primary">Open reliability →</p>
+          </Link>
+          <Link href="/eaf/historical" className="rounded-lg focus-ring">
             <p className="text-xs uppercase text-muted-foreground">Historical Similarity</p>
             <p className="font-mono text-xl font-semibold">
               {similarity != null ? `${similarity.toFixed(0)}%` : "—"}
             </p>
-          </div>
+            <p className="mt-1 text-xs text-primary">Open historical analysis →</p>
+          </Link>
         </div>
       </SectionCard>
 
-      <p className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-        Continue the workflow from the sidebar: Optimizer → Validation → Reports.
-      </p>
+      <PredictionNextActions />
     </div>
   );
 }

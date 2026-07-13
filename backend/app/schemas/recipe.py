@@ -77,6 +77,17 @@ class SimilarHeatItem(BaseModel):
     ttt_difference: float | None = None
     similarity_pct: float
     distance: float
+    # Controllable recipe snapshot from historical row (for operator comparison)
+    HM: float | None = None
+    DRI: float | None = None
+    HBI: float | None = None
+    Bucket: float | None = None
+    LIME: float | None = None
+    DOLO: float | None = None
+    CPC: float | None = None
+    POWER: float | None = None
+    OXY: float | None = None
+    Power_Restriction: int | None = None
 
 
 class IndustrialObservation(BaseModel):

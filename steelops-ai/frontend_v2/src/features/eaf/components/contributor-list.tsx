@@ -1,5 +1,6 @@
 import type { ContributorItem } from "@/lib/api/eaf";
 import { SectionCard } from "@/components/layout/section-card";
+import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
 import { formatContributorLabel } from "@/lib/eaf-labels";
 
 interface ContributorListProps {
@@ -18,7 +19,11 @@ export function ContributorList({
   const items = contributors.slice(0, limit);
 
   return (
-    <SectionCard title={title} description={description}>
+    <SectionCard
+      title={title}
+      description={description}
+      actions={<OpenPageLink href="/eaf/explainability" label="Explainability" />}
+    >
       {items.length ? (
         <ul className="space-y-2 text-sm">
           {items.map((c) => (

@@ -127,18 +127,25 @@ def find_similar_heats(recipe: dict[str, Any], predicted_ttt: float, k: int = 5)
         actual_ttt = float(row["TTT"]) if "TTT" in row and pd.notna(row["TTT"]) else None
         charge = float(row["Total_Charge"]) if pd.notna(row.get("Total_Charge")) else total_charge(recipe)
         similarity_pct = max(0.0, min(100.0, 100.0 * (1.0 - dist / max_dist)))
-        results.append(
-            {
-                "heat_id": str(row.get("Heat Number", idx)),
-                "shift": str(row.get("Shift", "—")),
-                "charge_t": round(charge, 1),
-                "actual_ttt": round(actual_ttt, 2) if actual_ttt is not None else None,
-                "predicted_ttt": round(predicted_ttt, 2),
-                "ttt_difference": round(actual_ttt - predicted_ttt, 2) if actual_ttt is not None else None,
-                "similarity_pct": round(similarity_pct, 1),
-                "distance": round(dist, 4),
-            }
-        )
+        item: dict[str, Any] = {
+            "heat_id": str(row.get("Heat Number", idx)),
+            "shift": str(row.get("Shift", "—")),
+            "charge_t": round(charge, 1),
+            "actual_ttt": round(actual_ttt, 2) if actual_ttt is not None else None,
+            "predicted_ttt": round(predicted_ttt, 2),
+            "ttt_difference": round(actual_ttt - predicted_ttt, 2) if actual_ttt is not None else None,
+            "similarity_pct": round(similarity_pct, 1),
+            "distance": round(dist, 4),
+        }
+        for col in CONTROLLABLE_NUMERIC:
+            if col in row.index and pd.notna(row[col]):
+                item[col] = round(float(row[col]), 3)
+        if "Power_Restriction" in row.index and pd.notna(row["Power_Restriction"]):
+            try:
+                item["Power_Restriction"] = int(row["Power_Restriction"])
+            except (TypeError, ValueError):
+                item["Power_Restriction"] = None
+        results.append(item)
     return results
 
 

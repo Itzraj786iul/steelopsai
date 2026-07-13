@@ -2,6 +2,7 @@
 
 import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
+import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
 import type { DigitalTwinReadiness } from "@/lib/api/eaf";
 
 interface DigitalTwinReadinessCardProps {
@@ -12,7 +13,11 @@ export function DigitalTwinReadinessCard({ readiness }: DigitalTwinReadinessCard
   if (!readiness) return null;
 
   return (
-    <SectionCard title="Digital Twin Readiness" description="Informational maturity score — does not affect predictions">
+    <SectionCard
+      title="Digital Twin Readiness"
+      description="Informational maturity score — does not affect predictions"
+      actions={<OpenPageLink href="/eaf/digital-twin-readiness" label="Digital Twin" />}
+    >
       <div className="flex items-center gap-4">
         <p className="font-mono text-4xl font-bold text-primary">{readiness.overall_score}%</p>
         <div>
