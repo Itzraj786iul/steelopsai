@@ -125,14 +125,8 @@ def validate_recipe(recipe: dict[str, Any]) -> tuple[bool, list[str]]:
     if shift not in VALID_SHIFTS:
         errors.append(f"Invalid shift '{recipe.get('Shift')}'. Use A, B, or C.")
 
-    if not errors:
-        charge = total_charge(recipe)
-        if charge < CHARGE_MIN_T or charge > CHARGE_MAX_T:
-            errors.append(
-                f"Total charge {charge:.1f} t is outside allowable range "
-                f"({CHARGE_MIN_T:.0f}-{CHARGE_MAX_T:.0f} t)."
-            )
-
+    # Total charge is advisory only (aligned with prediction / Phase 28).
+    # Out-of-band charges still allow optimize; warnings are emitted elsewhere.
     return len(errors) == 0, errors
 
 
@@ -156,9 +150,13 @@ def live_validation_warnings(recipe: dict[str, Any], stats: pd.DataFrame) -> lis
 
     charge = total_charge(recipe)
     if charge > CHARGE_MAX_T:
-        warnings.append(("error", f"Total charge {charge:.1f} t exceeds maximum {CHARGE_MAX_T:.0f} t."))
+        warnings.append(
+            ("warning", f"Total charge {charge:.1f} t is above advisory maximum {CHARGE_MAX_T:.0f} t.")
+        )
     elif charge < CHARGE_MIN_T:
-        warnings.append(("warning", f"Total charge {charge:.1f} t is below typical minimum {CHARGE_MIN_T:.0f} t."))
+        warnings.append(
+            ("warning", f"Total charge {charge:.1f} t is below typical minimum {CHARGE_MIN_T:.0f} t.")
+        )
 
     power = float(recipe.get("POWER", 0))
     if power < stats.loc["POWER", "p5"] * 0.9:

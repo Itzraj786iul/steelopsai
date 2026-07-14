@@ -132,7 +132,7 @@ export function ModelInsightsView() {
             <li>• Retrospective Electrical Energy features unsuitable for pre-heat planning without caution</li>
             <li>• Delay/abnormal heats not modeled separately in production (single regressor)</li>
             <li>• ~3 min MAE ceiling on existing columns (Phase 26 information ceiling)</li>
-            <li>• Backend charge validation (115–150 t) unchanged — UI allows wider range with warnings</li>
+            <li>• Charge band is advisory (80–150 t) for prediction and optimizer — out-of-band heats warn, do not block</li>
           </ul>
         </SectionCard>
         <SectionCard title="Expected future improvements">

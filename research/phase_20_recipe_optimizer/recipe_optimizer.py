@@ -36,7 +36,9 @@ PREPROC_PATH = PHASE19_EXPORTS / "preprocessing_pipeline.pkl"
 
 CONTROLLABLE_NUMERIC = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"]
 BURDEN_COLS = ["HM", "DRI", "HBI", "Bucket"]
-CHARGE_MIN_T = 115.0
+# Advisory plant band (aligned with prediction / UI 80–150 t).
+# Hard rejection previously used 115–150 and blocked real heats (~110 t).
+CHARGE_MIN_T = 80.0
 CHARGE_MAX_T = 150.0
 
 POWER_REDUCTION_EXEMPT_PCT = 0.01
@@ -189,10 +191,15 @@ def validate_candidate(
 ) -> ValidationResult:
     charge = total_charge(candidate)
 
-    if charge < CHARGE_MIN_T or charge > CHARGE_MAX_T:
+    # Keep candidates near the current heat charge. Expand the absolute band
+    # when the current heat is already outside the advisory 80–150 t range
+    # so optimization still works (same policy as advisory prediction).
+    band_lo = min(CHARGE_MIN_T, original_charge)
+    band_hi = max(CHARGE_MAX_T, original_charge)
+    if charge < band_lo or charge > band_hi:
         return ValidationResult(
             False,
-            f"Charge imbalance (outside {CHARGE_MIN_T:.0f}-{CHARGE_MAX_T:.0f} t band)",
+            f"Charge imbalance (outside {band_lo:.0f}-{band_hi:.0f} t band)",
         )
 
     if abs(charge - original_charge) > cfg.charge_tolerance_t:

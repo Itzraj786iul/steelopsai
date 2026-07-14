@@ -41,17 +41,35 @@ def _ensure_phase21_path() -> None:
         sys.path.insert(0, path)
 
 
+# Set True after background warmup (or first successful predict/optimize).
+# health() must NEVER load pickles — that blocked login on the event loop for 10–30s.
+_ml_warm = False
+
+
+def ml_is_warm() -> bool:
+    return _ml_warm
+
+
+def mark_ml_warm() -> None:
+    global _ml_warm
+    _ml_warm = True
+
+
 @lru_cache(maxsize=1)
 def get_prediction_engine():
     _ensure_phase21_path()
     from prediction_engine import PredictionEngine
-    return PredictionEngine()
+
+    engine = PredictionEngine()
+    mark_ml_warm()
+    return engine
 
 
 @lru_cache(maxsize=1)
 def get_optimizer_engine():
     _ensure_phase21_path()
     from optimizer_engine import OptimizerEngine
+
     return OptimizerEngine()
 
 
@@ -59,6 +77,7 @@ def get_optimizer_engine():
 def get_historical_stats() -> pd.DataFrame:
     _ensure_phase21_path()
     from utils import load_historical_stats
+
     return load_historical_stats()
 
 
@@ -66,6 +85,7 @@ def get_historical_stats() -> pd.DataFrame:
 def get_historical_raw() -> pd.DataFrame:
     _ensure_phase21_path()
     from utils import load_historical_raw
+
     return load_historical_raw()
 
 
@@ -395,29 +415,18 @@ class MLService:
     """Facade for timed operations and health checks."""
 
     def health(self) -> dict[str, Any]:
+        """Fast readiness probe — never loads ML artifacts (see mark_ml_warm)."""
+        from app.core.config import MODEL_PATH, OPTIMIZER_PKL_PATH
+
         settings = get_settings()
         registry = get_version_registry()
-        model_ok = False
-        opt_ok = False
-        stats_ok = False
-        try:
-            get_prediction_engine()
-            model_ok = True
-        except Exception:
-            pass
-        try:
-            get_optimizer_engine()
-            opt_ok = True
-        except Exception:
-            pass
-        try:
-            get_historical_stats()
-            stats_ok = True
-        except Exception:
-            pass
+        model_ok = get_prediction_engine.cache_info().currsize > 0 or ml_is_warm()
+        opt_ok = get_optimizer_engine.cache_info().currsize > 0
+        stats_ok = get_historical_stats.cache_info().currsize > 0
+        artifacts_present = MODEL_PATH.exists() and OPTIMIZER_PKL_PATH.exists()
 
         return {
-            "status": "ok" if model_ok else "degraded",
+            "status": "ok" if model_ok else ("warming" if artifacts_present else "degraded"),
             "model_loaded": model_ok,
             "optimizer_loaded": opt_ok,
             "historical_statistics_loaded": stats_ok,

@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Flame } from "lucide-react";
@@ -48,6 +48,7 @@ function useApiConfigWarning(): string | null {
 }
 
 export function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { setTokens, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +63,13 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Lightweight wake-up (version does not load ML) so first click is not cold.
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(`${EAF_API_URL}/version`, { signal: ctrl.signal }).catch(() => undefined);
+    return () => ctrl.abort();
+  }, []);
+
   const onSubmit = async (values: LoginValues) => {
     setError(null);
     try {
@@ -73,7 +81,13 @@ export function LoginForm() {
       const next = searchParams.get("next");
       const nextPath = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
       const destination = nextPath || getDefaultRouteForRole(user.role);
-      window.location.assign(destination);
+      // Soft nav is fast; hard assign only as fallback if soft nav stalls.
+      router.replace(destination);
+      window.setTimeout(() => {
+        if (window.location.pathname.startsWith("/login")) {
+          window.location.assign(destination);
+        }
+      }, 800);
     } catch (err) {
       setError(getApiErrorMessage(err, "Invalid email or password"));
     }

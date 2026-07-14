@@ -22,6 +22,7 @@ HeatStatus = Literal[
 class HeatUpsertPredictionRequest(BaseModel):
     heat_number: str = ""
     session_id: str = ""
+    heat_record_id: str = ""
     shift: str | None = None
     operator_name: str = ""
     operator_id: str = ""
@@ -39,6 +40,7 @@ class HeatUpsertPredictionRequest(BaseModel):
 class HeatUpdateOptimizerRequest(BaseModel):
     heat_number: str = ""
     session_id: str = ""
+    heat_record_id: str = ""
     recipe_inputs: dict[str, Any] | None = None
     optimizer: dict[str, Any] | None = None
     optimizer_v2: dict[str, Any] | None = None
@@ -50,6 +52,7 @@ class HeatUpdateOptimizerRequest(BaseModel):
 class HeatUpdateValidationRequest(BaseModel):
     heat_number: str = ""
     session_id: str = ""
+    heat_record_id: str = ""
     predicted_ttt: float | None = None
     actual_ttt: float | str | None = None
     operator_comments: str = ""

@@ -59,6 +59,14 @@ export function HeatHistoryView() {
     setLoading(true);
     setError(null);
     try {
+      // Re-push any heats still held in this browser's session history into SQLite
+      // (recovers rows lost when upsert incorrectly keyed on heat_number).
+      try {
+        const { recoverSessionHistoryToServer } = await import("@/lib/heat-history-sync");
+        await recoverSessionHistoryToServer();
+      } catch {
+        /* non-fatal */
+      }
       const { data } = await eafApi.heatsList({
         q: q || undefined,
         shift: shift === "all" ? undefined : shift,

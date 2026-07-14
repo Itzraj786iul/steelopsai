@@ -65,7 +65,8 @@ def _meta(request: Request) -> tuple[str, str]:
 
 
 @router.post("/auth/login", summary="Enterprise login")
-async def login(body: LoginBody, request: Request) -> dict[str, Any]:
+def login(body: LoginBody, request: Request) -> dict[str, Any]:
+    """Sync route so FastAPI runs auth in a worker thread (never blocks ML warmup)."""
     ip, ua = _meta(request)
     try:
         return auth.authenticate(body.email, body.password, ip=ip, ua=ua)
@@ -74,7 +75,7 @@ async def login(body: LoginBody, request: Request) -> dict[str, Any]:
 
 
 @router.post("/auth/refresh", summary="Refresh access token")
-async def refresh(body: RefreshBody) -> dict[str, Any]:
+def refresh(body: RefreshBody) -> dict[str, Any]:
     try:
         return auth.refresh_session(body.refresh_token)
     except ValueError as exc:

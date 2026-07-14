@@ -14,6 +14,7 @@ from typing import Any
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "enterprise"
 DB_PATH = DATA_DIR / "enterprise.db"
 _lock = threading.Lock()
+_schema_ready = False
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS departments (
@@ -357,10 +358,17 @@ CREATE INDEX IF NOT EXISTS idx_mes_timeline_heat ON mes_timeline_events(heat_num
 
 
 def ensure_enterprise_db() -> Path:
+    global _schema_ready
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if _schema_ready and DB_PATH.exists():
+        return DB_PATH
     with _lock:
+        if _schema_ready and DB_PATH.exists():
+            return DB_PATH
         conn = sqlite3.connect(str(DB_PATH))
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             conn.executescript(SCHEMA)
             conn.executescript(OPS_SCHEMA)
             conn.executescript(MES_SCHEMA)
@@ -369,6 +377,7 @@ def ensure_enterprise_db() -> Path:
             if "status" not in cols:
                 conn.execute("ALTER TABLE delay_events ADD COLUMN status TEXT DEFAULT 'Open'")
             conn.commit()
+            _schema_ready = True
         finally:
             conn.close()
     return DB_PATH
@@ -376,8 +385,10 @@ def ensure_enterprise_db() -> Path:
 
 def get_conn() -> sqlite3.Connection:
     ensure_enterprise_db()
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 

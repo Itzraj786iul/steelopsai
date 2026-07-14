@@ -251,58 +251,81 @@ def write_audit(
 
 
 def authenticate(email: str, password: str, ip: str = "", ua: str = "") -> dict[str, Any]:
-    user = get_user_by_email(email)
-    if not user:
-        record_login(email, None, False, ip, ua)
-        raise ValueError("Invalid email or password")
-
-    if user.get("locked_until"):
-        try:
-            locked = datetime.fromisoformat(user["locked_until"])
-            if locked.tzinfo is None:
-                locked = locked.replace(tzinfo=timezone.utc)
-            if locked > _now():
-                raise ValueError("Account locked due to repeated failed logins. Try again later.")
-        except ValueError as exc:
-            if "Account locked" in str(exc):
-                raise
-
-    if not user["is_active"]:
-        raise ValueError("Account is deactivated")
-
-    if not verify_password(password, user["password_hash"]):
-        fails = int(user.get("failed_login_count") or 0) + 1
-        locked_until = None
-        if fails >= MAX_FAILED_LOGINS:
-            locked_until = _iso(_now() + timedelta(minutes=LOCKOUT_MINUTES))
-            fails = 0
-        conn = get_conn()
-        try:
-            with conn:
-                conn.execute(
-                    "UPDATE users SET failed_login_count = ?, locked_until = ?, updated_at = ? WHERE id = ?",
-                    (fails, locked_until, _iso(), user["id"]),
-                )
-        finally:
-            conn.close()
-        record_login(email, user["id"], False, ip, ua)
-        raise ValueError("Invalid email or password")
-
+    email_norm = email.lower().strip()
     conn = get_conn()
     try:
-        with conn:
+        user = row_dict(conn.execute("SELECT * FROM users WHERE email = ?", (email_norm,)).fetchone())
+        if not user:
             conn.execute(
-                "UPDATE users SET failed_login_count = 0, locked_until = NULL, last_login_at = ?, updated_at = ? WHERE id = ?",
-                (_iso(), _iso(), user["id"]),
+                "INSERT INTO login_history (id, user_id, email, success, ip, user_agent, created_at) VALUES (?,?,?,?,?,?,?)",
+                (str(uuid.uuid4()), None, email_norm, 0, ip, ua, _iso()),
             )
+            conn.commit()
+            raise ValueError("Invalid email or password")
+
+        if user.get("locked_until"):
+            try:
+                locked = datetime.fromisoformat(user["locked_until"])
+                if locked.tzinfo is None:
+                    locked = locked.replace(tzinfo=timezone.utc)
+                if locked > _now():
+                    raise ValueError("Account locked due to repeated failed logins. Try again later.")
+            except ValueError as exc:
+                if "Account locked" in str(exc):
+                    raise
+
+        if not user["is_active"]:
+            raise ValueError("Account is deactivated")
+
+        if not verify_password(password, user["password_hash"]):
+            fails = int(user.get("failed_login_count") or 0) + 1
+            locked_until = None
+            if fails >= MAX_FAILED_LOGINS:
+                locked_until = _iso(_now() + timedelta(minutes=LOCKOUT_MINUTES))
+                fails = 0
+            conn.execute(
+                "UPDATE users SET failed_login_count = ?, locked_until = ?, updated_at = ? WHERE id = ?",
+                (fails, locked_until, _iso(), user["id"]),
+            )
+            conn.execute(
+                "INSERT INTO login_history (id, user_id, email, success, ip, user_agent, created_at) VALUES (?,?,?,?,?,?,?)",
+                (str(uuid.uuid4()), user["id"], email_norm, 0, ip, ua, _iso()),
+            )
+            conn.commit()
+            raise ValueError("Invalid email or password")
+
+        now = _iso()
+        conn.execute(
+            "UPDATE users SET failed_login_count = 0, locked_until = NULL, last_login_at = ?, updated_at = ? WHERE id = ?",
+            (now, now, user["id"]),
+        )
+        conn.execute(
+            "INSERT INTO login_history (id, user_id, email, success, ip, user_agent, created_at) VALUES (?,?,?,?,?,?,?)",
+            (str(uuid.uuid4()), user["id"], email_norm, 1, ip, ua, now),
+        )
+        conn.execute(
+            """INSERT INTO audit_logs
+            (id, user_id, user_email, action, resource, heat_number, old_value, new_value, reason, ip, user_agent, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (str(uuid.uuid4()), user["id"], user["email"], "login", "auth", "", None, None, "", ip, ua, now),
+        )
+        # Refresh token in same connection
+        refresh = secrets.token_urlsafe(48)
+        conn.execute(
+            "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, revoked, created_at) VALUES (?,?,?,?,0,?)",
+            (
+                str(uuid.uuid4()),
+                user["id"],
+                hash_token(refresh),
+                _iso(_now() + timedelta(days=REFRESH_TOKEN_DAYS)),
+                now,
+            ),
+        )
+        conn.commit()
     finally:
         conn.close()
 
-    record_login(email, user["id"], True, ip, ua)
-    write_audit(user_id=user["id"], user_email=user["email"], action="login", resource="auth", ip=ip, user_agent=ua)
-
     access, expires_in = create_access_token(user)
-    refresh = create_refresh_token(user["id"])
     return {
         "access_token": access,
         "refresh_token": refresh,

@@ -82,15 +82,22 @@ class PhysicsConstraintEngine:
         else:
             result.add("R1", "HM–DRI inverse coupling", True, "Coupling satisfied")
 
-        # R2 — Total charge balance band
+        # R2 — Total charge balance band (expand if current heat is already outside)
         charge = total_charge(candidate)
-        if charge < CHARGE_MIN_T or charge > CHARGE_MAX_T:
-            result.add("R2", "Total charge balance", False, f"Charge {charge:.1f} t outside {CHARGE_MIN_T}–{CHARGE_MAX_T} t")
+        orig = total_charge(current)
+        band_lo = min(CHARGE_MIN_T, orig)
+        band_hi = max(CHARGE_MAX_T, orig)
+        if charge < band_lo or charge > band_hi:
+            result.add(
+                "R2",
+                "Total charge balance",
+                False,
+                f"Charge {charge:.1f} t outside {band_lo:.0f}–{band_hi:.0f} t",
+            )
         else:
             result.add("R2", "Total charge balance", True, f"Charge {charge:.1f} t within band")
 
         # R3 — Charge drift from current
-        orig = total_charge(current)
         if abs(charge - orig) > cfg["charge_tolerance_t"]:
             result.add("R3", "Burden drift limit", False, f"Charge drift {abs(charge - orig):.1f} t exceeds tolerance")
         else:

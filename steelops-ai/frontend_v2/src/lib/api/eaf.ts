@@ -344,10 +344,28 @@ export const DEFAULT_RECIPE: EafRecipe = {
 export const eafClient = axios.create({
   baseURL: EAF_API_URL,
   headers: { "Content-Type": "application/json" },
+  // ML optimize/hybrid can be slow; auth overrides with a shorter timeout.
   timeout: 60_000,
 });
 
+/** Dedicated short-timeout client for login/refresh — must not wait on ML. */
+export const eafAuthClient = axios.create({
+  baseURL: EAF_API_URL,
+  headers: { "Content-Type": "application/json" },
+  timeout: 12_000,
+});
+
 eafClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+eafAuthClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
     if (token) {
@@ -397,6 +415,7 @@ export const eafApi = {
   heatFromPrediction: (body: {
     heat_number?: string;
     session_id?: string;
+    heat_record_id?: string;
     operator_name?: string;
     operator_id?: string;
     furnace_id?: string;
@@ -410,6 +429,7 @@ export const eafApi = {
   heatFromOptimizer: (body: {
     heat_number?: string;
     session_id?: string;
+    heat_record_id?: string;
     recipe_inputs?: EafRecipe | Record<string, unknown>;
     optimizer?: OptimizeResponse | Record<string, unknown> | null;
     optimizer_v2?: OptimizeV2Response | Record<string, unknown> | null;
@@ -420,6 +440,7 @@ export const eafApi = {
   heatFromValidation: (body: {
     heat_number?: string;
     session_id?: string;
+    heat_record_id?: string;
     predicted_ttt?: number;
     actual_ttt?: number | string | null;
     operator_comments?: string;

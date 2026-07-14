@@ -15,6 +15,7 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "heat_history"
 DB_PATH = DATA_DIR / "heats.db"
 
 _lock = threading.Lock()
+_schema_ready = False
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS heat_records (
@@ -89,16 +90,24 @@ HEAT_ATTR_COLUMNS = {
 
 
 def ensure_db() -> Path:
+    global _schema_ready
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if _schema_ready and DB_PATH.exists():
+        return DB_PATH
     with _lock:
+        if _schema_ready and DB_PATH.exists():
+            return DB_PATH
         conn = sqlite3.connect(str(DB_PATH))
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             conn.executescript(SCHEMA_SQL)
             existing = {r[1] for r in conn.execute("PRAGMA table_info(heat_records)").fetchall()}
             for col, typ in HEAT_ATTR_COLUMNS.items():
                 if col not in existing:
                     conn.execute(f"ALTER TABLE heat_records ADD COLUMN {col} {typ}")
             conn.commit()
+            _schema_ready = True
         finally:
             conn.close()
     return DB_PATH
@@ -106,8 +115,9 @@ def ensure_db() -> Path:
 
 def get_connection() -> sqlite3.Connection:
     ensure_db()
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 

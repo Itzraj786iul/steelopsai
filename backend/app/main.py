@@ -49,10 +49,14 @@ async def lifespan(app: FastAPI):
                 None,
                 lambda: (get_prediction_engine(), get_optimizer_engine(), get_historical_stats()),
             )
+            from app.services.ml_service import mark_ml_warm
+
+            mark_ml_warm()
             logger.info("ML engines warmed in %.1fs", time.perf_counter() - start)
         except Exception:
             logger.exception("ML warmup failed — API will retry on first request")
 
+    # Warm in background — must not block /auth/login or /health
     asyncio.create_task(_warm_ml())
 
     yield

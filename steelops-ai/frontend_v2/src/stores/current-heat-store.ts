@@ -25,6 +25,8 @@ export interface HeatValidationState {
 
 export interface HeatSessionSnapshot {
   id: string;
+  /** Permanent SQLite HeatRecord id once synced to the API. */
+  heatRecordId?: string | null;
   heatNumber: string;
   shift: string;
   recipe: EafRecipe;
@@ -46,6 +48,7 @@ const MAX_HISTORY = 20;
 function emptySession(recipe: EafRecipe = DEFAULT_RECIPE, heatNumber = ""): HeatSessionSnapshot {
   return {
     id: crypto.randomUUID(),
+    heatRecordId: null,
     heatNumber,
     shift: recipe.Shift,
     recipe: { ...recipe },
@@ -69,6 +72,7 @@ function recipesEqual(a: EafRecipe, b: EafRecipe): boolean {
 function normalizeSession(session: HeatSessionSnapshot): HeatSessionSnapshot {
   return {
     ...session,
+    heatRecordId: session.heatRecordId ?? null,
     recommendationAcceptance: session.recommendationAcceptance ?? null,
     archived: session.archived ?? false,
   };
@@ -95,6 +99,8 @@ interface CurrentHeatState {
   updateHybrid: (hybrid: HybridTrustResponse) => void;
   updateValidation: (validation: HeatValidationState) => void;
   setRecommendationAcceptance: (status: RecommendationAcceptanceStatus) => void;
+  /** Persist the SQLite HeatRecord id returned by /heats sync APIs. */
+  setHeatRecordId: (heatRecordId: string) => void;
   saveHeat: () => void;
   loadHeat: (id: string) => void;
   clearHeat: () => void;
@@ -297,6 +303,18 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
         void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterOptimizer());
       },
 
+      setHeatRecordId: (heatRecordId) => {
+        const active = get().active;
+        if (!active || !heatRecordId) return;
+        const next = { ...active, heatRecordId };
+        set({ active: next });
+        // Keep sessionHistory copy in sync so recovery / New Heat archive work.
+        const without = get().sessionHistory.filter((h) => h.id !== active.id);
+        if (active.prediction) {
+          set({ sessionHistory: [next, ...without].slice(0, MAX_HISTORY) });
+        }
+      },
+
       saveHeat: () => {
         const { active, sessionHistory } = get();
         if (!active?.prediction) return;
@@ -329,6 +347,7 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
 
       clearHeat: () => {
         const { active, sessionHistory } = get();
+        const heatRecordId = active?.heatRecordId;
         if (active?.prediction) {
           const archived = {
             ...active,
@@ -341,9 +360,13 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
             recipeDirty: false,
             sessionHistory: [archived, ...without].slice(0, MAX_HISTORY),
           });
-          return;
+        } else {
+          set({ active: null, recipeDirty: false });
         }
-        set({ active: null, recipeDirty: false });
+        // Freeze the SQLite row so the next heat with a reused heat_number cannot upsert over it.
+        if (heatRecordId) {
+          void import("@/lib/heat-history-sync").then((m) => m.archiveHeatRecord(heatRecordId));
+        }
       },
 
       hasActiveHeat: () => {

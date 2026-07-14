@@ -67,11 +67,16 @@ def upsert_from_prediction(payload: dict[str, Any]) -> dict[str, Any]:
     """Create or update a heat after a successful prediction."""
     heat_number = (payload.get("heat_number") or "").strip() or f"AUTO-{uuid.uuid4().hex[:8].upper()}"
     session_id = payload.get("session_id") or ""
+    heat_record_id = (payload.get("heat_record_id") or "").strip()
     recipe = payload.get("recipe_inputs") or payload.get("recipe") or {}
     prediction = payload.get("prediction") or {}
     hybrid = payload.get("hybrid") or {}
 
-    existing = _find_active(heat_number=heat_number, session_id=session_id)
+    existing = _find_active(
+        heat_number=heat_number,
+        session_id=session_id,
+        heat_record_id=heat_record_id,
+    )
     now = _now()
     record_id = existing["id"] if existing else str(uuid.uuid4())
 
@@ -140,7 +145,12 @@ def upsert_from_prediction(payload: dict[str, Any]) -> dict[str, Any]:
 def update_from_optimizer(payload: dict[str, Any]) -> dict[str, Any] | None:
     heat_number = (payload.get("heat_number") or "").strip()
     session_id = payload.get("session_id") or ""
-    existing = _find_active(heat_number=heat_number, session_id=session_id)
+    heat_record_id = (payload.get("heat_record_id") or "").strip()
+    existing = _find_active(
+        heat_number=heat_number,
+        session_id=session_id,
+        heat_record_id=heat_record_id,
+    )
     if not existing:
         # Create from optimizer if prediction save was skipped
         if payload.get("recipe_inputs") or payload.get("recipe"):
@@ -198,12 +208,41 @@ def update_from_optimizer(payload: dict[str, Any]) -> dict[str, Any] | None:
 def update_from_validation(payload: dict[str, Any]) -> dict[str, Any] | None:
     heat_number = (payload.get("heat_number") or "").strip()
     session_id = payload.get("session_id") or ""
-    existing = _find_active(heat_number=heat_number, session_id=session_id)
-    if not existing and heat_number:
-        # Try any record by heat number
-        existing = _find_by_heat_number(heat_number)
+    heat_record_id = (payload.get("heat_record_id") or "").strip()
+    existing = _find_active(
+        heat_number=heat_number,
+        session_id=session_id,
+        heat_record_id=heat_record_id,
+    )
+    # Only fall back to heat_number when we also have a matching session_id on that row,
+    # otherwise we would overwrite an older heat that reused the same number.
+    if not existing and heat_number and session_id:
+        conn = get_connection()
+        try:
+            row = conn.execute(
+                "SELECT * FROM heat_records WHERE heat_number = ? AND session_id = ? "
+                "ORDER BY updated_at DESC LIMIT 1",
+                (heat_number, session_id),
+            ).fetchone()
+            if row:
+                existing = dict(row)
+        finally:
+            conn.close()
     if not existing:
-        return None
+        # Create a row so validation of a new session is never lost
+        created = upsert_from_prediction(
+            {
+                **payload,
+                "prediction": {
+                    "predicted_ttt": payload.get("predicted_ttt"),
+                    "ci_lower_95": None,
+                    "ci_upper_95": None,
+                    "confidence": None,
+                },
+                "recipe_inputs": payload.get("actual_recipe") or payload.get("recipe_inputs") or {},
+            }
+        )
+        existing = {"id": created["id"], "status": created["status"], "predicted_ttt": created.get("predicted_ttt")}
 
     actual = payload.get("actual_ttt")
     actual_f: float | None = None
@@ -584,29 +623,46 @@ def _f(v: Any) -> float | None:
         return None
 
 
-def _find_active(*, heat_number: str = "", session_id: str = "") -> dict[str, Any] | None:
+def _find_active(
+    *,
+    heat_number: str = "",
+    session_id: str = "",
+    heat_record_id: str = "",
+) -> dict[str, Any] | None:
+    """Resolve the heat row to update for an in-progress operator session.
+
+    Identity rules (prevents overwriting prior heats that reuse a heat_number):
+    1. Explicit ``heat_record_id`` wins.
+    2. Else match non-Archived row by ``session_id`` only.
+    3. Never fall back to bare ``heat_number`` — that silently destroyed history
+       when operators ran multiple heats with the same / blank number.
+    """
     conn = get_connection()
     try:
+        if heat_record_id:
+            row = conn.execute(
+                "SELECT * FROM heat_records WHERE id = ?",
+                (heat_record_id,),
+            ).fetchone()
+            if row:
+                return dict(row)
         if session_id:
             row = conn.execute(
-                "SELECT * FROM heat_records WHERE session_id = ? AND status != 'Archived' ORDER BY updated_at DESC LIMIT 1",
+                "SELECT * FROM heat_records WHERE session_id = ? AND status != 'Archived' "
+                "ORDER BY updated_at DESC LIMIT 1",
                 (session_id,),
             ).fetchone()
             if row:
                 return dict(row)
-        if heat_number:
-            row = conn.execute(
-                "SELECT * FROM heat_records WHERE heat_number = ? AND status != 'Archived' ORDER BY updated_at DESC LIMIT 1",
-                (heat_number,),
-            ).fetchone()
-            if row:
-                return dict(row)
+        # heat_number intentionally ignored for active lookup
+        _ = heat_number
         return None
     finally:
         conn.close()
 
 
 def _find_by_heat_number(heat_number: str) -> dict[str, Any] | None:
+    """Latest row for a heat number (read helpers / reports only — not upsert)."""
     conn = get_connection()
     try:
         row = conn.execute(

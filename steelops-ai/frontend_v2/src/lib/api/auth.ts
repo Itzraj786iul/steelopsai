@@ -1,3 +1,6 @@
+import { eafAuthClient } from "@/lib/api/eaf";
+import type { LoginRequest, RegisterRequest, TokenResponse, User } from "@/types";
+import type { MessageResponse } from "@/types/api.types";
 import {
   clearGuestSession,
   guestLogin,
@@ -7,10 +10,7 @@ import {
   isGuestAuthMode,
   setGuestSession,
 } from "@/lib/auth/guest-auth";
-import { eafClient } from "@/lib/api/eaf";
 import { apiClient } from "@/services/api-client";
-import type { LoginRequest, RegisterRequest, TokenResponse, User } from "@/types";
-import type { MessageResponse } from "@/types/api.types";
 
 export interface EnterpriseLoginResponse extends TokenResponse {
   user?: User & { permissions?: string[]; shift?: string | null; department_id?: string | null };
@@ -28,7 +28,7 @@ export const authApi = {
       setGuestSession(user.email);
       return { data: { ...tokens, user } as EnterpriseLoginResponse };
     }
-    const { data } = await eafClient.post<EnterpriseLoginResponse>("/auth/login", payload);
+    const { data } = await eafAuthClient.post<EnterpriseLoginResponse>("/auth/login", payload);
     return { data };
   },
   register: async (payload: RegisterRequest) => {
@@ -43,7 +43,7 @@ export const authApi = {
     if (isGuestAuthMode() && process.env.NEXT_PUBLIC_AUTH_MODE !== "enterprise") {
       return { data: guestTokens() };
     }
-    const { data } = await eafClient.post<TokenResponse>("/auth/refresh", { refresh_token: refreshToken });
+    const { data } = await eafAuthClient.post<TokenResponse>("/auth/refresh", { refresh_token: refreshToken });
     return { data };
   },
   logout: async (refreshToken?: string) => {
@@ -53,7 +53,7 @@ export const authApi = {
     }
     if (refreshToken) {
       try {
-        await eafClient.post("/auth/logout", { refresh_token: refreshToken });
+        await eafAuthClient.post("/auth/logout", { refresh_token: refreshToken });
       } catch {
         /* ignore */
       }
@@ -66,7 +66,7 @@ export const authApi = {
       if (!user) throw new Error("Not authenticated");
       return { data: user };
     }
-    const { data } = await eafClient.get<User>("/auth/me");
+    const { data } = await eafAuthClient.get<User>("/auth/me");
     return { data };
   },
   // Keep legacy platform client available if configured
