@@ -1,0 +1,87 @@
+# Git / IDE / local env
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+*.swp
+*.swo
+.env
+.env.*
+!.env.example
+
+# Python caches / virtualenvs
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*$py.class
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+venv/
+.venv/
+**/venv/
+**/.venv/
+**/*.egg-info/
+**/dist/
+**/build/
+
+# Notebook checkpoints / temporary files
+**/.ipynb_checkpoints/
+**/*~
+**/*.tmp
+**/*.temp
+**/tmp/
+**/temp/
+**/.cache/
+
+# Logs
+**/*.log
+backend/logs/
+research/**/logs/
+
+# Node / frontend (not part of API image)
+node_modules/
+**/node_modules/
+**/.next/
+**/.swc/
+steelops-ai/
+frontend/
+
+# Docs, reports, presentations (not required at runtime)
+reports/
+presentation/
+presentations/
+docs/
+release/
+audit_output/
+catboost_info/
+*.md
+!backend/requirements.txt
+
+# Research artifacts not needed for API runtime
+research/**/plots/
+research/**/images/
+research/**/diagrams/
+research/**/architecture/
+research/**/exports/*.png
+research/**/cache/
+research/**/catboost_info/
+research/**/publication_figures/
+research/**/thesis_figures/
+research/**/presentation_figures/
+research/phase_39_hot_metal_chemistry_analysis/
+research/phase_40_hot_metal_traceability/
+research/phase_41_flux_analysis/
+
+# Local SQLite / runtime data (recreated on startup)
+backend/data/**/*.db
+backend/data/**/*.db-*
+backend/data/phase_33/*.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
