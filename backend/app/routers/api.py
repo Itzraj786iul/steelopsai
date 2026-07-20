@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.core.config import DEFAULT_RECIPE
 from app.schemas.recipe import (
@@ -54,6 +55,7 @@ from app.services.ml_service import (
     whatif_analysis,
 )
 
+logger = logging.getLogger("eaf.api")
 router = APIRouter()
 
 
@@ -130,8 +132,34 @@ async def model_info() -> ModelInfoResponse:
         }
     },
 )
-async def predict(req: PredictRequest) -> PredictionResponse:
+async def predict(req: PredictRequest, request: Request) -> PredictionResponse:
     data = predict_recipe(req.to_dict())
+    # Always persist to Heat History SQLite so records survive browser close
+    # (frontend sync remains as a secondary path for optimizer/validation updates).
+    try:
+        from app.services import heat_history_service as heat_svc
+
+        user = getattr(request.state, "user", None) or {}
+        persist = req.persistence_payload()
+        record = heat_svc.upsert_from_prediction(
+            {
+                **persist,
+                "recipe_inputs": req.to_dict(),
+                "prediction": data,
+                "hybrid": {},
+                "operator_id": persist.get("operator_id") or user.get("id") or "",
+                "operator_name": persist.get("operator_name")
+                or user.get("full_name")
+                or user.get("email")
+                or "",
+                "predicted_by": user.get("id"),
+            }
+        )
+        meta = dict(data.get("metadata") or {})
+        meta["heat_record_id"] = record.get("id")
+        data["metadata"] = meta
+    except Exception:
+        logger.exception("Heat History persist failed after prediction — ML result still returned")
     return PredictionResponse(**data)
 
 

@@ -45,7 +45,41 @@ class RecipeInput(BaseModel):
 
 
 class PredictRequest(RecipeInput):
-    pass
+    """Recipe plus optional Heat History persistence fields (ignored by the ML engine)."""
+
+    heat_number: str | None = Field(None, description="Plant heat number — stored in Heat History DB")
+    session_id: str | None = Field(None, description="Frontend heat session id for upsert matching")
+    heat_record_id: str | None = Field(None, description="Existing HeatRecord id to update")
+    operator_id: str | None = None
+    operator_name: str | None = None
+    furnace_id: str | None = None
+    plant: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Recipe-only payload for ML — persistence fields stay out of feature engineering."""
+        data = super().to_dict()
+        for key in (
+            "heat_number",
+            "session_id",
+            "heat_record_id",
+            "operator_id",
+            "operator_name",
+            "furnace_id",
+            "plant",
+        ):
+            data.pop(key, None)
+        return data
+
+    def persistence_payload(self) -> dict[str, Any]:
+        return {
+            "heat_number": self.heat_number,
+            "session_id": self.session_id,
+            "heat_record_id": self.heat_record_id,
+            "operator_id": self.operator_id,
+            "operator_name": self.operator_name,
+            "furnace_id": self.furnace_id,
+            "plant": self.plant,
+        }
 
 
 class OptimizeRequest(RecipeInput):
@@ -192,6 +226,9 @@ class PredictionMetadata(BaseModel):
     prediction_timestamp: str
     confidence: str
     warnings: list[str]
+    heat_record_id: str | None = Field(
+        default=None, description="SQLite HeatRecord id — prediction is persisted when present"
+    )
 
 
 class ValidationWarning(BaseModel):

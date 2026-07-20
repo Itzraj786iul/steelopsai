@@ -83,11 +83,28 @@ export function useEafPredict() {
       setError(null);
       const start = performance.now();
       try {
+        const activeBefore = useCurrentHeatStore.getState().active;
+        const { useAuthStore } = await import("@/stores/auth-store");
+        const { useOpsContextStore } = await import("@/stores/ops-context-store");
+        const user = useAuthStore.getState().user;
+        const ctx = useOpsContextStore.getState();
+
         // Show core prediction as soon as ML returns — don't block on hybrid trust.
-        const { data } = await eafApi.predict(recipe);
+        const { data } = await eafApi.predict(recipe, {
+          heat_number: heatId || activeBefore?.heatNumber || undefined,
+          session_id: activeBefore?.id,
+          heat_record_id: activeBefore?.heatRecordId || undefined,
+          operator_id: user?.id,
+          operator_name: user?.full_name || user?.email,
+          furnace_id: ctx.furnaceId || "EAF-1",
+          plant: ctx.plant || "JSPL",
+        });
         const warnings =
           data.validation_warnings?.filter((w) => w.level !== "error").map((w) => w.message) ?? [];
         updatePrediction(data, null, warnings);
+        if (data.metadata?.heat_record_id) {
+          useCurrentHeatStore.getState().setHeatRecordId(data.metadata.heat_record_id);
+        }
         setResult(data as PredictResponse & { hybrid_trust?: HybridTrustResponse });
         setLoading(false);
 
@@ -113,6 +130,7 @@ export function useEafPredict() {
           });
         }
 
+        // Secondary sync (optimizer fields / MES) — primary persist already happened on /predict
         void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterPrediction());
 
         void eafApi

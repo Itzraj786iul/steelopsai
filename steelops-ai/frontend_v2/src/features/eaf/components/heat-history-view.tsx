@@ -215,14 +215,45 @@ export function HeatHistoryView() {
       </SectionCard>
 
       <SectionCard title={`Production table (${total} heats)`}>
-        {error ? <PageAlert tone="error" className="mb-3">{error}</PageAlert> : null}
+        {error ? (
+          <PageAlert
+            tone="error"
+            className="mb-3"
+            title={
+              /inactive|expired|sign in|Not authenticated|deactivated/i.test(error)
+                ? "Cannot load saved heats — sign in again"
+                : "Could not load Heat History"
+            }
+            actions={
+              /inactive|expired|sign in|Not authenticated|deactivated/i.test(error) ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void import("@/stores/auth-store").then(({ useAuthStore }) => {
+                      useAuthStore.getState().clearAuth();
+                      router.push("/login?next=/eaf/heat-history");
+                    });
+                  }}
+                >
+                  Sign in again
+                </Button>
+              ) : null
+            }
+          >
+            {error}
+            {/inactive|expired|sign in|Not authenticated|deactivated/i.test(error)
+              ? " Your session no longer matches the server. Sign in again to see heats stored in the database."
+              : null}
+          </PageAlert>
+        ) : null}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading heat records…</p>
-        ) : !items.length ? (
+        ) : error ? null : !items.length ? (
           <EmptyState
             title="No heats yet"
-            description="Run Prediction → Optimizer → Validation to create the first production record."
-            actionLabel="Go to Prediction"
+            description="Run Predict cycle time once — each prediction is saved to the Heat History database and stays after you close the browser."
+            actionLabel="Go to Predict"
             onAction={() => router.push("/eaf/prediction")}
             className="py-10"
           />

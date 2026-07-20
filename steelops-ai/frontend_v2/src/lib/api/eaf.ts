@@ -141,6 +141,18 @@ export interface PredictionMetadata {
   prediction_timestamp: string;
   confidence: string;
   warnings: string[];
+  /** SQLite HeatRecord id when the API persisted this prediction */
+  heat_record_id?: string | null;
+}
+
+export interface PredictPersistMeta {
+  heat_number?: string;
+  session_id?: string;
+  heat_record_id?: string;
+  operator_id?: string;
+  operator_name?: string;
+  furnace_id?: string;
+  plant?: string;
 }
 
 export interface PredictResponse {
@@ -402,10 +414,63 @@ eafAuthClient.interceptors.request.use((config) => {
   return config;
 });
 
+let eafRefreshPromise: Promise<string | null> | null = null;
+
+async function refreshEafAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const refreshToken = localStorage.getItem("refresh_token");
+  if (!refreshToken) return null;
+  try {
+    const { data } = await eafAuthClient.post<{
+      access_token: string;
+      refresh_token: string;
+      expires_in?: number;
+    }>("/auth/refresh", { refresh_token: refreshToken });
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    return data.access_token;
+  } catch {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    return null;
+  }
+}
+
+eafClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean };
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !String(originalRequest.url || "").includes("/auth/login") &&
+      !String(originalRequest.url || "").includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+      eafRefreshPromise ??= refreshEafAccessToken().finally(() => {
+        eafRefreshPromise = null;
+      });
+      const newToken = await eafRefreshPromise;
+      if (newToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return eafClient.request(originalRequest);
+      }
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const eafApi = {
   health: () => eafClient.get<{ status: string; model_loaded: boolean }>("/health"),
   modelInfo: () => eafClient.get<ModelInfoResponse>("/model-info"),
-  predict: (recipe: EafRecipe) => eafClient.post<PredictResponse>("/predict", recipe),
+  predict: (recipe: EafRecipe, persist?: PredictPersistMeta) =>
+    eafClient.post<PredictResponse>("/predict", { ...recipe, ...persist }),
   optimize: (recipe: EafRecipe, n_generate = 1000) =>
     eafClient.post<OptimizeResponse>("/optimize", { ...recipe, n_generate }),
   optimizeV2: (recipe: EafRecipe) => eafClient.post<OptimizeV2Response>("/optimize/v2", recipe),

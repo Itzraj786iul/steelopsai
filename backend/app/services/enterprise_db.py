@@ -6,13 +6,26 @@ Does not touch ML artifacts. Lives in backend/data/enterprise/enterprise.db
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "enterprise"
-DB_PATH = DATA_DIR / "enterprise.db"
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "enterprise"
+
+
+def _resolve_db_path() -> tuple[Path, Path]:
+    explicit = (os.environ.get("ENTERPRISE_DB_PATH") or "").strip()
+    if explicit:
+        path = Path(explicit)
+        return path.parent, path
+    root = (os.environ.get("EAF_DATA_DIR") or "").strip()
+    data_dir = Path(root) / "enterprise" if root else _DEFAULT_DATA_DIR
+    return data_dir, data_dir / "enterprise.db"
+
+
+DATA_DIR, DB_PATH = _resolve_db_path()
 _lock = threading.Lock()
 _schema_ready = False
 

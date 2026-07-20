@@ -30,8 +30,13 @@ RUN pip install --upgrade pip \
 COPY backend/ /app/backend/
 COPY research/ /app/research/
 
-# Writable dirs for SQLite / logs (ephemeral unless a persistent volume is attached)
+# Writable dirs for SQLite / logs.
+# Mount a persistent volume at /data and set EAF_DATA_DIR=/data so heats survive restarts.
+ENV EAF_DATA_DIR=/data
 RUN mkdir -p \
+        /data/heat_history \
+        /data/enterprise \
+        /data/phase_33 \
         /app/backend/data/heat_history \
         /app/backend/data/enterprise \
         /app/backend/data/phase_33 \
@@ -39,7 +44,9 @@ RUN mkdir -p \
         /app/research/phase_21_streamlit_app/logs \
         /app/research/phase_21_streamlit_app/exports \
     && useradd --create-home --uid 1001 --shell /usr/sbin/nologin appuser \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app /data
+
+VOLUME ["/data"]
 
 USER appuser
 

@@ -136,8 +136,14 @@ def seed_enterprise() -> None:
             ]
             now = _iso()
             for email, name, role, password, dept, shift in demo_users:
-                existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+                existing = conn.execute("SELECT id, is_active FROM users WHERE email = ?", (email,)).fetchone()
                 if existing:
+                    # Keep demo accounts usable after DB resets / accidental deactivation
+                    if not existing["is_active"]:
+                        conn.execute(
+                            "UPDATE users SET is_active = 1, updated_at = ? WHERE id = ?",
+                            (now, existing["id"]),
+                        )
                     continue
                 conn.execute(
                     """INSERT INTO users

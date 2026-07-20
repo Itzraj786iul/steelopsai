@@ -97,8 +97,16 @@ class EnterpriseAuthMiddleware(BaseHTTPMiddleware):
         try:
             payload = auth.decode_access_token(token)
             user = auth.get_user_by_id(payload["sub"])
-            if not user or not user["is_active"]:
-                return JSONResponse({"detail": "User inactive"}, status_code=401)
+            if not user:
+                return JSONResponse(
+                    {"detail": "Session expired — please sign in again"},
+                    status_code=401,
+                )
+            if not user["is_active"]:
+                return JSONResponse(
+                    {"detail": "This account is deactivated — contact an admin or sign in with another user"},
+                    status_code=401,
+                )
             public = auth.user_public(user)
             request.state.user = public
         except Exception:

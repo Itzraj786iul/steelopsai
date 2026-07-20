@@ -6,13 +6,28 @@ Does not touch ML prediction/optimizer code. Schema lives in backend/data/heat_h
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "heat_history"
-DB_PATH = DATA_DIR / "heats.db"
+# Prefer EAF_DATA_DIR (or HEAT_HISTORY_DB_PATH) so hosted deploys can mount a persistent volume.
+# Without a volume, container restarts wipe the default path under /app/backend/data.
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "heat_history"
+
+
+def _resolve_db_path() -> tuple[Path, Path]:
+    explicit = (os.environ.get("HEAT_HISTORY_DB_PATH") or "").strip()
+    if explicit:
+        path = Path(explicit)
+        return path.parent, path
+    root = (os.environ.get("EAF_DATA_DIR") or "").strip()
+    data_dir = Path(root) / "heat_history" if root else _DEFAULT_DATA_DIR
+    return data_dir, data_dir / "heats.db"
+
+
+DATA_DIR, DB_PATH = _resolve_db_path()
 
 _lock = threading.Lock()
 _schema_ready = False
