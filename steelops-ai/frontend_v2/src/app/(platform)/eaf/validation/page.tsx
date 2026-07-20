@@ -132,16 +132,19 @@ export default function EafValidationPage() {
         </SectionCard>
       ) : null}
 
-      <SectionCard title="Save production result" description="Writes this heat permanently to Heat History">
+      <SectionCard
+        title="Save production result"
+        description="Heat number and prediction come from earlier steps — enter actual TTT only"
+      >
         {!active?.prediction ? (
           <p className="text-sm text-muted-foreground">Predict a heat first.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
-              label="Heat Number"
-              value={form.heat_number}
-              onChange={(v) => setForm((f) => ({ ...f, heat_number: v }))}
-            />
+            <div>
+              <Label>Heat Number</Label>
+              <Input className="mt-1" value={form.heat_number || "—"} readOnly disabled />
+              <p className="mt-1 text-xs text-muted-foreground">From Prediction — not re-entered here</p>
+            </div>
             <div>
               <Label>Predicted TTT (min)</Label>
               <Input className="mt-1" value={form.predicted_ttt} readOnly disabled />
@@ -170,7 +173,16 @@ export default function EafValidationPage() {
           </div>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button onClick={submit} disabled={saving || !form.heat_number || !form.predicted_ttt || missingDecision}>
+          <Button
+            onClick={submit}
+            disabled={
+              saving ||
+              !form.heat_number ||
+              !form.predicted_ttt ||
+              !form.actual_ttt.trim() ||
+              missingDecision
+            }
+          >
             {saving ? "Saving…" : "Save & open heat report"}
           </Button>
           {savedOk ? (

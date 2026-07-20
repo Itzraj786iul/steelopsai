@@ -217,3 +217,42 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Production heat report — clean print / Save as PDF */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  aside,
+  header,
+  nav,
+  [data-sidebar],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main,
+  .heat-print-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .heat-print-root .recharts-responsive-container {
+    break-inside: avoid;
+  }
+
+  .heat-print-root section,
+  .heat-print-root [class*="rounded"] {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+}
+
