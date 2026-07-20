@@ -219,6 +219,9 @@ export async function recoverSessionHistoryToServer(): Promise<number> {
           lastUpdated: audit.timestamp,
           warnings: [],
           recommendationAcceptance: rec?.acceptance ?? null,
+          recommendationLocked: !!rec?.acceptance,
+          recommendationNotes: "",
+          modifiedRecipe: null,
           archived: false,
         });
       }
