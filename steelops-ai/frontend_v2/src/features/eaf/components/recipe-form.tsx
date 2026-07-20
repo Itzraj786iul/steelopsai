@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 
-import { Input } from "@/components/ui/input";
+import { GuidedNumberField } from "@/components/forms/guided-field";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SectionCard } from "@/components/layout/section-card";
 import { ValidationBanner } from "@/features/eaf/components/validation-banner";
 import type { EafRecipe } from "@/lib/api/eaf";
-import { RECIPE_FIELD_LABELS } from "@/lib/eaf-labels";
+import { RECIPE_FIELD_GUIDES } from "@/lib/eaf-glossary";
 import { assessCharge, parseRecipeNumber } from "@/lib/charge-validation";
 import { SHIFTS } from "@/lib/constants";
 import type { HistoricalVariable } from "@/lib/api/eaf";
@@ -33,6 +33,14 @@ const FIELDS: { key: keyof EafRecipe; step?: string }[] = [
 ];
 
 type NumericRecipeKey = (typeof FIELDS)[number]["key"];
+
+function softOutOfRange(key: string, value: number): boolean {
+  const g = RECIPE_FIELD_GUIDES[key];
+  if (!g || !Number.isFinite(value)) return false;
+  if (g.softMin != null && value < g.softMin) return true;
+  if (g.softMax != null && value > g.softMax) return true;
+  return false;
+}
 
 export function RecipeForm({ recipe, onChange, charge, historicalVariables }: RecipeFormProps) {
   const chargeAssessment = assessCharge(charge, historicalVariables);
@@ -68,53 +76,126 @@ export function RecipeForm({ recipe, onChange, charge, historicalVariables }: Re
     onChange(key, parseRecipeNumber(raw, 0) as EafRecipe[typeof key]);
   };
 
+  const ironInputs = FIELDS.filter((f) => ["HM", "DRI", "HBI", "Bucket"].includes(f.key as string));
+  const fluxes = FIELDS.filter((f) => ["LIME", "DOLO"].includes(f.key as string));
+  const programs = FIELDS.filter((f) => ["CPC", "POWER", "OXY"].includes(f.key as string));
+
   return (
     <SectionCard
-      title="Burden Composition"
-      description={`Total charge: ${charge.toFixed(1)} t · Historical median ${chargeAssessment.bounds.median.toFixed(0)} t (P5–P95: ${chargeAssessment.bounds.p5.toFixed(0)}–${chargeAssessment.bounds.p95.toFixed(0)} t)`}
+      title="Furnace charge mix"
+      description={`Total iron charge: ${charge.toFixed(1)} tonnes · Plant heats usually land near ${chargeAssessment.bounds.median.toFixed(0)} t (common band ~${chargeAssessment.bounds.p5.toFixed(0)}–${chargeAssessment.bounds.p95.toFixed(0)} t). Defaults below are a realistic demo recipe — change only what you need.`}
     >
       <ValidationBanner messages={chargeAssessment.warnings} />
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {FIELDS.map(({ key, step }) => (
-          <div key={key} className="space-y-2">
-            <Label htmlFor={key}>{RECIPE_FIELD_LABELS[key] ?? key}</Label>
-            <Input
-              id={key}
-              type="number"
-              inputMode="decimal"
-              step={step}
-              min={0}
-              value={displayValue(key)}
-              onChange={(e) => handleNumericChange(key, e.target.value)}
-              onBlur={() => commitNumeric(key)}
-            />
-          </div>
+
+      <FieldGroup title="Iron feeds" subtitle="What goes into the furnace as metal / scrap">
+        {ironInputs.map(({ key, step }) => (
+          <GuidedNumberField
+            key={key}
+            id={key}
+            guide={RECIPE_FIELD_GUIDES[key]}
+            step={step}
+            value={displayValue(key)}
+            onChange={(raw) => handleNumericChange(key, raw)}
+            onBlur={() => commitNumeric(key)}
+            outOfRange={softOutOfRange(key, Number(recipe[key]))}
+          />
         ))}
-        <div className="space-y-2">
-          <Label>Shift</Label>
+      </FieldGroup>
+
+      <FieldGroup title="Fluxes" subtitle="Slag-forming materials (smaller tonnages)">
+        {fluxes.map(({ key, step }) => (
+          <GuidedNumberField
+            key={key}
+            id={key}
+            guide={RECIPE_FIELD_GUIDES[key]}
+            step={step}
+            value={displayValue(key)}
+            onChange={(raw) => handleNumericChange(key, raw)}
+            onBlur={() => commitNumeric(key)}
+            outOfRange={softOutOfRange(key, Number(recipe[key]))}
+          />
+        ))}
+      </FieldGroup>
+
+      <FieldGroup title="Energy & process programs" subtitle="Electricity, oxygen, and carbon practice">
+        {programs.map(({ key, step }) => (
+          <GuidedNumberField
+            key={key}
+            id={key}
+            guide={RECIPE_FIELD_GUIDES[key]}
+            step={step}
+            value={displayValue(key)}
+            onChange={(raw) => handleNumericChange(key, raw)}
+            onBlur={() => commitNumeric(key)}
+            outOfRange={softOutOfRange(key, Number(recipe[key]))}
+          />
+        ))}
+      </FieldGroup>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="leading-snug">
+            <span className="block text-sm font-medium">Shift</span>
+            <span className="text-[11px] font-normal text-muted-foreground">
+              Plant work window · A / B / C
+            </span>
+          </Label>
           <Select value={recipe.Shift} onValueChange={(v) => onChange("Shift", v as EafRecipe["Shift"])}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {SHIFTS.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  Shift {s}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <p className="text-[11px] text-muted-foreground">Which crew / time block this heat belongs to.</p>
         </div>
-        <div className="space-y-2">
-          <Label>{RECIPE_FIELD_LABELS.Power_Restriction}</Label>
+        <div className="space-y-1.5">
+          <Label className="leading-snug">
+            <span className="block text-sm font-medium">Electrical power restriction</span>
+            <span className="text-[11px] font-normal text-muted-foreground">Grid / plant limit flag</span>
+          </Label>
           <Select
             value={String(recipe.Power_Restriction)}
             onValueChange={(v) => onChange("Power_Restriction", Number(v) as 0 | 1)}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0">No restriction</SelectItem>
-              <SelectItem value="1">Active</SelectItem>
+              <SelectItem value="0">No restriction (normal)</SelectItem>
+              <SelectItem value="1">Restriction active</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-[11px] text-muted-foreground">
+            Use “active” only when the plant is limiting electrical draw.
+          </p>
         </div>
       </div>
     </SectionCard>
+  );
+}
+
+function FieldGroup({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-5 first:mt-4">
+      <div className="mb-3">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+    </div>
   );
 }

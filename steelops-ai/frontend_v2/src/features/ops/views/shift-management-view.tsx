@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   EnterpriseTable,
   EnterpriseTableBody,
@@ -82,7 +84,8 @@ export function ShiftManagementView() {
 
   return (
     <PageContainer title="Shift Management" description="Create, assign, and archive production shifts A / B / C">
-      <SectionCard title="Create shift">
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+      <SectionCard title="Create shift" description="Registers the next production window">
         <div className="grid gap-3 md:grid-cols-3">
           <div>
             <Label>Code</Label>
@@ -105,7 +108,6 @@ export function ShiftManagementView() {
           </div>
         </div>
         <Button className="mt-4" onClick={() => void create()}>Create shift</Button>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
 
       <SectionCard title="Shifts">

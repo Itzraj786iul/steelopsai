@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   EnterpriseTable,
   EnterpriseTableBody,
@@ -75,7 +77,8 @@ export function UserManagementView() {
 
   return (
     <PageContainer title="User Management" description="Create users, assign roles and shifts">
-      <SectionCard title="Create user">
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+      <SectionCard title="Create user" description="New accounts are active immediately">
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div>
             <Label htmlFor="email">Email</Label>
@@ -114,10 +117,9 @@ export function UserManagementView() {
           </div>
         </div>
         <Button className="mt-4" onClick={() => void create()}>Create user</Button>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
 
-      <SectionCard title={`Users (${users.length})`} className="mt-6">
+      <SectionCard title={`Users (${users.length})`}>
         <EnterpriseTable>
           <EnterpriseTableHead>
             <EnterpriseTableHeaderCell>Name</EnterpriseTableHeaderCell>
@@ -130,11 +132,15 @@ export function UserManagementView() {
           <EnterpriseTableBody>
             {users.map((u) => (
               <EnterpriseTableRow key={u.id}>
-                <EnterpriseTableCell>{u.full_name}</EnterpriseTableCell>
+                <EnterpriseTableCell className="font-medium">{u.full_name}</EnterpriseTableCell>
                 <EnterpriseTableCell>{u.email}</EnterpriseTableCell>
-                <EnterpriseTableCell>{u.role}</EnterpriseTableCell>
+                <EnterpriseTableCell>
+                  <Badge variant="outline">{u.role}</Badge>
+                </EnterpriseTableCell>
                 <EnterpriseTableCell>{u.shift || "—"}</EnterpriseTableCell>
-                <EnterpriseTableCell>{u.is_active ? "Active" : "Disabled"}</EnterpriseTableCell>
+                <EnterpriseTableCell>
+                  <Badge variant={u.is_active ? "success" : "muted"}>{u.is_active ? "Active" : "Disabled"}</Badge>
+                </EnterpriseTableCell>
                 <EnterpriseTableCell>
                   <Button size="sm" variant="outline" onClick={() => void toggleActive(u)}>
                     {u.is_active ? "Disable" : "Enable"}

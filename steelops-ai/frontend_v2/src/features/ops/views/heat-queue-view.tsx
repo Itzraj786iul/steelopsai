@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { EmptyState } from "@/components/feedback/empty-state";
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +74,7 @@ export function HeatQueueView() {
     try {
       await opsApi.createQueue({ heat_number: heatNumber.trim(), furnace_id: furnaceId, status: "Upcoming" });
       setHeatNumber("");
+      setError(null);
       load();
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "Failed to add heat"));
@@ -102,73 +105,116 @@ export function HeatQueueView() {
   };
 
   return (
-    <PageContainer title="Production Queue" description="Upcoming, running, delayed, validated, and archived heats">
-      <SectionCard title="Add to queue">
-        <div className="flex flex-wrap items-end gap-3">
+    <PageContainer
+      title="Production Queue"
+      description="Upcoming, running, delayed, validated, and archived heats"
+      meta={`Active furnace · ${furnaceId}`}
+    >
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+
+      <SectionCard title="Enqueue & filter" description="Add a heat, then refine the list">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Label>Heat number</Label>
-            <Input value={heatNumber} onChange={(e) => setHeatNumber(e.target.value)} placeholder="H-1024" />
+            <Label htmlFor="queue-heat">Heat number</Label>
+            <Input
+              id="queue-heat"
+              value={heatNumber}
+              onChange={(e) => setHeatNumber(e.target.value)}
+              placeholder="H-1024"
+            />
           </div>
-          <Button onClick={() => void add()}>Enqueue</Button>
           <div>
             <Label>Status filter</Label>
             <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Find heat</Label>
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search heat #" />
+            <Label htmlFor="queue-find">Find heat</Label>
+            <Input
+              id="queue-find"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search heat #"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button className="w-full sm:w-auto" onClick={() => void add()} disabled={!heatNumber.trim()}>
+              Enqueue
+            </Button>
           </div>
         </div>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
 
-      <SectionCard title={`Queue · furnace ${furnaceId}`}>
-        <EnterpriseTable>
-          <EnterpriseTableHead>
-            <EnterpriseTableRow>
-              <EnterpriseTableHeaderCell>#</EnterpriseTableHeaderCell>
-              <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
-              <EnterpriseTableHeaderCell>Furnace</EnterpriseTableHeaderCell>
-              <EnterpriseTableHeaderCell>Status</EnterpriseTableHeaderCell>
-              <EnterpriseTableHeaderCell>Order</EnterpriseTableHeaderCell>
-            </EnterpriseTableRow>
-          </EnterpriseTableHead>
-          <EnterpriseTableBody>
-            {visible.map((r) => {
-              const i = rows.findIndex((x) => x.id === r.id);
-              const highlighted = highlight && r.heat_number.toLowerCase().includes(highlight.toLowerCase());
-              return (
-                <EnterpriseTableRow key={r.id} className={highlighted ? "bg-primary/5" : undefined}>
-                  <EnterpriseTableCell>{i + 1}</EnterpriseTableCell>
-                  <EnterpriseTableCell className="font-medium">{r.heat_number}</EnterpriseTableCell>
-                  <EnterpriseTableCell>{r.furnace_id}</EnterpriseTableCell>
-                  <EnterpriseTableCell>
-                    <Select value={r.status} onValueChange={(v) => void setStatus(r.id, v)}>
-                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </EnterpriseTableCell>
-                  <EnterpriseTableCell className="space-x-1">
-                    <Button size="sm" variant="outline" onClick={() => void move(i, -1)}>↑</Button>
-                    <Button size="sm" variant="outline" onClick={() => void move(i, 1)}>↓</Button>
-                  </EnterpriseTableCell>
-                </EnterpriseTableRow>
-              );
-            })}
-          </EnterpriseTableBody>
-        </EnterpriseTable>
+      <SectionCard title={`Queue · ${furnaceId}`} description={`${visible.length} of ${rows.length} heats shown`}>
+        {visible.length ? (
+          <EnterpriseTable>
+            <EnterpriseTableHead>
+              <EnterpriseTableRow>
+                <EnterpriseTableHeaderCell>#</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Furnace</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Status</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Order</EnterpriseTableHeaderCell>
+              </EnterpriseTableRow>
+            </EnterpriseTableHead>
+            <EnterpriseTableBody>
+              {visible.map((r) => {
+                const i = rows.findIndex((x) => x.id === r.id);
+                const highlighted = highlight && r.heat_number.toLowerCase().includes(highlight.toLowerCase());
+                return (
+                  <EnterpriseTableRow key={r.id} className={highlighted ? "bg-primary/5 ring-1 ring-inset ring-primary/20" : undefined}>
+                    <EnterpriseTableCell>{i + 1}</EnterpriseTableCell>
+                    <EnterpriseTableCell className="font-medium">{r.heat_number}</EnterpriseTableCell>
+                    <EnterpriseTableCell>{r.furnace_id}</EnterpriseTableCell>
+                    <EnterpriseTableCell>
+                      <Select value={r.status} onValueChange={(v) => void setStatus(r.id, v)}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </EnterpriseTableCell>
+                    <EnterpriseTableCell className="space-x-1">
+                      <Button size="sm" variant="outline" onClick={() => void move(i, -1)}>
+                        ↑
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void move(i, 1)}>
+                        ↓
+                      </Button>
+                    </EnterpriseTableCell>
+                  </EnterpriseTableRow>
+                );
+              })}
+            </EnterpriseTableBody>
+          </EnterpriseTable>
+        ) : (
+          <EmptyState
+            title={rows.length ? "No matches" : "Queue is empty"}
+            description={
+              rows.length
+                ? "Clear the search or change the status filter."
+                : "Enqueue a heat number above to start the production order."
+            }
+            className="py-10"
+          />
+        )}
       </SectionCard>
     </PageContainer>
   );

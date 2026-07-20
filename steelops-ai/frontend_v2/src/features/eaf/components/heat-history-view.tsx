@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Search, Trash2 } from "lucide-react";
 
+import { EmptyState } from "@/components/feedback/empty-state";
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -172,7 +174,7 @@ export function HeatHistoryView() {
       title="Heat History"
       description="Permanent production records — delete test heats anytime"
     >
-      <SectionCard title="Filters" className="mt-2">
+      <SectionCard title="Filters">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[180px] flex-1">
             <label className="mb-1 block text-xs text-muted-foreground" htmlFor="heat-search">
@@ -212,12 +214,18 @@ export function HeatHistoryView() {
         </div>
       </SectionCard>
 
-      <SectionCard title={`Production table (${total} heats)`} className="mt-6">
-        {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
+      <SectionCard title={`Production table (${total} heats)`}>
+        {error ? <PageAlert tone="error" className="mb-3">{error}</PageAlert> : null}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading heat records…</p>
         ) : !items.length ? (
-          <p className="text-sm text-muted-foreground">No heats in the database yet. Run a prediction to create the first record.</p>
+          <EmptyState
+            title="No heats yet"
+            description="Run Prediction → Optimizer → Validation to create the first production record."
+            actionLabel="Go to Prediction"
+            onAction={() => router.push("/eaf/prediction")}
+            className="py-10"
+          />
         ) : (
           <>
             <EnterpriseTable>
@@ -245,7 +253,7 @@ export function HeatHistoryView() {
                   <button type="button" onClick={() => toggleSort("status")}>Status</button>
                 </EnterpriseTableHeaderCell>
                 <EnterpriseTableHeaderCell>
-                  <button type="button" onClick={() => toggleSort("predicted_ttt")}>Pred TTT</button>
+                  <button type="button" onClick={() => toggleSort("predicted_ttt")}>Pred. cycle</button>
                 </EnterpriseTableHeaderCell>
                 <EnterpriseTableHeaderCell>
                   <button type="button" onClick={() => toggleSort("actual_ttt")}>Actual</button>

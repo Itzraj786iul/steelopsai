@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { TermTip } from "@/components/feedback/term-tip";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +18,7 @@ import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { SimilarHistoricalHeatCard } from "@/features/eaf/components/similar-historical-heat-card";
 import { ValidationBanner } from "@/features/eaf/components/validation-banner";
 import { useEafPredict, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
+import { PAGE_EXPLAINERS, TTT } from "@/lib/eaf-glossary";
 import { isHeatPathComplete } from "@/lib/heat-lifecycle";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
@@ -38,27 +42,38 @@ export default function EafPredictionPage() {
   };
 
   return (
-    <PageContainer title="Prediction" description="Enter heat recipe → predict TTT → continue to Optimizer">
-      <HeatWorkflowStrip active={active} currentPage="predict" className="mt-4" />
+    <PageContainer
+      title="Predict cycle time"
+      description={
+        <>
+          Tell the model what this furnace batch looks like — it estimates{" "}
+          <TermTip term={TTT} /> in minutes.
+        </>
+      }
+    >
+      <HeatWorkflowStrip active={active} currentPage="predict" />
+      <PageExplainer {...PAGE_EXPLAINERS.prediction} />
 
       {sessionComplete ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              Heat {active?.heatNumber || "session"} is already saved
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Start a new heat before entering the next recipe — this keeps history clean.
-            </p>
-          </div>
-          <NewHeatButton variant="default" />
-        </div>
+        <PageAlert
+          tone="success"
+          title={`Heat ${active?.heatNumber || "session"} is already saved`}
+          actions={<NewHeatButton variant="default" />}
+        >
+          Start a new heat before entering the next recipe — this keeps history clean.
+        </PageAlert>
       ) : null}
 
-      <SectionCard title="Heat input" className="mt-6" description="Heat number and burden recipe">
-        <div className="mb-4 max-w-xs space-y-2">
-          <Label htmlFor="heat-number">
-            Heat Number <span className="text-destructive">*</span>
+      <SectionCard
+        title="Identify the heat"
+        description="A heat number is the plant’s ID for one furnace batch. Use a real ID from the shop floor, or a demo number while exploring."
+      >
+        <div className="mb-2 max-w-sm space-y-1.5">
+          <Label htmlFor="heat-number" className="leading-snug">
+            <span className="block text-sm font-medium">
+              Heat number <span className="text-destructive">*</span>
+            </span>
+            <span className="text-[11px] font-normal text-muted-foreground">Batch ID · required before predict</span>
           </Label>
           <Input
             id="heat-number"
@@ -67,28 +82,33 @@ export default function EafPredictionPage() {
             onChange={(e) => setHeatNumber(e.target.value)}
             disabled={sessionComplete}
           />
-        </div>
-        <RecipeForm recipe={recipe} onChange={update} charge={charge} />
-        <ValidationBanner messages={apiWarnings} />
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={handlePredict} disabled={loading || sessionComplete || !heatNumber.trim()}>
-            {loading ? "Predicting…" : "Predict TTT"}
-          </Button>
-          {!heatNumber.trim() && !sessionComplete ? (
-            <p className="self-center text-sm text-amber-700 dark:text-amber-400">Enter heat number first</p>
-          ) : null}
-        </div>
-        {error ? (
-          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            {error}
+          <p className="text-[11px] text-muted-foreground">
+            Example format: 7-digit plant heat ID. Visitors can type any demo number like 4618213.
           </p>
-        ) : null}
+        </div>
       </SectionCard>
+
+      <RecipeForm recipe={recipe} onChange={update} charge={charge} />
+      <ValidationBanner messages={apiWarnings} />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="lg" onClick={handlePredict} disabled={loading || sessionComplete || !heatNumber.trim()}>
+          {loading ? "Estimating cycle time…" : "Predict cycle time"}
+        </Button>
+        {!heatNumber.trim() && !sessionComplete ? (
+          <p className="text-sm text-warning">Enter a heat number first — then press predict.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Result is minutes of furnace time (TTT). Defaults already look like a real heat.
+          </p>
+        )}
+      </div>
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
 
       {result && !sessionComplete ? (
         <motion.div
           key={result.predicted_ttt + String(result.ci_lower_95)}
-          className="mt-6 min-w-0 space-y-6"
+          className="min-w-0 space-y-6"
           variants={staggerContainer}
           initial="initial"
           animate="animate"
@@ -106,7 +126,7 @@ export default function EafPredictionPage() {
             <motion.div variants={fadeUp}>
               <details className="rounded-lg border border-border/60 bg-muted/10 p-4">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Similar historical heats (optional)
+                  Similar past heats (optional — for metallurgists)
                 </summary>
                 <div className="mt-4">
                   <SimilarHistoricalHeatCard
@@ -123,7 +143,8 @@ export default function EafPredictionPage() {
             </motion.div>
           ) : null}
 
-          <motion.div variants={fadeUp} className="flex justify-end">
+          <motion.div variants={fadeUp} className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end sm:items-center">
+            <p className="text-sm text-muted-foreground">Next: see if a better charge mix can shorten the cycle.</p>
             <Button asChild size="lg">
               <Link href="/eaf/optimizer">Continue to Optimizer →</Link>
             </Button>

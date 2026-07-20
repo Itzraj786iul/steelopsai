@@ -58,6 +58,13 @@ const STAGES: StageDef[] = [
   },
 ];
 
+const STAGE_BLURBS: Record<StageId, string> = {
+  predict: "Estimate cycle time",
+  optimize: "Improve the mix",
+  validate: "Enter real minutes",
+  complete: "View the heat report",
+};
+
 function stageStatuses(active: HeatSessionSnapshot | null): { id: StageId; status: StageStatus }[] {
   let currentSet = false;
   return STAGES.map((stage) => {
@@ -95,9 +102,9 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
     <div className={cn("min-w-0 overflow-hidden rounded-xl border border-border/70 bg-muted/15 p-3 sm:p-4", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Heat workflow</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">One heat, four steps</p>
           <p className="text-sm text-muted-foreground">
-            Predict → Optimize → Validate → Report
+            Predict cycle time → Improve mix → Record real result → Report
             {active?.heatNumber ? ` · Heat ${active.heatNumber}` : ""}
           </p>
         </div>
@@ -171,8 +178,8 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
                     {stage.label}
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
-                    {status === "done" ? "Done" : status === "current" ? "In progress" : "Later"}
-                    {isHere ? " · here" : ""}
+                    {STAGE_BLURBS[stage.id]}
+                    {isHere ? " · here" : status === "done" ? " · done" : ""}
                   </span>
                 </span>
               </Link>

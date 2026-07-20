@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   EnterpriseTable,
   EnterpriseTableBody,
@@ -57,8 +59,14 @@ export function FurnaceManagementView() {
   };
 
   return (
-    <PageContainer title="Furnace Management" description="Multi-furnace registry (EAF-1, EAF-2, LF-1, …)">
-      <SectionCard title="Active furnace filter">
+    <PageContainer
+      title="Furnace Management"
+      description="Multi-furnace registry (EAF-1, EAF-2, LF-1, …)"
+      meta={`Dashboard & heat sync use · ${furnaceId}`}
+    >
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+
+      <SectionCard title="Active furnace filter" description="Sets the plant context used across Live Board and Queue">
         <div className="flex flex-wrap gap-2">
           {rows.map((f) => (
             <Button
@@ -71,7 +79,6 @@ export function FurnaceManagementView() {
             </Button>
           ))}
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">Dashboard & heat sync use: {furnaceId}</p>
       </SectionCard>
 
       <SectionCard title="Register furnace">
@@ -94,7 +101,6 @@ export function FurnaceManagementView() {
           </div>
         </div>
         <Button className="mt-4" onClick={() => void create()}>Add furnace</Button>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
 
       <SectionCard title="Furnaces">
@@ -105,15 +111,21 @@ export function FurnaceManagementView() {
               <EnterpriseTableHeaderCell>Name</EnterpriseTableHeaderCell>
               <EnterpriseTableHeaderCell>Type</EnterpriseTableHeaderCell>
               <EnterpriseTableHeaderCell>Plant</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>Context</EnterpriseTableHeaderCell>
             </EnterpriseTableRow>
           </EnterpriseTableHead>
           <EnterpriseTableBody>
             {rows.map((r) => (
               <EnterpriseTableRow key={r.id}>
-                <EnterpriseTableCell>{r.code}</EnterpriseTableCell>
+                <EnterpriseTableCell className="font-medium">{r.code}</EnterpriseTableCell>
                 <EnterpriseTableCell>{r.name}</EnterpriseTableCell>
                 <EnterpriseTableCell>{r.type}</EnterpriseTableCell>
                 <EnterpriseTableCell>{r.plant}</EnterpriseTableCell>
+                <EnterpriseTableCell>
+                  {furnaceId === r.code ? <Badge variant="success">Active</Badge> : (
+                    <Button size="sm" variant="ghost" onClick={() => setFurnaceId(r.code)}>Use</Button>
+                  )}
+                </EnterpriseTableCell>
               </EnterpriseTableRow>
             ))}
           </EnterpriseTableBody>

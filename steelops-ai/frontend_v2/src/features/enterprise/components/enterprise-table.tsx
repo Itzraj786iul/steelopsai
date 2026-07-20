@@ -26,16 +26,19 @@ export function EnterpriseTableRow({
   children,
   interactive,
   onClick,
+  className,
 }: {
   children: React.ReactNode;
   interactive?: boolean;
   onClick?: () => void;
+  className?: string;
 }) {
   return (
     <tr
       className={cn(
         "border-b border-border/40 transition-colors duration-200",
-        interactive && "cursor-pointer hover:bg-muted/50 focus-within:bg-muted/50"
+        interactive && "cursor-pointer hover:bg-muted/50 focus-within:bg-muted/50",
+        className
       )}
       onClick={onClick}
       tabIndex={interactive ? 0 : undefined}

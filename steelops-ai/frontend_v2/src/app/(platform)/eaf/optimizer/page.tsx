@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { KpiStrip } from "@/components/layout/kpi-strip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
@@ -20,7 +23,8 @@ import { FullRecommendationExplanation } from "@/features/eaf/components/full-re
 import { usePermissions } from "@/hooks/use-auth";
 import { useEafOptimize, useEafOptimizeV2, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import type { EafRecipe } from "@/lib/api/eaf";
-import { formatVariableLabel } from "@/lib/eaf-labels";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
+import { formatVariableLabel, TTT_SHORT_LABEL } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
 import { currentCharge, useCurrentHeatStore } from "@/stores/current-heat-store";
 
@@ -77,72 +81,70 @@ export default function EafOptimizerPage() {
   };
 
   return (
-    <PageContainer title="Optimizer" description="Run recommendation → Accept / Modify / Reject → Validation">
-      {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
-      <HeatWorkflowStrip active={active} currentPage="optimize" className="mb-6" />
-      <OptimizerDisclaimer className="mb-4" />
+    <PageContainer
+      title="Optimize the charge"
+      description="Ask the model for a safer, faster mix — then Accept, Modify, or Reject before recording the real result."
+      actions={
+        isResearchUi ? (
+          <div className="flex flex-wrap gap-2">
+            {(["production", "research", "compare"] as const).map((m) => (
+              <Button key={m} variant={effectiveMode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
+                {m === "production" ? "Production" : m === "research" ? "Research V2" : "Compare"}
+              </Button>
+            ))}
+          </div>
+        ) : undefined
+      }
+    >
+      {!active?.prediction ? <EmptyHeatState /> : null}
+      <HeatWorkflowStrip active={active} currentPage="optimize" />
+      <PageExplainer {...PAGE_EXPLAINERS.optimizer} />
+      <OptimizerDisclaimer />
 
-      {isResearchUi ? (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {(["production", "research", "compare"] as const).map((m) => (
-            <Button key={m} variant={effectiveMode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
-              {m === "production" ? "Production" : m === "research" ? "Research V2" : "Compare"}
-            </Button>
-          ))}
-        </div>
-      ) : null}
-
-      <SectionCard title="Current heat" description="Loaded from prediction — no re-entry needed">
+      <SectionCard
+        title="This heat (from Prediction)"
+        description="No need to re-type the recipe — we reuse the batch you just predicted."
+      >
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <Badge variant="outline">Heat {active?.heatNumber || "—"}</Badge>
           <Badge variant="outline">Shift {recipe.Shift}</Badge>
           <span className="font-mono text-muted-foreground">Charge {charge.toFixed(1)} t</span>
-          <span className="font-mono text-muted-foreground">
-            Pred {active?.prediction?.predicted_ttt.toFixed(1) ?? "—"} min
+          <span className="text-muted-foreground">
+            Predicted cycle:{" "}
+            <span className="font-mono font-medium text-foreground">
+              {active?.prediction?.predicted_ttt.toFixed(1) ?? "—"} min
+            </span>
           </span>
         </div>
         <Button className="mt-4" onClick={runOptimization} disabled={loading || !active?.prediction}>
-          {loading ? "Running…" : "Run Optimizer"}
+          {loading ? "Finding a better mix…" : "Suggest a better mix"}
         </Button>
-        {error ? (
-          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
+        {error ? <PageAlert tone="error" className="mt-4">{error}</PageAlert> : null}
       </SectionCard>
 
       {effectiveMode === "compare" && prodResult && v2Result ? (
-        <SectionCard title="Optimizer comparison" className="mt-6">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Current</p>
-              <p className="font-mono text-2xl">{prodResult.current_ttt.toFixed(2)} min</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Production</p>
-              <p className="font-mono text-2xl text-primary">{prodResult.optimized_ttt.toFixed(2)} min</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Research V2</p>
-              <p className="font-mono text-2xl text-primary">{v2Result.optimized_ttt.toFixed(2)} min</p>
-            </div>
-          </div>
+        <SectionCard title="Optimizer comparison">
+          <KpiStrip
+            columns={3}
+            items={[
+              { label: "Current", value: `${prodResult.current_ttt.toFixed(2)} min` },
+              { label: "Production suggestion", value: `${prodResult.optimized_ttt.toFixed(2)} min`, highlight: true },
+              { label: "Research V2", value: `${v2Result.optimized_ttt.toFixed(2)} min` },
+            ]}
+          />
         </SectionCard>
       ) : null}
 
       {effectiveMode !== "research" && prodResult ? (
-        <div className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <SectionCard title="Current">
-              <p className="font-mono text-2xl">{prodResult.current_ttt.toFixed(2)} min</p>
-            </SectionCard>
-            <SectionCard title="Optimized">
-              <p className="font-mono text-2xl text-primary">{prodResult.optimized_ttt.toFixed(2)} min</p>
-            </SectionCard>
-            <SectionCard title="Expected saving">
-              <p className="font-mono text-2xl text-green-600">{prodResult.improvement_min.toFixed(2)} min</p>
-            </SectionCard>
-          </div>
+        <div className="space-y-6">
+          <KpiStrip
+            columns={3}
+            items={[
+              { label: `Current ${TTT_SHORT_LABEL}`, value: `${prodResult.current_ttt.toFixed(2)} min` },
+              { label: `Suggested ${TTT_SHORT_LABEL}`, value: `${prodResult.optimized_ttt.toFixed(2)} min`, highlight: true },
+              { label: "Minutes you might save", value: `${prodResult.improvement_min.toFixed(2)} min` },
+            ]}
+          />
 
           <TttComparisonBars
             historicalActual={
@@ -193,8 +195,8 @@ export default function EafOptimizerPage() {
       ) : null}
 
       {effectiveMode === "research" && v2Result ? (
-        <div className="mt-6 space-y-6">
-          <Badge className="border-amber-500/40 bg-amber-500/10 text-amber-700">Research optimizer</Badge>
+        <div className="space-y-6">
+          <Badge className="border-warning/40 bg-warning/10 text-foreground">Research optimizer</Badge>
           <FullRecommendationExplanation explanation={v2Best?.explanation} />
           <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
           <OptimizerChangeCards

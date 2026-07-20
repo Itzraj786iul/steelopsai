@@ -82,15 +82,15 @@ export function EafLandingHero() {
               JSPL Raigarh · Steel Melting Shop 3
             </p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-              EAF tap-to-tap decision support
+              Estimate furnace cycle time — then improve the mix
               <span className="mt-2 block text-xl font-semibold text-muted-foreground sm:text-2xl">
-                for SMS-3 furnace operations
+                Decision support for JSPL SMS-3 Electric Arc Furnace
               </span>
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Predict cycle time, optimize burden under physics constraints, and close heats with
-              validation — advisory AI on the frozen {PRODUCTION_MODEL_PHASE} production model.
-              Operators stay in control.
+              Built so a visitor can follow along: predict how long a heat takes (tap-to-tap / TTT),
+              suggest a safer faster charge mix, then record what really happened. Operators stay in control —
+              the AI is advisory on the frozen {PRODUCTION_MODEL_PHASE} production model.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -142,9 +142,9 @@ export function EafLandingHero() {
             </dl>
             <div className="mt-5 grid grid-cols-2 gap-2">
               {[
-                { icon: LineChart, label: "Predict TTT" },
-                { icon: Cpu, label: "Optimize" },
-                { icon: Target, label: "Validate" },
+                { icon: LineChart, label: "Predict cycle time" },
+                { icon: Cpu, label: "Optimize mix" },
+                { icon: Target, label: "Record result" },
                 { icon: Shield, label: "Audit trail" },
               ].map(({ icon: Icon, label }) => (
                 <div
@@ -241,15 +241,15 @@ export function EafLandingHero() {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Workflow</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight">Standard heat path</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              One session carries recipe and results across prediction, optimization, and validation.
+              Four plain steps — even if you are new to steelmaking, the path stays the same.
             </p>
           </div>
           <ol className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { n: "01", t: "Predict", d: "Enter burden · forecast TTT" },
-              { n: "02", t: "Optimize", d: "Review physics-safe changes" },
-              { n: "03", t: "Decide", d: "Accept, modify, or reject" },
-              { n: "04", t: "Validate", d: "Record actual TTT & close" },
+              { n: "01", t: "Predict", d: "Enter the charge mix · estimate cycle time (TTT)" },
+              { n: "02", t: "Optimize", d: "Review safer, faster suggested changes" },
+              { n: "03", t: "Decide", d: "Accept, modify, or reject the suggestion" },
+              { n: "04", t: "Validate", d: "Record real minutes & close the heat" },
             ].map((step) => (
               <li key={step.n} className="border border-border/60 bg-card/40 p-5">
                 <span className="font-mono text-xs text-primary">{step.n}</span>

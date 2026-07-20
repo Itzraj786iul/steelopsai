@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ClipboardCheck, LayoutGrid, ListOrdered, CalendarRange, Target, Gauge } from "lucide-react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { ShortcutBar } from "@/components/layout/shortcut-bar";
+import { KpiStrip, humanizeKey } from "@/components/layout/kpi-strip";
 import { Button } from "@/components/ui/button";
 import {
   EnterpriseTable,
@@ -18,19 +24,23 @@ import { opsApi } from "@/lib/api/ops";
 import { getApiErrorMessage } from "@/services/api-client";
 
 export function ProductionManagerOpsView() {
+  const router = useRouter();
   const [dash, setDash] = useState<Record<string, unknown> | null>(null);
   const [shift, setShift] = useState<Record<string, unknown> | null>(null);
   const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([opsApi.productionDash(), opsApi.shiftPerf(), opsApi.analytics()])
       .then(([d, s, a]) => {
         setDash(d.data as Record<string, unknown>);
         setShift(s.data as Record<string, unknown>);
         setAnalytics(a.data as Record<string, unknown>);
       })
-      .catch((e: unknown) => setError(getApiErrorMessage(e, "Failed to load dashboard")));
+      .catch((e: unknown) => setError(getApiErrorMessage(e, "Failed to load dashboard")))
+      .finally(() => setLoading(false));
   }, []);
 
   const live = (dash?.live_queue || {}) as Record<string, number>;
@@ -42,113 +52,156 @@ export function ProductionManagerOpsView() {
     <PageContainer
       title="Production Hub"
       description="Live production home — queue, approvals, and running heats. Use Shift Analytics for period charts."
+      actions={
+        <Button asChild size="sm" variant="outline">
+          <Link href="/eaf/live-board">Open Live Board</Link>
+        </Button>
+      }
     >
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
 
-      <SectionCard title="Do next" description="Primary production actions" className="mb-4">
-        <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm"><Link href="/eaf/live-board">Live Board</Link></Button>
-          <Button asChild size="sm" variant="outline"><Link href="/eaf/heat-queue">Heat Queue</Link></Button>
-          <Button asChild size="sm" variant="outline"><Link href="/eaf/approvals">Approvals</Link></Button>
-          <Button asChild size="sm" variant="outline"><Link href="/eaf/production-plan">Production Plan</Link></Button>
-          <Button asChild size="sm" variant="outline"><Link href="/eaf/prediction">Run heat path</Link></Button>
-          <Button asChild size="sm" variant="ghost"><Link href="/eaf/shift-dashboard">Shift Analytics</Link></Button>
-        </div>
-      </SectionCard>
+      <ShortcutBar
+        title="Do next"
+        description="Primary production actions"
+        items={[
+          { href: "/eaf/live-board", label: "Live Board", icon: LayoutGrid },
+          { href: "/eaf/heat-queue", label: "Heat Queue", icon: ListOrdered },
+          { href: "/eaf/approvals", label: "Approvals", icon: ClipboardCheck },
+          { href: "/eaf/production-plan", label: "Production Plan", icon: CalendarRange },
+          { href: "/eaf/prediction", label: "Run heat path", icon: Target },
+          { href: "/eaf/shift-dashboard", label: "Shift Analytics", variant: "ghost", icon: Gauge },
+        ]}
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Object.entries(live).map(([k, v]) => (
-          <SectionCard key={k} title={k}>
-            <p className="text-2xl font-semibold tabular-nums">{v}</p>
-          </SectionCard>
-        ))}
-      </div>
+      {loading && !dash ? (
+        <p className="text-sm text-muted-foreground">Loading production snapshot…</p>
+      ) : (
+        <KpiStrip
+          items={Object.entries(live).map(([k, v]) => ({
+            label: humanizeKey(k),
+            value: v,
+          }))}
+        />
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Shift performance">
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            {shift
-              ? Object.entries(shift).map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-muted-foreground">{k.replace(/_/g, " ")}</dt>
-                    <dd className="font-medium tabular-nums">{String(v ?? "—")}</dd>
-                  </div>
-                ))
-              : null}
-          </dl>
+          {shift ? (
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              {Object.entries(shift).map(([k, v]) => (
+                <div key={k} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+                  <dt className="text-xs text-muted-foreground">{humanizeKey(k)}</dt>
+                  <dd className="mt-0.5 font-mono text-base font-semibold tabular-nums">{String(v ?? "—")}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">No shift metrics yet.</p>
+          )}
         </SectionCard>
 
-        <SectionCard title="Throughput snapshot">
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <dt className="text-muted-foreground">Heat throughput</dt>
-              <dd className="text-xl font-semibold">{String(analytics?.heat_throughput ?? "—")}</dd>
+        <SectionCard
+          title="Throughput snapshot"
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="outline"><Link href="/eaf/delays">Delays</Link></Button>
+              <Button asChild size="sm" variant="outline"><Link href="/eaf/reports">Reports</Link></Button>
+              <Button asChild size="sm" variant="outline"><Link href="/eaf/shift-handover">Handover</Link></Button>
             </div>
-            <div>
-              <dt className="text-muted-foreground">Open tasks</dt>
-              <dd className="text-xl font-semibold">
+          }
+        >
+          <dl className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+              <dt className="text-xs text-muted-foreground">Heat throughput</dt>
+              <dd className="mt-0.5 font-mono text-xl font-semibold">{String(analytics?.heat_throughput ?? "—")}</dd>
+            </div>
+            <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+              <dt className="text-xs text-muted-foreground">Open tasks</dt>
+              <dd className="mt-0.5 font-mono text-xl font-semibold">
                 {String((analytics?.operator_utilization as { open_tasks?: number } | undefined)?.open_tasks ?? "—")}
               </dd>
             </div>
           </dl>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/delays">Delays</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/reports">Reports</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/shift-handover">Handover</Link></Button>
-          </div>
         </SectionCard>
       </div>
 
       <SectionCard title="Running heats">
-        <EnterpriseTable>
-          <EnterpriseTableHead>
-            <EnterpriseTableRow>
-              <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
-              <EnterpriseTableHeaderCell>Furnace</EnterpriseTableHeaderCell>
-            </EnterpriseTableRow>
-          </EnterpriseTableHead>
-          <EnterpriseTableBody>
-            {running.map((r) => (
-              <EnterpriseTableRow key={r.heat_number}>
-                <EnterpriseTableCell>
-                  <Link className="text-primary underline" href={`/eaf/heat-queue?q=${encodeURIComponent(r.heat_number)}`}>
-                    {r.heat_number}
-                  </Link>
-                </EnterpriseTableCell>
-                <EnterpriseTableCell>{r.furnace_id || "—"}</EnterpriseTableCell>
-              </EnterpriseTableRow>
-            ))}
-            {!running.length ? (
+        {running.length ? (
+          <EnterpriseTable>
+            <EnterpriseTableHead>
               <EnterpriseTableRow>
-                <EnterpriseTableCell colSpan={2} className="text-muted-foreground">No running heats</EnterpriseTableCell>
+                <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Furnace</EnterpriseTableHeaderCell>
               </EnterpriseTableRow>
-            ) : null}
-          </EnterpriseTableBody>
-        </EnterpriseTable>
+            </EnterpriseTableHead>
+            <EnterpriseTableBody>
+              {running.map((r) => (
+                <EnterpriseTableRow key={r.heat_number}>
+                  <EnterpriseTableCell>
+                    <Link className="font-medium text-primary hover:underline" href={`/eaf/heat-queue?q=${encodeURIComponent(r.heat_number)}`}>
+                      {r.heat_number}
+                    </Link>
+                  </EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.furnace_id || "—"}</EnterpriseTableCell>
+                </EnterpriseTableRow>
+              ))}
+            </EnterpriseTableBody>
+          </EnterpriseTable>
+        ) : (
+          <EmptyState
+            title="No running heats"
+            description="When heats are active they appear here with a link into the queue."
+            actionLabel="Open Live Board"
+            onAction={() => router.push("/eaf/live-board")}
+            className="py-10"
+          />
+        )}
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Approval backlog">
-          <ul className="space-y-1 text-sm">
-            {approvals.map((a) => (
-              <li key={a.id}>
-                <Link className="text-primary underline" href="/eaf/approvals">
-                  {a.heat_number}
-                </Link>
-                {" · "}
-                {a.stage}
-              </li>
-            ))}
-            {!approvals.length ? <li className="text-muted-foreground">Clear</li> : null}
-          </ul>
+        <SectionCard
+          title="Approval backlog"
+          actions={
+            <Button asChild size="sm" variant="ghost">
+              <Link href="/eaf/approvals">View all</Link>
+            </Button>
+          }
+        >
+          {approvals.length ? (
+            <ul className="divide-y divide-border/60 text-sm">
+              {approvals.map((a) => (
+                <li key={a.id} className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0">
+                  <Link className="font-medium text-primary hover:underline" href="/eaf/approvals">
+                    {a.heat_number}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">{a.stage}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Backlog clear.</p>
+          )}
         </SectionCard>
-        <SectionCard title="Open delays">
-          <ul className="space-y-1 text-sm">
-            {delays.map((d) => (
-              <li key={d.id}>{d.category} · {d.heat_number || "—"}</li>
-            ))}
-            {!delays.length ? <li className="text-muted-foreground">None</li> : null}
-          </ul>
+        <SectionCard
+          title="Open delays"
+          actions={
+            <Button asChild size="sm" variant="ghost">
+              <Link href="/eaf/delays">Delay log</Link>
+            </Button>
+          }
+        >
+          {delays.length ? (
+            <ul className="divide-y divide-border/60 text-sm">
+              {delays.map((d) => (
+                <li key={d.id} className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0">
+                  <span>{d.category}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{d.heat_number || "—"}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No open delays.</p>
+          )}
         </SectionCard>
       </div>
     </PageContainer>

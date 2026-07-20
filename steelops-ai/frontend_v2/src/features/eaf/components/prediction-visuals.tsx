@@ -65,7 +65,9 @@ export function TttComparisonBars({
     <div className={cn("min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3 sm:p-4", className)}>
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">TTT comparison</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Cycle time comparison (minutes)
+          </p>
           <p className="text-sm text-muted-foreground">Where this heat sits vs history and optimizer</p>
         </div>
         {predVsHist != null ? (

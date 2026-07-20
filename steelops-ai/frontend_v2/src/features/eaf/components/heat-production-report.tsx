@@ -229,9 +229,9 @@ export function HeatProductionReport({
             ) : null}
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi label="Predicted TTT" value={`${fmt(predicted)} min`} tone="prediction" />
-            <Kpi label="Optimized TTT" value={optimized != null ? `${fmt(optimized)} min` : "—"} tone="info" />
-            <Kpi label="Actual TTT" value={actualTtt != null ? `${fmt(actualTtt)} min` : "Pending"} tone="warning" />
+            <Kpi label="Predicted cycle" value={`${fmt(predicted)} min`} tone="prediction" />
+            <Kpi label="Optimized cycle" value={optimized != null ? `${fmt(optimized)} min` : "—"} tone="info" />
+            <Kpi label="Actual cycle" value={actualTtt != null ? `${fmt(actualTtt)} min` : "Pending"} tone="warning" />
             <Kpi
               label={errorMin != null ? "Prediction error" : "Expected saving"}
               value={
@@ -257,7 +257,7 @@ export function HeatProductionReport({
         </SectionCard>
 
         {/* TTT chart */}
-        <SectionCard title="TTT performance" description="Interactive comparison — hover for exact values">
+        <SectionCard title="Cycle time performance" description="Predicted vs optimized vs actual — hover for exact minutes">
           {tttChartData.length ? (
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -270,7 +270,7 @@ export function HeatProductionReport({
                   />
                   <Tooltip
                     contentStyle={CHART_TOOLTIP_STYLE}
-                    formatter={(value) => [`${Number(value).toFixed(2)} min`, "TTT"]}
+                    formatter={(value) => [`${Number(value).toFixed(2)} min`, "Cycle time"]}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={64}>
                     {tttChartData.map((entry) => (
@@ -281,7 +281,7 @@ export function HeatProductionReport({
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No TTT values available yet.</p>
+            <p className="text-sm text-muted-foreground">No cycle-time values available yet.</p>
           )}
         </SectionCard>
 
@@ -506,8 +506,8 @@ export function HeatProductionReport({
             <div className="rounded-lg border border-border/60 bg-muted/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Validation</p>
               <dl className="mt-2 space-y-1.5 text-sm">
-                <Row label="Actual TTT" value={actualTtt != null ? `${fmt(actualTtt)} min` : "Pending"} />
-                <Row label="Predicted TTT" value={`${fmt(predicted)} min`} />
+                <Row label="Actual cycle" value={actualTtt != null ? `${fmt(actualTtt)} min` : "Pending"} />
+                <Row label="Predicted cycle" value={`${fmt(predicted)} min`} />
                 <Row label="Error" value={errorMin != null ? `${errorMin >= 0 ? "+" : ""}${fmt(errorMin)} min` : "—"} />
                 <Row label="Optimizer" value={active.validation?.optimizerUsed || (optimizer ? "Production optimizer" : "—")} />
                 <Row

@@ -71,9 +71,9 @@ const RESEARCH_ROLES = [R.DataScientist, R.QualityEngineer];
  * Admin uses Administration section (support via Users / Audit), not floor nav.
  */
 export const PRODUCTION_NAV: NavDefinition[] = [
-  { href: "/eaf/prediction", label: "Prediction", icon: Target, section: "production", roles: FLOOR },
-  { href: "/eaf/optimizer", label: "Optimizer", icon: Cpu, section: "production", roles: FLOOR },
-  { href: "/eaf/validation", label: "Validation", icon: CheckCircle2, section: "production", roles: [...FLOOR, R.QualityEngineer] },
+  { href: "/eaf/prediction", label: "Predict", icon: Target, section: "production", roles: FLOOR },
+  { href: "/eaf/optimizer", label: "Optimize", icon: Cpu, section: "production", roles: FLOOR },
+  { href: "/eaf/validation", label: "Validate", icon: CheckCircle2, section: "production", roles: [...FLOOR, R.QualityEngineer] },
   { href: "/eaf/heat-history", label: "Heat History", icon: ClipboardList, section: "production", roles: [...FLOOR, R.PlantManager, R.QualityEngineer, R.Viewer, R.MaintenanceEngineer, R.DataScientist] },
   { href: "/eaf/reports", label: "Reports", icon: FileText, section: "production", roles: [...FLOOR, R.PlantManager, R.QualityEngineer, R.Viewer, R.MaintenanceEngineer, R.DataScientist] },
   { href: "/eaf/tasks", label: "My Tasks", icon: CheckSquare, section: "production", roles: [R.ShiftEngineer, R.QualityEngineer, R.MaintenanceEngineer] },
@@ -177,9 +177,9 @@ export const PLATFORM_NAV: NavDefinition[] = [];
 export const ALL_NAV_ITEMS: NavDefinition[] = PRIMARY_NAV;
 
 export const QUICK_ACTIONS = [
-  { id: "predict", label: "Predict TTT", href: "/eaf/prediction", shortcut: "P", roles: FLOOR },
-  { id: "optimize", label: "Optimizer", href: "/eaf/optimizer", shortcut: "O", roles: FLOOR },
-  { id: "validation", label: "Validation", href: "/eaf/validation", shortcut: "V", roles: [...FLOOR, R.QualityEngineer] },
+  { id: "predict", label: "Predict cycle time", href: "/eaf/prediction", shortcut: "P", roles: FLOOR },
+  { id: "optimize", label: "Optimize mix", href: "/eaf/optimizer", shortcut: "O", roles: FLOOR },
+  { id: "validation", label: "Record result", href: "/eaf/validation", shortcut: "V", roles: [...FLOOR, R.QualityEngineer] },
   { id: "history", label: "Heat History", href: "/eaf/heat-history", shortcut: "H", roles: [...FLOOR, R.PlantManager, R.QualityEngineer, R.Viewer] },
   { id: "whatif", label: "What-if", href: "/eaf/whatif", shortcut: "W", roles: FLOOR },
   { id: "reports", label: "Reports", href: "/eaf/reports", roles: [...FLOOR, R.PlantManager, R.QualityEngineer, R.Viewer] },

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
 import { SectionCard } from "@/components/layout/section-card";
+import { Button } from "@/components/ui/button";
 import { INDUSTRIAL_STATUS } from "@/lib/industrial-colors";
 import { cn } from "@/lib/utils";
 
@@ -15,12 +17,12 @@ interface EmptyHeatStateProps {
 }
 
 const PAGE_HINT =
-  "Use New Heat in the header, then complete Prediction from the sidebar before using this page.";
+  "Start on Predict: enter a heat number (batch ID), keep or tweak the demo recipe, and estimate cycle time. Then this page unlocks.";
 
-const PANEL_HINT = "No active heat. Start with New Heat in the header.";
+const PANEL_HINT = "No active heat yet. Open Predict and run a cycle-time estimate first.";
 
 export function EmptyHeatState({
-  title = "No Active Heat",
+  title = "Start with a heat first",
   description,
   variant = "page",
   className,
@@ -49,9 +51,14 @@ export function EmptyHeatState({
 
   return (
     <SectionCard title={title} className={cn("border-dashed", className)}>
-      <div className="flex items-start gap-3 py-4">
-        <AlertCircle className="h-8 w-8 shrink-0 text-muted-foreground" aria-hidden />
-        <p className="max-w-lg text-sm text-muted-foreground">{hint}</p>
+      <div className="flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-8 w-8 shrink-0 text-muted-foreground" aria-hidden />
+          <p className="max-w-lg text-sm text-muted-foreground">{hint}</p>
+        </div>
+        <Button asChild>
+          <Link href="/eaf/prediction">Go to Predict</Link>
+        </Button>
       </div>
     </SectionCard>
   );

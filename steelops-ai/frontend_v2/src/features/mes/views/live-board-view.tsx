@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { RefreshCw } from "lucide-react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { KpiStrip } from "@/components/layout/kpi-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mesApi } from "@/lib/api/mes";
@@ -22,6 +25,10 @@ interface HeatCard {
   assigned_shift?: string;
   target_grade?: string;
   priority?: string;
+}
+
+function colLabel(col: string): string {
+  return col.replace(/([A-Z])/g, " $1").trim();
 }
 
 export function LiveBoardView() {
@@ -50,48 +57,74 @@ export function LiveBoardView() {
     return () => clearInterval(t);
   }, [load]);
 
+  const totalHeats = Object.values(counts).reduce((a, b) => a + (b || 0), 0);
+
   return (
-    <PageContainer title="Live Shift Board" description={`Auto-refresh 30s · Furnace ${furnaceId}`}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Last refresh: {refreshed?.slice(0, 19) || "—"}</p>
-        <Button size="sm" variant="outline" onClick={() => load()}>Refresh now</Button>
-      </div>
-      {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
+    <PageContainer
+      title="Live Shift Board"
+      description={`Kanban of heats for furnace ${furnaceId} — auto-refresh every 30s`}
+      meta={refreshed ? `Last refresh · ${refreshed.slice(0, 19)}` : "Waiting for first refresh…"}
+      actions={
+        <Button size="sm" variant="outline" onClick={() => load()}>
+          <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+          Refresh
+        </Button>
+      }
+    >
+      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+
+      <KpiStrip
+        columns={3}
+        items={[
+          { label: "On board", value: totalHeats },
+          { label: "Running", value: counts.Running ?? 0, highlight: true },
+          { label: "Delayed", value: counts.Delayed ?? 0 },
+        ]}
+      />
 
       <div className="grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
-        {COLS.map((col) => (
-          <SectionCard key={col} title={`${col.replace(/([A-Z])/g, " $1").trim()} (${counts[col] ?? 0})`}>
-            <div className="space-y-2 max-h-[70vh] overflow-y-auto">
-              {(columns[col] || []).map((h) => (
-                <div
-                  key={h.id}
-                  className={cn(
-                    "rounded-md border border-border/70 bg-card p-3 shadow-sm",
-                    col === "Delayed" && "border-destructive/50",
-                    col === "Running" && "border-emerald-600/40"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-1">
-                    <Link
-                      href={`/eaf/heat-queue?q=${encodeURIComponent(h.heat_number)}`}
-                      className="font-semibold text-sm hover:underline"
-                    >
-                      {h.heat_number}
-                    </Link>
-                    <Badge variant="outline" className="text-[10px]">{h.priority || "—"}</Badge>
+        {COLS.map((col) => {
+          const heats = columns[col] || [];
+          return (
+            <SectionCard key={col} title={`${colLabel(col)}`} description={`${counts[col] ?? 0} heats`}>
+              <div className="max-h-[70vh] space-y-2 overflow-y-auto">
+                {heats.map((h) => (
+                  <div
+                    key={h.id}
+                    className={cn(
+                      "rounded-md border border-border/70 bg-card p-3 shadow-elevation-sm transition-shadow hover:shadow-elevation-md",
+                      col === "Delayed" && "border-destructive/50 bg-destructive/5",
+                      col === "Running" && "border-success/40 bg-success/5"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <Link
+                        href={`/eaf/heat-queue?q=${encodeURIComponent(h.heat_number)}`}
+                        className="text-sm font-semibold hover:underline"
+                      >
+                        {h.heat_number}
+                      </Link>
+                      <Badge variant="outline" className="text-[10px]">
+                        {h.priority || "—"}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {h.assigned_furnace} · Shift {h.assigned_shift}
+                    </p>
+                    <p className="text-xs">
+                      {h.target_grade || "—"} · {h.status}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {h.assigned_furnace} · Shift {h.assigned_shift}
+                ))}
+                {!heats.length ? (
+                  <p className="rounded-md border border-dashed border-border/60 px-2 py-6 text-center text-xs text-muted-foreground">
+                    No heats
                   </p>
-                  <p className="text-xs">{h.target_grade || "—"} · {h.status}</p>
-                </div>
-              ))}
-              {!(columns[col] || []).length ? (
-                <p className="text-xs text-muted-foreground">Empty</p>
-              ) : null}
-            </div>
-          </SectionCard>
-        ))}
+                ) : null}
+              </div>
+            </SectionCard>
+          );
+        })}
       </div>
     </PageContainer>
   );

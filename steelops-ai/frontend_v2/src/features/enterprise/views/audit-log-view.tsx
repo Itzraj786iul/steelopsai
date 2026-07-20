@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Input } from "@/components/ui/input";
@@ -44,33 +46,41 @@ export function AuditLogView() {
 
   return (
     <PageContainer title="Audit Log" description="Every authenticated action is recorded">
-      <SectionCard title="Search">
+      <SectionCard title="Search" description="Filter by action, email, or heat number">
         <Input placeholder="Filter by action, email, heat…" value={q} onChange={(e) => setQ(e.target.value)} />
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+        {error ? <PageAlert tone="error" className="mt-3">{error}</PageAlert> : null}
       </SectionCard>
-      <SectionCard title={`Events (${rows.length})`} className="mt-6">
-        <EnterpriseTable>
-          <EnterpriseTableHead>
-            <EnterpriseTableHeaderCell>Time</EnterpriseTableHeaderCell>
-            <EnterpriseTableHeaderCell>User</EnterpriseTableHeaderCell>
-            <EnterpriseTableHeaderCell>Action</EnterpriseTableHeaderCell>
-            <EnterpriseTableHeaderCell>Resource</EnterpriseTableHeaderCell>
-            <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
-            <EnterpriseTableHeaderCell>IP</EnterpriseTableHeaderCell>
-          </EnterpriseTableHead>
-          <EnterpriseTableBody>
-            {rows.map((r) => (
-              <EnterpriseTableRow key={r.id}>
-                <EnterpriseTableCell mono>{r.created_at}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.user_email || "—"}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.action}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.resource || "—"}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.heat_number || "—"}</EnterpriseTableCell>
-                <EnterpriseTableCell mono>{r.ip || "—"}</EnterpriseTableCell>
-              </EnterpriseTableRow>
-            ))}
-          </EnterpriseTableBody>
-        </EnterpriseTable>
+      <SectionCard title={`Events (${rows.length})`}>
+        {rows.length ? (
+          <EnterpriseTable>
+            <EnterpriseTableHead>
+              <EnterpriseTableHeaderCell>Time</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>User</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>Action</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>Resource</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>Heat</EnterpriseTableHeaderCell>
+              <EnterpriseTableHeaderCell>IP</EnterpriseTableHeaderCell>
+            </EnterpriseTableHead>
+            <EnterpriseTableBody>
+              {rows.map((r) => (
+                <EnterpriseTableRow key={r.id}>
+                  <EnterpriseTableCell mono>{r.created_at}</EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.user_email || "—"}</EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.action}</EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.resource || "—"}</EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.heat_number || "—"}</EnterpriseTableCell>
+                  <EnterpriseTableCell mono>{r.ip || "—"}</EnterpriseTableCell>
+                </EnterpriseTableRow>
+              ))}
+            </EnterpriseTableBody>
+          </EnterpriseTable>
+        ) : (
+          <EmptyState
+            title="No audit events"
+            description={q ? "Try a different search." : "Actions will appear here as users work the floor."}
+            className="py-10"
+          />
+        )}
       </SectionCard>
     </PageContainer>
   );

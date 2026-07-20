@@ -234,7 +234,7 @@ export function RecommendationAcceptancePanel({ disabled }: RecommendationAccept
       {locked ? (
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Decision locked. Next: record actual TTT and save this heat permanently.
+            Decision locked. Next: record the actual cycle time (minutes) and save this heat permanently.
           </p>
           <Button asChild disabled={!canProceedToValidation} className="w-full sm:w-auto">
             <Link href="/eaf/validation">

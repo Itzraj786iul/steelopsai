@@ -38,11 +38,11 @@ export function assessCharge(charge: number, variables?: HistoricalVariable[]): 
 
   if (charge < CHARGE_UI_MIN_T || charge > CHARGE_UI_MAX_T) {
     warnings.push(
-      "⚠ Total charge is outside the typical operating range (80–150 t). Predictions may have lower confidence."
+      "Total iron charge is outside the usual plant band (about 80–150 tonnes). The estimate may be less trustworthy."
     );
   } else if (charge < bounds.p5 || charge > bounds.p95) {
     warnings.push(
-      "⚠ Total charge is outside the historical distribution (P5–P95). Predictions may have lower confidence."
+      `Total iron charge is outside the common historical band (~${bounds.p5.toFixed(0)}–${bounds.p95.toFixed(0)} t). The estimate may be less trustworthy.`
     );
   }
 

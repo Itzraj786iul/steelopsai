@@ -58,11 +58,11 @@ function buildHeatSteps(active: HeatSessionSnapshot | null): WorkflowStep[] {
   const steps: WorkflowStep[] = [
     {
       step: 1,
-      title: "Predict TTT",
+      title: "Predict cycle time",
       action: "Done on this page",
       href: "/eaf/prediction",
       status: hasPrediction ? "done" : "next",
-      detail: "Burden entered and TTT predicted",
+      detail: "Charge mix entered and cycle time estimated",
     },
     {
       step: 2,
@@ -70,15 +70,15 @@ function buildHeatSteps(active: HeatSessionSnapshot | null): WorkflowStep[] {
       action: "Open Optimizer",
       href: "/eaf/optimizer",
       status: !hasPrediction ? "todo" : hasAcceptance ? "done" : hasOptimizer ? "next" : "next",
-      detail: "Run optimizer, then Accept / Modify / Reject",
+      detail: "Suggest a better mix, then Accept / Modify / Reject",
     },
     {
       step: 3,
-      title: "Validate heat",
+      title: "Record real result",
       action: "Open Validation",
       href: "/eaf/validation",
       status: !hasAcceptance ? "todo" : hasValidated ? "done" : "next",
-      detail: "Enter actual TTT and save permanently",
+      detail: "Enter actual cycle time (minutes) and save",
     },
     {
       step: 4,
@@ -154,16 +154,16 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
   const primary: ActionItem[] = [
     {
       href: "/eaf/optimizer",
-      label: "Optimizer",
-      description: "Recommendations + Accept / Modify / Reject",
+      label: "Optimize mix",
+      description: "Suggestions + Accept / Modify / Reject",
       icon: Cpu,
       emphasize: true,
       status: active?.recommendationAcceptance ? "done" : "needed",
     },
     {
       href: "/eaf/validation",
-      label: "Validation",
-      description: "Enter actual TTT and save this heat",
+      label: "Record result",
+      description: "Enter actual cycle time (minutes) and save this heat",
       icon: CheckCircle2,
       emphasize: true,
       status: active?.validation?.validatedAt ? "done" : "needed",
@@ -171,7 +171,7 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
     {
       href: "/eaf/whatif",
       label: "What-if",
-      description: "Test alternate burden before commit",
+      description: "Try a different charge mix before committing",
       icon: Sparkles,
       status: "ready",
     },
@@ -202,7 +202,7 @@ export function PredictionNextActions({ className, active = null }: PredictionNe
   return (
     <SectionCard
       title="Operator Heat Console"
-      description="One path: Predict → Optimize → Validate → Report"
+      description="One path: Predict cycle time → Optimize mix → Record result → Report"
       className={className}
     >
       <motion.div className="space-y-5" variants={staggerContainer} initial="initial" animate="animate">

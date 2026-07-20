@@ -48,13 +48,17 @@ export function PredictionCompleteDashboard({
     <motion.div className="min-w-0" variants={staggerContainer} initial="initial" animate="animate">
       <motion.div variants={fadeUp} className="min-w-0">
         <SectionCard
-          title="Prediction result"
-          description={compact ? "Predicted TTT vs similar historical heat" : undefined}
+          title="Your cycle-time estimate"
+          description={
+            compact
+              ? "How long this heat is expected to take (minutes) — compared with a similar past heat"
+              : undefined
+          }
           className={INDUSTRIAL_STATUS.prediction.className}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="min-w-0">
-              <p className="text-xs uppercase text-muted-foreground">Predicted TTT</p>
+              <p className="text-xs uppercase text-muted-foreground">Predicted cycle time (TTT)</p>
               <p className="break-words font-mono text-3xl font-bold text-blue-700 dark:text-blue-400 sm:text-4xl">
                 {result.predicted_ttt.toFixed(2)}{" "}
                 <span className="text-lg font-semibold sm:text-xl">min</span>
@@ -67,7 +71,7 @@ export function PredictionCompleteDashboard({
               ) : null}
             </div>
             <div className="min-w-0">
-              <p className="text-xs uppercase text-muted-foreground">95% Interval</p>
+              <p className="text-xs uppercase text-muted-foreground">Likely range (95%)</p>
               <p className="break-words font-mono text-lg font-semibold sm:text-xl">
                 {result.ci_lower_95.toFixed(1)} – {result.ci_upper_95.toFixed(1)} min
               </p>

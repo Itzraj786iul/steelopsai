@@ -5,7 +5,11 @@ interface PageContainerProps {
   className?: string;
   size?: "default" | "executive" | "full";
   title?: string;
-  description?: string;
+  description?: React.ReactNode;
+  /** Page-level actions (period select, refresh, primary CTA) — right of the title. */
+  actions?: React.ReactNode;
+  /** Optional meta line under description (e.g. last refresh). */
+  meta?: React.ReactNode;
 }
 
 export function PageContainer({
@@ -14,6 +18,8 @@ export function PageContainer({
   size = "default",
   title,
   description,
+  actions,
+  meta,
 }: PageContainerProps) {
   return (
     <div
@@ -26,12 +32,20 @@ export function PageContainer({
       )}
     >
       {title ? (
-        <div className="min-w-0 space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-display-md">{title}</h1>
-          {description ? (
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-display-md">{title}</h1>
+            {description ? (
+              <div className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</div>
+            ) : null}
+            {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+          </div>
+          {actions ? (
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+              {actions}
+            </div>
           ) : null}
-        </div>
+        </header>
       ) : null}
       {children}
     </div>

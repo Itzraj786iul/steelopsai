@@ -1,20 +1,30 @@
 /** User-facing labels for EAF variables — backend field names stay unchanged. */
 
+import { RECIPE_FIELD_GUIDES, termLabel, TTT } from "@/lib/eaf-glossary";
+
 export const ELECTRICAL_ENERGY_LABEL = "Electrical Energy (kWh)";
 export const ELECTRICAL_ENERGY_FULL_LABEL = "Electrical Energy Consumed (kWh)";
 
+/** Short KPI / table label for cycle time. */
+export const TTT_SHORT_LABEL = "Cycle time (TTT)";
+export const TTT_FULL_LABEL = termLabel(TTT);
+
+/**
+ * Recipe fields: plain name first, code in parentheses.
+ * Prefer GuidedNumberField + RECIPE_FIELD_GUIDES for forms.
+ */
 export const RECIPE_FIELD_LABELS: Record<string, string> = {
-  HM: "HM (t)",
-  DRI: "DRI (t)",
-  HBI: "HBI (t)",
-  Bucket: "Bucket (t)",
-  LIME: "LIME (t)",
-  DOLO: "DOLO (t)",
-  CPC: "Target Carbon Program",
+  HM: "Hot metal — HM (t)",
+  DRI: "Direct reduced iron — DRI (t)",
+  HBI: "Hot briquetted iron — HBI (t)",
+  Bucket: "Scrap buckets (t)",
+  LIME: "Lime — LIME (t)",
+  DOLO: "Dolomite — DOLO (t)",
+  CPC: "Carbon program (CPC)",
   POWER: ELECTRICAL_ENERGY_LABEL,
-  OXY: "Target Oxygen Program",
-  Shift: "Shift",
-  Power_Restriction: "Electrical Restriction",
+  OXY: "Oxygen program (OXY)",
+  Shift: "Shift (A / B / C)",
+  Power_Restriction: "Electrical power restriction",
 };
 
 export const FEATURE_DISPLAY_NAMES: Record<string, string> = {
@@ -50,6 +60,10 @@ const POWER_WORD = /\bpower\b/i;
 /** Map API / model feature keys to operator-friendly labels. */
 export function formatVariableLabel(key: string): string {
   if (FEATURE_DISPLAY_NAMES[key]) return FEATURE_DISPLAY_NAMES[key];
+  if (RECIPE_FIELD_GUIDES[key]) {
+    const g = RECIPE_FIELD_GUIDES[key];
+    return `${g.plain} (${g.code})`;
+  }
   if (RECIPE_FIELD_LABELS[key]) return RECIPE_FIELD_LABELS[key];
 
   const normalized = key.replace(/_/g, " ");
