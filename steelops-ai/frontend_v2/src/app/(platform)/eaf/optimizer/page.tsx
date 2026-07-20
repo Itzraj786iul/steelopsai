@@ -1,62 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DigitalTwinReadinessCard } from "@/features/eaf/components/digital-twin-readiness-card";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
-import { FullRecommendationExplanation } from "@/features/eaf/components/full-recommendation-explanation";
-import { HeatLifecycleTimeline } from "@/features/eaf/components/heat-lifecycle-timeline";
 import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { OptimizerChangeCards } from "@/features/eaf/components/optimizer-change-cards";
 import { RecommendationAcceptancePanel } from "@/features/eaf/components/recommendation-acceptance-panel";
 import { RecommendationAlternativesPanel } from "@/features/eaf/components/recommendation-alternatives-panel";
 import { RecommendationValidationTable } from "@/features/eaf/components/recommendation-validation-table";
 import { SimilarHistoricalHeatCard } from "@/features/eaf/components/similar-historical-heat-card";
-import { TrustMeterGauge, TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
+import { TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import { OptimizerDisclaimer } from "@/features/eaf/components/validation-banner";
-import { RecipeForm } from "@/features/eaf/components/recipe-form";
+import { FullRecommendationExplanation } from "@/features/eaf/components/full-recommendation-explanation";
+import { usePermissions } from "@/hooks/use-auth";
 import { useEafOptimize, useEafOptimizeV2, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import type { EafRecipe } from "@/lib/api/eaf";
 import { formatVariableLabel } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
-import { useCurrentHeatStore } from "@/stores/current-heat-store";
+import { currentCharge, useCurrentHeatStore } from "@/stores/current-heat-store";
 
 type OptimizerMode = "production" | "research" | "compare";
 
 export default function EafOptimizerPage() {
   const searchParams = useSearchParams();
-  const { recipe, update, charge } = useEafRecipe();
+  const { canAccessLabs } = usePermissions();
+  const allowResearch = canAccessLabs();
+  const { recipe } = useEafRecipe();
   const { optimize, loading: prodLoading, error: prodError, result: prodResult } = useEafOptimize();
   const { optimizeV2, loading: v2Loading, error: v2Error, result: v2Result } = useEafOptimizeV2();
   const active = useCurrentHeatStore((s) => s.active);
-  const cachedHybrid = useCurrentHeatStore((s) => s.active?.hybrid);
   const [mode, setMode] = useState<OptimizerMode>("production");
-  const hybridReliability = cachedHybrid?.reliability_index ?? null;
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
+    if (!allowResearch) {
+      setMode("production");
+      return;
+    }
     const param = searchParams.get("mode");
-    if (param === "research") setMode("research");
-  }, [searchParams]);
+    if (param === "research" || param === "compare") setMode(param);
+  }, [allowResearch, searchParams]);
 
   const explain = prodResult?.explainability;
   const v2Best = v2Result?.recommendations?.[0];
   const loading = prodLoading || v2Loading || compareLoading;
   const error = prodError || v2Error || compareError;
+  const charge = currentCharge(recipe);
+  const effectiveMode: OptimizerMode = allowResearch ? mode : "production";
+  const isResearchUi = allowResearch && (effectiveMode === "research" || effectiveMode === "compare");
 
   const runOptimization = async () => {
     setCompareError(null);
-    if (mode === "production") {
+    if (effectiveMode === "production") {
       await optimize(recipe);
       return;
     }
-    if (mode === "research") {
+    if (effectiveMode === "research") {
       await optimizeV2(recipe);
       return;
     }
@@ -70,111 +77,107 @@ export default function EafOptimizerPage() {
     }
   };
 
-  const showProd = mode === "production" || mode === "compare";
-  const showV2 = mode === "research" || mode === "compare";
-
   return (
-    <PageContainer title="Optimizer" description="Current heat burden composition loads automatically — no duplicate entry">
+    <PageContainer title="Optimizer" description="Run recommendation → Accept / Modify / Reject → Validation">
       {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
       <HeatWorkflowStrip active={active} currentPage="optimize" className="mb-6" />
-      <OptimizerDisclaimer className="mb-6" />
-      {mode === "research" ? (
-        <Badge className="mb-4 border-amber-500/40 bg-amber-500/10 text-amber-700">Research Tool — Phase 31 V2</Badge>
-      ) : null}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {(["production", "research", "compare"] as const).map((m) => (
-          <Button key={m} variant={mode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
-            {m === "production" ? "Production (20.2)" : m === "research" ? "Research (V2)" : "Compare Both"}
-          </Button>
-        ))}
-      </div>
-      <RecipeForm recipe={recipe} onChange={update} charge={charge} />
-      <Button className="mt-6" onClick={runOptimization} disabled={loading || !active?.prediction}>
-        {loading ? "Running…" : "Run Optimizer"}
-      </Button>
-      {error ? (
-        <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {error}
-        </p>
+      <OptimizerDisclaimer className="mb-4" />
+
+      {isResearchUi ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(["production", "research", "compare"] as const).map((m) => (
+            <Button key={m} variant={effectiveMode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
+              {m === "production" ? "Production" : m === "research" ? "Research V2" : "Compare"}
+            </Button>
+          ))}
+        </div>
       ) : null}
 
-      {mode === "compare" && prodResult && v2Result ? (
-        <SectionCard title="Optimizer comparison" className="mt-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <SectionCard title="Current heat" description="Loaded from prediction — no re-entry needed">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <Badge variant="outline">Heat {active?.heatNumber || "—"}</Badge>
+          <Badge variant="outline">Shift {recipe.Shift}</Badge>
+          <span className="font-mono text-muted-foreground">Charge {charge.toFixed(1)} t</span>
+          <span className="font-mono text-muted-foreground">
+            Pred {active?.prediction?.predicted_ttt.toFixed(1) ?? "—"} min
+          </span>
+        </div>
+        <Button className="mt-4" onClick={runOptimization} disabled={loading || !active?.prediction}>
+          {loading ? "Running…" : "Run Optimizer"}
+        </Button>
+        {error ? (
+          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+      </SectionCard>
+
+      {effectiveMode === "compare" && prodResult && v2Result ? (
+        <SectionCard title="Optimizer comparison" className="mt-6">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <p className="text-xs text-muted-foreground">Current TTT</p>
+              <p className="text-xs text-muted-foreground">Current</p>
               <p className="font-mono text-2xl">{prodResult.current_ttt.toFixed(2)} min</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Phase 20.2</p>
+              <p className="text-xs text-muted-foreground">Production</p>
               <p className="font-mono text-2xl text-primary">{prodResult.optimized_ttt.toFixed(2)} min</p>
-              <p className="text-sm text-green-600">−{prodResult.improvement_min.toFixed(2)} min</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Phase 31 V2</p>
+              <p className="text-xs text-muted-foreground">Research V2</p>
               <p className="font-mono text-2xl text-primary">{v2Result.optimized_ttt.toFixed(2)} min</p>
-              <p className="text-sm text-green-600">−{v2Result.improvement_min.toFixed(2)} min</p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Reliability Index</p>
-              <p className="font-mono text-2xl">{hybridReliability != null ? hybridReliability.toFixed(1) : "—"}</p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <Badge variant="outline">20.2 physics: {prodResult.physics_compliant ? "YES" : "NO"}</Badge>
-            <Badge variant="outline">V2 physics: {v2Result.physics_compliant ? "YES" : "NO"}</Badge>
-            <Badge variant="outline">V2 never optimizes Electrical Energy</Badge>
-            <Badge variant="secondary">Confidence: {explain?.recommendation_confidence ?? v2Best?.confidence ?? "—"}</Badge>
           </div>
         </SectionCard>
       ) : null}
 
-      {showProd && prodResult ? (
-        <div className="mt-8 space-y-6">
-          {mode !== "compare" ? <h2 className="text-lg font-semibold">Production — Phase 20.2</h2> : null}
-          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
-            <div className="min-w-0 lg:col-span-2">
-              <TttComparisonBars
-                historicalActual={
-                  explain?.similar_heats?.length
-                    ? [...explain.similar_heats].sort(
-                        (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
-                      )[0]?.actual_ttt
-                    : null
-                }
-                predicted={prodResult.current_ttt}
-                optimized={prodResult.optimized_ttt}
-              />
-            </div>
-            <div className="min-w-0">
-              <TrustMeterGauge value={hybridReliability} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+      {effectiveMode !== "research" && prodResult ? (
+        <div className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <SectionCard title="Current">
-              <p className="break-words font-mono text-2xl sm:text-3xl">{prodResult.current_ttt.toFixed(2)} min</p>
+              <p className="font-mono text-2xl">{prodResult.current_ttt.toFixed(2)} min</p>
             </SectionCard>
             <SectionCard title="Optimized">
-              <p className="break-words font-mono text-2xl text-primary sm:text-3xl">{prodResult.optimized_ttt.toFixed(2)} min</p>
+              <p className="font-mono text-2xl text-primary">{prodResult.optimized_ttt.toFixed(2)} min</p>
             </SectionCard>
-            <SectionCard title="Expected Saving">
-              <p className="break-words font-mono text-2xl text-green-600 sm:text-3xl">{prodResult.improvement_min.toFixed(2)} min</p>
-            </SectionCard>
-            <SectionCard title="Recommendation Confidence">
-              <p className="text-xl font-semibold sm:text-2xl">{explain?.recommendation_confidence ?? "—"}</p>
-            </SectionCard>
-            <SectionCard title="Burden Stability">
-              <p className="text-xl font-semibold sm:text-2xl">{explain?.recommendation_stability ?? "—"}</p>
+            <SectionCard title="Expected saving">
+              <p className="font-mono text-2xl text-green-600">{prodResult.improvement_min.toFixed(2)} min</p>
             </SectionCard>
           </div>
-          {mode === "production" ? (
-            <>
-              <OptimizerChangeCards
-                rows={explain?.validated_recommendations ?? prodResult.comparison}
-                physicsCompliant={prodResult.physics_compliant}
+
+          <TttComparisonBars
+            historicalActual={
+              explain?.similar_heats?.length
+                ? [...explain.similar_heats].sort(
+                    (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
+                  )[0]?.actual_ttt
+                : null
+            }
+            predicted={prodResult.current_ttt}
+            optimized={prodResult.optimized_ttt}
+          />
+
+          <OptimizerChangeCards
+            rows={explain?.validated_recommendations ?? prodResult.comparison}
+            physicsCompliant={prodResult.physics_compliant}
+          />
+
+          <RecommendationAcceptancePanel />
+
+          <details
+            className="rounded-lg border border-border/60 bg-muted/10 p-4"
+            open={showDetails}
+            onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
+          >
+            <summary className="cursor-pointer text-sm font-medium">More details (optional)</summary>
+            <div className="mt-4 space-y-6">
+              <FullRecommendationExplanation
+                explanation={
+                  explain?.recommendation_narrative
+                    ? { narrative_lines: explain.recommendation_narrative }
+                    : undefined
+                }
               />
-              <RecommendationAcceptancePanel />
-              <FullRecommendationExplanation explanation={explain?.recommendation_narrative ? { narrative_lines: explain.recommendation_narrative } : undefined} />
               <RecommendationValidationTable rows={explain?.validated_recommendations ?? prodResult.comparison} />
               <RecommendationAlternativesPanel alternatives={explain?.top5_alternatives ?? []} />
               <SimilarHistoricalHeatCard
@@ -183,29 +186,23 @@ export default function EafOptimizerPage() {
                 currentRecipe={recipe}
                 optimizer={prodResult}
                 neighborBenchmark={explain?.neighbor_benchmark}
+                showExploreLink={allowResearch}
               />
-              <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
-              {active ? <HeatLifecycleTimeline active={active} /> : null}
-            </>
-          ) : null}
+            </div>
+          </details>
         </div>
       ) : null}
 
-      {showV2 && v2Result ? (
-        <div className="mt-8 space-y-6">
-          {mode !== "compare" ? <h2 className="text-lg font-semibold">Research — Phase 31 V2</h2> : null}
-          <FullRecommendationExplanation
-            explanation={v2Best?.explanation}
-            reliabilityIndex={hybridReliability ?? undefined}
-          />
+      {effectiveMode === "research" && v2Result ? (
+        <div className="mt-6 space-y-6">
+          <Badge className="border-amber-500/40 bg-amber-500/10 text-amber-700">Research optimizer</Badge>
+          <FullRecommendationExplanation explanation={v2Best?.explanation} />
           <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
-          {mode === "research" ? (
-            <OptimizerChangeCards
-              rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
-              physicsCompliant={v2Result.physics_compliant}
-              title="V2 Recommended Burden Changes"
-            />
-          ) : null}
+          <OptimizerChangeCards
+            rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
+            physicsCompliant={v2Result.physics_compliant}
+            title="Recommended burden changes"
+          />
         </div>
       ) : null}
     </PageContainer>
@@ -224,7 +221,7 @@ function buildV2Comparison(current: EafRecipe, optimized: EafRecipe) {
       difference: (optimized[v] ?? 0) - (current[v] ?? 0),
       pct_change: current[v] ? (((optimized[v] ?? 0) - current[v]) / current[v]) * 100 : 0,
       arrow: "",
-      reason: "Phase 31 V2 planning adjustment",
+      reason: "Research planning adjustment",
       physics_status: "feasible",
     }));
 }

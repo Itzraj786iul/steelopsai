@@ -19,9 +19,7 @@ const STAGE_HREF: Partial<Record<HeatLifecycleStageId, string>> = {
   recipe_entered: "/eaf/prediction",
   prediction_complete: "/eaf/prediction",
   optimization_complete: "/eaf/optimizer",
-  hybrid_evaluation: "/eaf/reliability",
   operator_review: "/eaf/optimizer",
-  actual_ttt: "/eaf/validation",
   validation: "/eaf/validation",
   archived: "/eaf/heat-history",
 };

@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { NotificationsView } from "@/features/enterprise/views/alerts-notifications-view";
-
-export default function NotificationsPage() {
-  return <NotificationsView />;
+/** Merged into Alerts & Notifications. */
+export default function NotificationsRedirectPage() {
+  redirect("/eaf/alerts");
 }

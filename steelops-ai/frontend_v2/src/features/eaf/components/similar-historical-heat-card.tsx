@@ -28,6 +28,8 @@ interface SimilarHistoricalHeatCardProps {
   optimizer?: OptimizeResponse | null;
   neighborBenchmark?: NeighborTttBenchmark | null;
   neighborCalibratedTtt?: number | null;
+  /** Link out to Historical Analysis — off by default on the Operator heat path. */
+  showExploreLink?: boolean;
 }
 
 function fmtNum(value: number | null | undefined, digits = 1): string {
@@ -47,6 +49,7 @@ export function SimilarHistoricalHeatCard({
   optimizer,
   neighborBenchmark,
   neighborCalibratedTtt,
+  showExploreLink = false,
 }: SimilarHistoricalHeatCardProps) {
   if (!heats.length) return null;
 
@@ -79,7 +82,7 @@ export function SimilarHistoricalHeatCard({
     <SectionCard
       title="Similar Historical Heats"
       description="Recipe neighbours matched to your current input — compare burden, predicted TTT, and historical actuals"
-      actions={<OpenPageLink href="/eaf/historical" label="Historical Analysis" />}
+      actions={showExploreLink ? <OpenPageLink href="/eaf/historical" label="Historical Analysis" /> : undefined}
     >
       <div className={`min-w-0 overflow-hidden rounded-lg border p-3 sm:p-4 ${INDUSTRIAL_STATUS.historical.className}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">

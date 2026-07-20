@@ -1,5 +1,6 @@
-import { OperatorBoardView } from "@/features/mes/views/operator-board-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <OperatorBoardView />;
+/** Operator Board folded into Live Board for a single floor surface. */
+export default function OperatorBoardRedirectPage() {
+  redirect("/eaf/live-board");
 }

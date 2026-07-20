@@ -44,6 +44,7 @@ ROUTE_PERMS: list[tuple[str, str, list[str]]] = [
     ("GET", r"^/heats", ["heat.view_all", "heat.view_shift", "reports.view"]),
     ("POST", r"^/heats", ["heat.create", "heat.optimize", "heat.validate", "reports.export"]),
     ("PATCH", r"^/heats", ["heat.validate", "users.manage"]),
+    ("DELETE", r"^/heats", ["heat.create", "heat.view_all", "users.manage"]),
     ("GET", r"^/model-info$", ["research.view", "system.health", "heat.create"]),
     ("GET", r"^/historical", ["heat.view_all", "heat.create", "analytics.advanced"]),
     ("POST", r"^/historical", ["heat.create", "analytics.advanced"]),

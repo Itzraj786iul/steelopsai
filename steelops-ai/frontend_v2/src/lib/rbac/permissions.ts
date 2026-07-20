@@ -1,12 +1,13 @@
 import { UserRole } from "@/lib/enums";
+import { OPERATOR_CONSOLE_ROUTES } from "@/lib/navigation";
 
 const ROLE_DEFAULT_ROUTES: Record<string, string> = {
   [UserRole.Admin]: "/eaf/admin",
-  [UserRole.PlantManager]: "/eaf/plant-dashboard",
+  [UserRole.PlantManager]: "/eaf/shift-dashboard",
   [UserRole.ProductionManager]: "/eaf/shift-dashboard",
-  [UserRole.ShiftEngineer]: "/eaf/dashboard",
+  [UserRole.ShiftEngineer]: "/eaf/prediction",
   [UserRole.Operator]: "/eaf/prediction",
-  [UserRole.QualityEngineer]: "/eaf/validation-center",
+  [UserRole.QualityEngineer]: "/eaf/validation",
   [UserRole.MaintenanceEngineer]: "/eaf/delays",
   [UserRole.DataScientist]: "/eaf/model",
   [UserRole.Viewer]: "/eaf/heat-history",
@@ -36,7 +37,6 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
     UserRole.MaintenanceEngineer,
     UserRole.QualityEngineer,
     UserRole.DataScientist,
@@ -47,11 +47,26 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
     UserRole.QualityEngineer,
     UserRole.MaintenanceEngineer,
     UserRole.DataScientist,
     UserRole.Viewer,
+  ],
+  "/eaf/feedback": [],
+  "/eaf/historical": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.DataScientist,
+    UserRole.QualityEngineer,
+  ],
+  "/eaf/health": [
+    UserRole.Admin,
+    UserRole.PlantManager,
+    UserRole.ProductionManager,
+    UserRole.ShiftEngineer,
+    UserRole.MaintenanceEngineer,
   ],
   "/eaf/research": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer],
   "/eaf/model": [UserRole.Admin, UserRole.DataScientist, UserRole.QualityEngineer],
@@ -64,6 +79,7 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
+    UserRole.Operator,
     UserRole.QualityEngineer,
     UserRole.MaintenanceEngineer,
     UserRole.DataScientist,
@@ -114,7 +130,6 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
   ],
   "/eaf/dashboard": [
     UserRole.Admin,
-    UserRole.Operator,
     UserRole.ShiftEngineer,
     UserRole.ProductionManager,
     UserRole.PlantManager,
@@ -126,19 +141,16 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
   ],
   "/eaf/shift-handover": [UserRole.Admin, UserRole.ProductionManager, UserRole.ShiftEngineer],
   "/eaf/approvals": [
     UserRole.Admin,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
     UserRole.PlantManager,
   ],
   "/eaf/tasks": [
     UserRole.Admin,
-    UserRole.Operator,
     UserRole.ShiftEngineer,
     UserRole.ProductionManager,
     UserRole.PlantManager,
@@ -188,14 +200,12 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
   ],
   "/eaf/live-board": [
     UserRole.Admin,
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
   ],
   "/eaf/kpi-wall": [
     UserRole.Admin,
@@ -203,7 +213,7 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
   ],
-  "/eaf/operator-board": [UserRole.Admin, UserRole.Operator, UserRole.ShiftEngineer],
+  "/eaf/operator-board": [UserRole.Admin, UserRole.ShiftEngineer],
   "/eaf/supervisor-board": [UserRole.Admin, UserRole.ShiftEngineer, UserRole.ProductionManager],
   "/eaf/plant-manager-board": [UserRole.Admin, UserRole.PlantManager, UserRole.ProductionManager],
   "/eaf/production-timeline": [
@@ -211,7 +221,6 @@ const ROUTE_ROLE_ACCESS: Record<string, string[]> = {
     UserRole.PlantManager,
     UserRole.ProductionManager,
     UserRole.ShiftEngineer,
-    UserRole.Operator,
   ],
   "/eaf/delay-dashboard": [
     UserRole.Admin,
@@ -255,7 +264,16 @@ export function normalizeRole(role: string): string {
 }
 
 export function getDefaultRouteForRole(role: string): string {
-  return ROLE_DEFAULT_ROUTES[normalizeRole(role)] ?? "/eaf/dashboard";
+  return ROLE_DEFAULT_ROUTES[normalizeRole(role)] ?? "/eaf/prediction";
+}
+
+function pathMatchesRoute(path: string, route: string): boolean {
+  return path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`);
+}
+
+function isOperatorConsolePath(path: string): boolean {
+  const bare = path.split("?")[0] ?? path;
+  return OPERATOR_CONSOLE_ROUTES.some((route) => bare === route || bare.startsWith(`${route}/`));
 }
 
 export function canAccessRoute(role: string, path: string): boolean {
@@ -265,27 +283,35 @@ export function canAccessRoute(role: string, path: string): boolean {
   // Core open paths for authenticated users
   if (path === "/" || path === "/eaf/about" || path === "/unauthorized") return true;
 
+  // Feedback is retired — no role should land here (page also redirects).
+  if (pathMatchesRoute(path, "/eaf/feedback")) return false;
+
   const restricted = Object.entries(ROUTE_ROLE_ACCESS)
-    .filter(([route]) => path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`))
+    .filter(([route]) => pathMatchesRoute(path, route))
     .sort((a, b) => b[0].length - a[0].length)[0];
 
-  if (!restricted) {
-    // Unlisted /eaf routes: allow operator-level production roles by default
-    if (path.startsWith("/eaf")) {
-      return [
-        UserRole.Operator,
-        UserRole.ShiftEngineer,
-        UserRole.ProductionManager,
-        UserRole.PlantManager,
-        UserRole.QualityEngineer,
-        UserRole.MaintenanceEngineer,
-        UserRole.DataScientist,
-        UserRole.Viewer,
-      ].includes(normalizedRole as UserRole);
-    }
-    return true;
+  if (restricted) {
+    // Empty allow-list = nobody (except admin above)
+    if (!restricted[1].length) return false;
+    return restricted[1].includes(normalizedRole);
   }
-  return restricted[1].includes(normalizedRole);
+
+  if (path.startsWith("/eaf")) {
+    // Operators: only the heat console + What-if / About / Announcements
+    if (normalizedRole === UserRole.Operator) {
+      return isOperatorConsolePath(path);
+    }
+    return [
+      UserRole.ShiftEngineer,
+      UserRole.ProductionManager,
+      UserRole.PlantManager,
+      UserRole.QualityEngineer,
+      UserRole.MaintenanceEngineer,
+      UserRole.DataScientist,
+      UserRole.Viewer,
+    ].includes(normalizedRole as UserRole);
+  }
+  return true;
 }
 
 /** Sidebar / command palette visibility — role-curated, independent of deep-link access. */

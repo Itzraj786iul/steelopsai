@@ -4,9 +4,7 @@ export type HeatLifecycleStageId =
   | "recipe_entered"
   | "prediction_complete"
   | "optimization_complete"
-  | "hybrid_evaluation"
   | "operator_review"
-  | "actual_ttt"
   | "validation"
   | "archived";
 
@@ -16,30 +14,22 @@ export interface LifecycleStageDef {
   isComplete: (active: HeatSessionSnapshot) => boolean;
 }
 
+/** Align with floor strip: recipe → predict → optimize → review → validate → done. */
 export const HEAT_LIFECYCLE_STAGES: LifecycleStageDef[] = [
   { id: "recipe_entered", label: "Recipe Entered", isComplete: (a) => !!a.recipe },
-  { id: "prediction_complete", label: "Prediction Complete", isComplete: (a) => !!a.prediction },
-  { id: "optimization_complete", label: "Optimization Complete", isComplete: (a) => !!a.optimizer },
-  { id: "hybrid_evaluation", label: "Hybrid Evaluation", isComplete: (a) => !!a.hybrid },
+  { id: "prediction_complete", label: "Prediction", isComplete: (a) => !!a.prediction },
+  { id: "optimization_complete", label: "Optimization", isComplete: (a) => !!a.optimizer },
   {
     id: "operator_review",
-    label: "Operator Review",
-    isComplete: (a) => !!a.recommendationAcceptance,
-  },
-  {
-    id: "actual_ttt",
-    label: "Actual TTT",
-    isComplete: (a) => {
-      const v = a.validation?.actualTtt;
-      return !!v && v !== "Pending" && !Number.isNaN(parseFloat(v));
-    },
+    label: "Operator Decision",
+    isComplete: (a) => !!a.recommendationLocked,
   },
   {
     id: "validation",
     label: "Validation",
     isComplete: (a) => !!a.validation?.validatedAt,
   },
-  { id: "archived", label: "Archived", isComplete: (a) => !!a.archived },
+  { id: "archived", label: "Saved", isComplete: (a) => !!a.archived || !!a.validation?.validatedAt },
 ];
 
 export function deriveCurrentLifecycleStage(active: HeatSessionSnapshot | null): HeatLifecycleStageId | null {
@@ -61,4 +51,12 @@ export function lifecycleStageStatus(
   if (stageIndex < currentIndex) return "completed";
   if (stageId === current) return "current";
   return "pending";
+}
+
+/** True when actual TTT is saved (or archived) — operator should start New Heat. */
+export function isHeatPathComplete(active: HeatSessionSnapshot | null): boolean {
+  if (!active) return false;
+  if (active.archived || active.validation?.validatedAt) return true;
+  const v = active.validation?.actualTtt;
+  return !!v && v !== "Pending" && !Number.isNaN(parseFloat(v));
 }

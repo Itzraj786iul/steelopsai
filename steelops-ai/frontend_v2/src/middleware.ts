@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { AUTH_COOKIE_KEY } from "@/lib/constants";
+import { AUTH_COOKIE_KEY, ROLE_COOKIE_KEY } from "@/lib/constants";
+import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/unauthorized"];
 
@@ -15,7 +16,9 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.get(AUTH_COOKIE_KEY)?.value === "1";
 
   if ((pathname === "/login" || pathname === "/register") && isAuthenticated) {
-    return NextResponse.redirect(new URL("/eaf/dashboard", request.url));
+    const role = request.cookies.get(ROLE_COOKIE_KEY)?.value;
+    const dest = role ? getDefaultRouteForRole(decodeURIComponent(role)) : "/eaf/prediction";
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Protect all platform / EAF routes — require login

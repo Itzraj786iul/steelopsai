@@ -102,12 +102,12 @@ export function MobileSidebar() {
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)] px-3 py-4">
           <div className="space-y-4">
-            <MobileNavSection title="Production" items={PRODUCTION_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Heat workflow" items={PRODUCTION_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
             <MobileNavSection title="Operations" items={OPERATIONS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
             <MobileNavSection title="Administration" items={ADMIN_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
             <MobileNavSection title="Enterprise" items={ENTERPRISE_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
             <MobileNavSection title="Research" items={RESEARCH_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
-            <MobileNavSection title="Tools" items={TOOLS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
+            <MobileNavSection title="Analysis" items={TOOLS_NAV} pathname={pathname} searchParams={searchParams} onNavigate={close} canShow={canShowNavItem} />
           </div>
         </ScrollArea>
       </SheetContent>

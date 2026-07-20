@@ -34,18 +34,18 @@ describe("permissions", () => {
     expect(isNavItemVisible("admin", { href: "/eaf/prediction", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
       false
     );
-    expect(isNavItemVisible("admin", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
-      false
-    );
+    expect(isNavItemVisible("admin", { href: "/eaf/live-board", roles: [UserRole.ShiftEngineer] })).toBe(false);
     expect(isNavItemVisible("admin", { href: "/eaf/users", roles: [UserRole.Admin] })).toBe(true);
   });
 
-  it("shows operator board only to floor roles", () => {
-    expect(isNavItemVisible("operator", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
-      true
-    );
-    expect(isNavItemVisible("plant_manager", { href: "/eaf/operator-board", roles: [UserRole.Operator, UserRole.ShiftEngineer] })).toBe(
-      false
-    );
+  it("keeps operator on the heat console", () => {
+    expect(canAccessRoute("operator", "/eaf/prediction")).toBe(true);
+    expect(canAccessRoute("operator", "/eaf/optimizer")).toBe(true);
+    expect(canAccessRoute("operator", "/eaf/whatif")).toBe(true);
+    expect(canAccessRoute("operator", "/eaf/live-board")).toBe(false);
+    expect(canAccessRoute("operator", "/eaf/historical")).toBe(false);
+    expect(canAccessRoute("operator", "/eaf/feedback")).toBe(false);
+    expect(isNavItemVisible("operator", { href: "/eaf/live-board", roles: [UserRole.ShiftEngineer] })).toBe(false);
+    expect(isNavItemVisible("shift_engineer", { href: "/eaf/live-board", roles: [UserRole.ShiftEngineer] })).toBe(true);
   });
 });

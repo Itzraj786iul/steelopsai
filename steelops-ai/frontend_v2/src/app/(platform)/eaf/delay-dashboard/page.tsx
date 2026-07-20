@@ -1,5 +1,6 @@
-import { DelayDashboardView } from "@/features/mes/views/delay-dashboard-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <DelayDashboardView />;
+/** Delay Dashboard folded into Delay Log. */
+export default function DelayDashboardRedirectPage() {
+  redirect("/eaf/delays");
 }

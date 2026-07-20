@@ -5,6 +5,7 @@ import {
   API_URL,
   AUTH_COOKIE_KEY,
   REFRESH_TOKEN_KEY,
+  ROLE_COOKIE_KEY,
 } from "@/lib/constants";
 import type { ApiError } from "@/types";
 
@@ -27,11 +28,22 @@ export function setAuthTokens(accessToken: string, refreshToken: string, maxAgeS
   document.cookie = `${AUTH_COOKIE_KEY}=1; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
 }
 
+export function setRoleCookie(role: string | null | undefined, maxAgeSeconds?: number): void {
+  if (typeof window === "undefined") return;
+  const maxAge = Math.max(60, maxAgeSeconds ?? 60 * 60 * 8);
+  if (!role) {
+    document.cookie = `${ROLE_COOKIE_KEY}=; path=/; max-age=0; SameSite=Lax`;
+    return;
+  }
+  document.cookie = `${ROLE_COOKIE_KEY}=${encodeURIComponent(role)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+}
+
 export function clearAuthTokens(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   document.cookie = `${AUTH_COOKIE_KEY}=; path=/; max-age=0; SameSite=Lax`;
+  document.cookie = `${ROLE_COOKIE_KEY}=; path=/; max-age=0; SameSite=Lax`;
 }
 
 export function getWsBaseUrl(): string {

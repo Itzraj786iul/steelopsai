@@ -39,6 +39,12 @@ export interface HeatSessionSnapshot {
   lastUpdated: string | null;
   warnings: string[];
   recommendationAcceptance: RecommendationAcceptanceStatus | null;
+  /** Once true, Accept / Modify / Reject cannot be changed for this heat. */
+  recommendationLocked: boolean;
+  /** Operator notes (required for Modify / Reject). */
+  recommendationNotes: string;
+  /** Operator-adjusted recipe when status is Modified. */
+  modifiedRecipe: EafRecipe | null;
   archived: boolean;
   lifecycleTimestamps?: LifecycleTimestamps;
 }
@@ -61,6 +67,9 @@ function emptySession(recipe: EafRecipe = DEFAULT_RECIPE, heatNumber = ""): Heat
     lastUpdated: null,
     warnings: [],
     recommendationAcceptance: null,
+    recommendationLocked: false,
+    recommendationNotes: "",
+    modifiedRecipe: null,
     archived: false,
   };
 }
@@ -70,10 +79,24 @@ function recipesEqual(a: EafRecipe, b: EafRecipe): boolean {
 }
 
 function normalizeSession(session: HeatSessionSnapshot): HeatSessionSnapshot {
+  const acceptance = session.recommendationAcceptance ?? null;
+  const notes = session.recommendationNotes ?? "";
+  let locked = session.recommendationLocked ?? !!acceptance;
+  // Recover bad state: Rejected/Modified locked without a reason — treat as draft again.
+  if (
+    locked &&
+    (acceptance === "Rejected" || acceptance === "Modified") &&
+    notes.trim().length < 3
+  ) {
+    locked = false;
+  }
   return {
     ...session,
     heatRecordId: session.heatRecordId ?? null,
-    recommendationAcceptance: session.recommendationAcceptance ?? null,
+    recommendationAcceptance: acceptance,
+    recommendationLocked: locked,
+    recommendationNotes: notes,
+    modifiedRecipe: session.modifiedRecipe ?? null,
     archived: session.archived ?? false,
   };
 }
@@ -98,7 +121,18 @@ interface CurrentHeatState {
   updateOptimizer: (optimizer?: OptimizeResponse | null, optimizerV2?: OptimizeV2Response | null) => void;
   updateHybrid: (hybrid: HybridTrustResponse) => void;
   updateValidation: (validation: HeatValidationState) => void;
-  setRecommendationAcceptance: (status: RecommendationAcceptanceStatus) => void;
+  /**
+   * Select operator decision. Accept locks immediately.
+   * Modify / Reject stay unlocked until confirmRecommendation() so a reason can be entered first.
+   */
+  setRecommendationAcceptance: (
+    status: RecommendationAcceptanceStatus,
+    options?: { notes?: string; modifiedRecipe?: EafRecipe | null; lock?: boolean }
+  ) => void;
+  /** Finalize Modify / Reject after notes are filled (min 3 chars). */
+  confirmRecommendation: () => boolean;
+  setRecommendationNotes: (notes: string) => void;
+  setModifiedRecipeField: <K extends keyof EafRecipe>(key: K, value: EafRecipe[K]) => void;
   /** Persist the SQLite HeatRecord id returned by /heats sync APIs. */
   setHeatRecordId: (heatRecordId: string) => void;
   saveHeat: () => void;
@@ -165,6 +199,9 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
                   confidence: null,
                   warnings: [],
                   recommendationAcceptance: null,
+                  recommendationLocked: false,
+                  recommendationNotes: "",
+                  modifiedRecipe: null,
                 }
               : {}),
           },
@@ -271,36 +308,100 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
         });
         useAuditStore.getState().updateRecommendationAudit(active.id, {
           validationOutcome: withTimestamp.actualTtt ?? null,
-          finalOperatorRecipe: active.recipe,
+          finalOperatorRecipe: active.modifiedRecipe ?? active.recipe,
         });
         void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterValidation());
       },
 
-      setRecommendationAcceptance: (status) => {
+      setRecommendationAcceptance: (status, options) => {
         const active = get().active;
-        if (!active) return;
-        const actionMap = { Accepted: "accepted", Modified: "modified", Rejected: "rejected" } as const;
+        if (!active?.optimizer) return;
+        if (active.recommendationLocked) return;
+
+        const notes = options?.notes ?? active.recommendationNotes ?? "";
+        let modifiedRecipe = options?.modifiedRecipe ?? active.modifiedRecipe;
+        if (status === "Modified" && !modifiedRecipe && active.optimizer?.optimized_recipe) {
+          modifiedRecipe = { ...active.optimizer.optimized_recipe };
+        }
+        if (status !== "Modified") {
+          modifiedRecipe = null;
+        }
+
+        // Accept locks immediately. Modify/Reject draft first unless lock: true.
+        const lock = options?.lock ?? status === "Accepted";
+
         set({
           active: {
             ...active,
             recommendationAcceptance: status,
+            recommendationLocked: lock,
+            recommendationNotes: notes,
+            modifiedRecipe,
             lastUpdated: new Date().toISOString(),
             lifecycleTimestamps: recordLifecycleTimestamp(active.lifecycleTimestamps, "operatorReview"),
           },
-          operatorActivity: touchOperatorActivity(get().operatorActivity, {
-            heatId: active.id,
-            heatNumber: active.heatNumber,
-            action: actionMap[status],
-          }),
         });
-        get().saveHeat();
-        useAuditStore.getState().updateRecommendationAudit(active.id, {
-          acceptance: status,
-          finalOperatorRecipe: active.recipe,
+
+        if (lock) {
+          const actionMap = { Accepted: "accepted", Modified: "modified", Rejected: "rejected" } as const;
+          set({
+            operatorActivity: touchOperatorActivity(get().operatorActivity, {
+              heatId: active.id,
+              heatNumber: active.heatNumber,
+              action: actionMap[status],
+            }),
+          });
+          get().saveHeat();
+          useAuditStore.getState().updateRecommendationAudit(active.id, {
+            acceptance: status,
+            finalOperatorRecipe: modifiedRecipe ?? active.recipe,
+          });
+          useAuditStore.getState().updatePredictionAudit(active.id, { operatorDecision: status });
+          get().showToast(`Recommendation ${status.toLowerCase()} — locked`);
+          void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterOptimizer());
+        }
+      },
+
+      confirmRecommendation: () => {
+        const active = get().active;
+        if (!active?.optimizer || active.recommendationLocked) return false;
+        const status = active.recommendationAcceptance;
+        if (!status) return false;
+        if (status !== "Accepted" && active.recommendationNotes.trim().length < 3) return false;
+
+        get().setRecommendationAcceptance(status, {
+          notes: active.recommendationNotes,
+          modifiedRecipe: active.modifiedRecipe,
+          lock: true,
         });
-        useAuditStore.getState().updatePredictionAudit(active.id, { operatorDecision: status });
-        get().showToast(`Recommendation ${status.toLowerCase()}`);
-        void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterOptimizer());
+        return true;
+      },
+
+      setRecommendationNotes: (notes) => {
+        const active = get().active;
+        if (!active) return;
+        set({
+          active: {
+            ...active,
+            recommendationNotes: notes,
+            lastUpdated: new Date().toISOString(),
+          },
+        });
+      },
+
+      setModifiedRecipeField: (key, value) => {
+        const active = get().active;
+        if (!active || active.recommendationAcceptance !== "Modified") return;
+        const base =
+          active.modifiedRecipe ??
+          (active.optimizer?.optimized_recipe ? { ...active.optimizer.optimized_recipe } : { ...active.recipe });
+        set({
+          active: {
+            ...active,
+            modifiedRecipe: { ...base, [key]: value },
+            lastUpdated: new Date().toISOString(),
+          },
+        });
       },
 
       setHeatRecordId: (heatRecordId) => {
@@ -405,6 +506,21 @@ export const useCurrentHeatStore = create<CurrentHeatState>()(
         sessionHistory: state.sessionHistory,
         operatorActivity: state.operatorActivity,
       }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<{
+          active: HeatSessionSnapshot | null;
+          sessionHistory: HeatSessionSnapshot[];
+          operatorActivity: CurrentHeatState["operatorActivity"];
+        }>;
+        return {
+          ...current,
+          ...p,
+          active: p.active ? normalizeSession(p.active) : null,
+          sessionHistory: Array.isArray(p.sessionHistory)
+            ? p.sessionHistory.map(normalizeSession)
+            : current.sessionHistory,
+        };
+      },
     }
   )
 );

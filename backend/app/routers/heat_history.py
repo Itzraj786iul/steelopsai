@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Query, Response
+from pydantic import BaseModel, Field
 
 from app.schemas.heat_record import (
     HeatExportRequest,
@@ -160,6 +163,16 @@ async def get_by_number(heat_number: str) -> HeatRecordResponse:
     return HeatRecordResponse(**data)
 
 
+class BulkDeleteBody(BaseModel):
+    ids: list[str] = Field(default_factory=list, min_length=1)
+
+
+@router.post("/bulk-delete", summary="Permanently delete multiple heat records")
+async def bulk_delete(body: BulkDeleteBody) -> dict[str, Any]:
+    deleted = svc.delete_heats(body.ids)
+    return {"deleted": deleted, "requested": len(body.ids)}
+
+
 @router.get("/{heat_id}", response_model=HeatRecordResponse)
 async def get_heat(heat_id: str) -> HeatRecordResponse:
     data = svc.get_heat(heat_id)
@@ -185,3 +198,11 @@ async def archive(heat_id: str) -> HeatRecordResponse:
     if not data:
         raise HTTPException(status_code=404, detail="Heat not found")
     return HeatRecordResponse(**data)
+
+
+@router.delete("/{heat_id}", summary="Permanently delete a heat record")
+async def delete_heat(heat_id: str) -> dict[str, Any]:
+    ok = svc.delete_heat(heat_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Heat not found")
+    return {"deleted": True, "id": heat_id}

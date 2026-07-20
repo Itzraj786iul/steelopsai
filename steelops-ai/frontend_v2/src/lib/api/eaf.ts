@@ -482,6 +482,10 @@ export const eafApi = {
   heatSetStatus: (id: string, status: HeatLifecycleStatus) =>
     eafClient.patch<HeatRecord>(`/heats/${encodeURIComponent(id)}/status`, { status }),
   heatArchive: (id: string) => eafClient.post<HeatRecord>(`/heats/${encodeURIComponent(id)}/archive`),
+  heatDelete: (id: string) =>
+    eafClient.delete<{ deleted: boolean; id: string }>(`/heats/${encodeURIComponent(id)}`),
+  heatsBulkDelete: (ids: string[]) =>
+    eafClient.post<{ deleted: number; requested: number }>("/heats/bulk-delete", { ids }),
   heatsDashboard: (params?: { period?: string; date_from?: string; date_to?: string }) =>
     eafClient.get<HeatDashboardResponse>("/heats/dashboard", { params }),
   heatsAnalytics: (params?: { period?: string; date_from?: string; date_to?: string }) =>

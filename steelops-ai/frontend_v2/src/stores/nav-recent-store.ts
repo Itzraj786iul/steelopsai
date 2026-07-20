@@ -12,7 +12,7 @@ export const useNavRecentStore = create<NavRecentState>()(
   persist(
     (set, get) => ({
       recent: [],
-      pinned: ["/eaf/dashboard", "/eaf/prediction"],
+      pinned: ["/eaf/prediction", "/eaf/optimizer", "/eaf/validation"],
       addRecent: (href) => {
         if (href === "/" || href.startsWith("/login")) return;
         const recent = [href, ...get().recent.filter((e) => e !== href)].slice(0, 6);

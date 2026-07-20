@@ -301,6 +301,32 @@ def archive_heat(heat_id: str) -> dict[str, Any] | None:
     return set_status(heat_id, "Archived")
 
 
+def delete_heat(heat_id: str) -> bool:
+    """Permanently remove a heat record (test cleanup / mistaken entries)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute("DELETE FROM heat_records WHERE id = ?", (heat_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_heats(heat_ids: list[str]) -> int:
+    """Bulk permanent delete. Returns number of rows removed."""
+    ids = [i for i in heat_ids if i]
+    if not ids:
+        return 0
+    conn = get_connection()
+    try:
+        placeholders = ",".join("?" for _ in ids)
+        cur = conn.execute(f"DELETE FROM heat_records WHERE id IN ({placeholders})", ids)
+        conn.commit()
+        return int(cur.rowcount or 0)
+    finally:
+        conn.close()
+
+
 def get_heat(heat_id: str) -> dict[str, Any] | None:
     conn = get_connection()
     try:

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { clearAuthTokens, setAuthTokens } from "@/services/api-client";
+import { clearAuthTokens, setAuthTokens, setRoleCookie } from "@/services/api-client";
 import { clearGuestSession } from "@/lib/auth/guest-auth";
 import type { User } from "@/types";
 
@@ -22,7 +22,10 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isHydrated: false,
       setHydrated: (value) => set({ isHydrated: value }),
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setUser: (user) => {
+        setRoleCookie(user?.role ?? null);
+        set({ user, isAuthenticated: !!user });
+      },
       setTokens: (accessToken, refreshToken, expiresIn) => {
         setAuthTokens(accessToken, refreshToken, expiresIn);
         set({ isAuthenticated: true });
@@ -40,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
+        if (state?.user?.role) setRoleCookie(state.user.role);
         state?.setHydrated(true);
       },
     }

@@ -1,5 +1,6 @@
-import { OpsReportsView } from "@/features/ops/views/ops-reports-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <OpsReportsView />;
+/** Reports hub is /eaf/reports. */
+export default function OpsReportsRedirectPage() {
+  redirect("/eaf/reports");
 }

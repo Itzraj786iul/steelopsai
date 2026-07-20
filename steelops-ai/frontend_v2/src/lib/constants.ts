@@ -14,6 +14,7 @@ export const DEFAULT_TENANT_SLUG = "jspl";
 export const ACCESS_TOKEN_KEY = "access_token";
 export const REFRESH_TOKEN_KEY = "refresh_token";
 export const AUTH_COOKIE_KEY = "steelops_authenticated";
+export const ROLE_COOKIE_KEY = "steelops_role";
 
 export const SIDEBAR_STORAGE_KEY = "steelops-sidebar-collapsed";
 export const PLANT_STORAGE_KEY = "steelops-plant-context";

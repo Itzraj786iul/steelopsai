@@ -39,12 +39,10 @@ export function OptimizerDisclaimer({ className }: OptimizerDisclaimerProps) {
         className
       )}
     >
-      <p className="font-medium text-foreground">Production optimizer notice</p>
+      <p className="font-medium text-foreground">Production optimizer</p>
       <p className="mt-1 leading-relaxed">
-        The current optimizer follows the deployed Phase 19 production model. Research has identified{" "}
-        <strong className="text-foreground">Electrical Energy (kWh)</strong> as a retrospective variable recorded
-        after heat completion. Future optimizer versions will replace this with planning-stage variables once
-        industrially validated sensors are available. No optimization logic has changed in this release.
+        Recommendations use the deployed plant model. Review suggested burden changes, then Accept, Modify, or
+        Reject before validation.
       </p>
     </div>
   );

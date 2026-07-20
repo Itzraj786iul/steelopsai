@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ShiftDashboardView } from "@/features/eaf/components/shift-dashboard-view";
-
-export default function PlantDashboardPage() {
-  return <ShiftDashboardView />;
+/** Alias of Shift Dashboard — keep one plant overview. */
+export default function PlantDashboardRedirectPage() {
+  redirect("/eaf/shift-dashboard");
 }

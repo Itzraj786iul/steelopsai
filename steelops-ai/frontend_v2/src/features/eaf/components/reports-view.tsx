@@ -2,21 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
+import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
+import { NewHeatButton } from "@/features/eaf/components/new-heat-button";
 import { RecommendationAcceptanceBadge } from "@/features/eaf/components/recommendation-acceptance-panel";
 import {
   APP_VERSION,
   PRODUCTION_MODEL_PHASE,
-  RESEARCH_VERSION,
 } from "@/lib/constants";
 import { currentCharge, useCurrentHeatStore } from "@/stores/current-heat-store";
 import { eafApi } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
+import { INDUSTRIAL_STATUS } from "@/lib/industrial-colors";
 
 async function downloadFromSession(
   format: "json" | "csv" | "pdf",
@@ -26,7 +30,6 @@ async function downloadFromSession(
   const meta = {
     model_version: PRODUCTION_MODEL_PHASE,
     frontend_version: APP_VERSION,
-    research_version: RESEARCH_VERSION,
     heat_number: active.heatNumber,
     shift: active.shift,
     generated_at: new Date().toISOString(),
@@ -35,12 +38,11 @@ async function downloadFromSession(
 
   if (format === "json") {
     const payload = {
-      phase_34_current_heat: meta,
+      heat_report: meta,
       recipe,
       prediction: active.prediction,
       hybrid: active.hybrid,
       optimizer: active.optimizer,
-      optimizer_v2: active.optimizerV2,
       recommendationAcceptance: active.recommendationAcceptance,
       validation: active.validation,
       confidence: active.confidence,
@@ -73,6 +75,10 @@ export function ReportsView() {
   const active = useCurrentHeatStore((s) => s.active);
   const sessionHistory = useCurrentHeatStore((s) => s.sessionHistory);
   const recordReportExport = useCurrentHeatStore((s) => s.recordReportExport);
+  const searchParams = useSearchParams();
+  const completed = searchParams.get("completed") === "1";
+  const completedHeat = searchParams.get("heat") || active?.heatNumber || "";
+  const recordId = searchParams.get("recordId");
   const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [daily, setDaily] = useState<Record<string, unknown> | null>(null);
@@ -126,7 +132,41 @@ export function ReportsView() {
       title="Reports"
       description="Current heat exports and production database reports"
     >
-      {!active?.prediction ? <EmptyHeatState className="mb-6" /> : null}
+      <HeatWorkflowStrip active={active} currentPage="reports" className="mb-6" />
+
+      {completed ? (
+        <div className={`mb-6 rounded-lg border p-4 ${INDUSTRIAL_STATUS.validated.className}`}>
+          <div className="flex flex-wrap items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <div className="min-w-0 flex-1 space-y-2">
+              <p className="font-semibold">
+                Heat {completedHeat || "session"} validated and saved permanently
+              </p>
+              <p className="text-sm opacity-90">
+                This record is in Heat History. Export below, or start the next heat when ready.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button asChild size="sm">
+                  <Link
+                    href={
+                      recordId
+                        ? `/eaf/heat-history?highlight=${encodeURIComponent(recordId)}`
+                        : completedHeat
+                          ? `/eaf/heat-history?q=${encodeURIComponent(completedHeat)}`
+                          : "/eaf/heat-history"
+                    }
+                  >
+                    Open in Heat History
+                  </Link>
+                </Button>
+                <NewHeatButton variant="default" size="sm" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {!active?.prediction && !completed ? <EmptyHeatState className="mb-6" /> : null}
 
       <SectionCard title="Daily production report (database)" className="mt-2">
         {daily ? (

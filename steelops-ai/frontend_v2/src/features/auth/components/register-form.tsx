@@ -47,7 +47,7 @@ export function RegisterForm() {
       setTokens(login.data.access_token, login.data.refresh_token, login.data.expires_in);
       const user = await authApi.me();
       setUser(user.data);
-      window.location.assign("/eaf/dashboard");
+      window.location.assign("/eaf/prediction");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     }

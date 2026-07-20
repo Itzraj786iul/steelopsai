@@ -1,5 +1,6 @@
-import { HeatSchedulerView } from "@/features/mes/views/heat-scheduler-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <HeatSchedulerView />;
+/** Heat Scheduler folded into Heat Queue. */
+export default function HeatSchedulerRedirectPage() {
+  redirect("/eaf/heat-queue");
 }

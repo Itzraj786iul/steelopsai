@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Download, Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Download, Search, Trash2 } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
@@ -42,25 +42,26 @@ function statusClass(status: string): string {
 
 export function HeatHistoryView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<HeatRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(() => searchParams.get("q") || searchParams.get("highlight") || "");
   const [shift, setShift] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [period, setPeriod] = useState("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Re-push any heats still held in this browser's session history into SQLite
-      // (recovers rows lost when upsert incorrectly keyed on heat_number).
       try {
         const { recoverSessionHistoryToServer } = await import("@/lib/heat-history-sync");
         await recoverSessionHistoryToServer();
@@ -80,6 +81,7 @@ export function HeatHistoryView() {
       setItems(data.items);
       setTotal(data.total);
       setPages(data.pages);
+      setSelected(new Set());
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "Failed to load heat history"));
     } finally {
@@ -119,10 +121,56 @@ export function HeatHistoryView() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === items.length) setSelected(new Set());
+    else setSelected(new Set(items.map((h) => h.id)));
+  };
+
+  const deleteOne = async (h: HeatRecord, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const label = h.heat_number || h.id;
+    if (!window.confirm(`Permanently delete heat ${label}? This cannot be undone.`)) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await eafApi.heatDelete(h.id);
+      await load();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Failed to delete heat"));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteSelected = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!window.confirm(`Permanently delete ${ids.length} selected heat(s)? This cannot be undone.`)) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await eafApi.heatsBulkDelete(ids);
+      await load();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Failed to delete selected heats"));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <PageContainer
       title="Heat History"
-      description="Permanent production records for every heat processed in the platform"
+      description="Permanent production records — delete test heats anytime"
     >
       <SectionCard title="Filters" className="mt-2">
         <div className="flex flex-wrap items-end gap-3">
@@ -154,12 +202,12 @@ export function HeatHistoryView() {
             <Button size="sm" variant="outline" onClick={() => void exportFmt("excel")}>
               <Download className="mr-1 h-3.5 w-3.5" /> Excel
             </Button>
-            <Button size="sm" variant="outline" onClick={() => void exportFmt("json")}>
-              <Download className="mr-1 h-3.5 w-3.5" /> JSON
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void exportFmt("pdf")}>
-              <Download className="mr-1 h-3.5 w-3.5" /> PDF
-            </Button>
+            {selected.size > 0 ? (
+              <Button size="sm" variant="destructive" disabled={deleting} onClick={() => void deleteSelected()}>
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete ({selected.size})
+              </Button>
+            ) : null}
           </div>
         </div>
       </SectionCard>
@@ -174,6 +222,14 @@ export function HeatHistoryView() {
           <>
             <EnterpriseTable>
               <EnterpriseTableHead>
+                <EnterpriseTableHeaderCell>
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on page"
+                    checked={items.length > 0 && selected.size === items.length}
+                    onChange={toggleSelectAll}
+                  />
+                </EnterpriseTableHeaderCell>
                 <EnterpriseTableHeaderCell>
                   <button type="button" className="font-medium" onClick={() => toggleSort("heat_number")}>
                     Heat
@@ -197,12 +253,9 @@ export function HeatHistoryView() {
                 <EnterpriseTableHeaderCell>
                   <button type="button" onClick={() => toggleSort("prediction_error")}>Error</button>
                 </EnterpriseTableHeaderCell>
-                <EnterpriseTableHeaderCell>
-                  <button type="button" onClick={() => toggleSort("expected_saving")}>Saving</button>
-                </EnterpriseTableHeaderCell>
-                <EnterpriseTableHeaderCell>Reliability</EnterpriseTableHeaderCell>
                 <EnterpriseTableHeaderCell>Recommendation</EnterpriseTableHeaderCell>
                 <EnterpriseTableHeaderCell>Operator</EnterpriseTableHeaderCell>
+                <EnterpriseTableHeaderCell>Actions</EnterpriseTableHeaderCell>
               </EnterpriseTableHead>
               <EnterpriseTableBody>
                 {items.map((h) => (
@@ -211,6 +264,16 @@ export function HeatHistoryView() {
                     interactive
                     onClick={() => router.push(`/eaf/heats/${encodeURIComponent(h.heat_number || h.id)}`)}
                   >
+                    <EnterpriseTableCell>
+                      <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${h.heat_number}`}
+                          checked={selected.has(h.id)}
+                          onChange={() => toggleSelect(h.id)}
+                        />
+                      </div>
+                    </EnterpriseTableCell>
                     <EnterpriseTableCell mono>{h.heat_number}</EnterpriseTableCell>
                     <EnterpriseTableCell>{h.date}</EnterpriseTableCell>
                     <EnterpriseTableCell>{h.shift}</EnterpriseTableCell>
@@ -226,14 +289,22 @@ export function HeatHistoryView() {
                     <EnterpriseTableCell mono>
                       {h.prediction_error != null ? h.prediction_error.toFixed(2) : "—"}
                     </EnterpriseTableCell>
-                    <EnterpriseTableCell mono>
-                      {h.expected_saving != null ? h.expected_saving.toFixed(2) : "—"}
-                    </EnterpriseTableCell>
-                    <EnterpriseTableCell mono>
-                      {h.reliability_index != null ? h.reliability_index.toFixed(1) : "—"}
-                    </EnterpriseTableCell>
                     <EnterpriseTableCell>{h.recommendation_status || "—"}</EnterpriseTableCell>
                     <EnterpriseTableCell>{h.operator_name || "—"}</EnterpriseTableCell>
+                    <EnterpriseTableCell>
+                      <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={deleting}
+                          onClick={(e) => void deleteOne(h, e)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </EnterpriseTableCell>
                   </EnterpriseTableRow>
                 ))}
               </EnterpriseTableBody>
@@ -241,6 +312,7 @@ export function HeatHistoryView() {
             <div className="mt-4 flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 Page {page} of {pages}
+                {selected.size ? ` · ${selected.size} selected` : ""}
               </p>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

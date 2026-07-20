@@ -1,5 +1,6 @@
-import { MesSearchView } from "@/features/mes/views/mes-search-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <MesSearchView />;
+/** MES Search folded into Search. */
+export default function MesSearchRedirectPage() {
+  redirect("/eaf/search");
 }

@@ -9,11 +9,6 @@ import { HeaderBar } from "@/components/layout/header";
 import { FooterStatus } from "@/components/layout/footer-status";
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
 import { CommandPalette } from "@/features/command-palette/command-palette";
-import {
-  EafContentPadding,
-  StickyCurrentHeatMobileBar,
-  StickyCurrentHeatPanelDesktop,
-} from "@/features/eaf/components/sticky-current-heat-panel";
 import { HeatToast } from "@/features/eaf/components/heat-toast";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -30,7 +25,6 @@ export function AppShell({ children }: AppShellProps) {
   useTrackRecentPage();
   useTrackPagePerformance();
   const pathname = usePathname();
-  const isEaf = pathname.startsWith("/eaf");
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -43,22 +37,17 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <OfflineBanner />
         <HeaderBar />
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <motion.main
-            key={pathname}
-            initial={pageTransition.initial}
-            animate={pageTransition.animate}
-            transition={industrialEase}
-            className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
-          >
-            {children}
-            {isEaf ? <EafContentPadding /> : null}
-          </motion.main>
-          {isEaf ? <StickyCurrentHeatPanelDesktop /> : null}
-        </div>
+        <motion.main
+          key={pathname}
+          initial={pageTransition.initial}
+          animate={pageTransition.animate}
+          transition={industrialEase}
+          className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
+        >
+          {children}
+        </motion.main>
         <FooterStatus />
       </div>
-      {isEaf ? <StickyCurrentHeatMobileBar /> : null}
       <CommandPalette />
       <HeatToast />
     </div>

@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
-export function NewHeatButton({ variant = "outline" as const, size = "sm" as const }) {
+type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
+type ButtonSize = React.ComponentProps<typeof Button>["size"];
+
+export function NewHeatButton({
+  variant = "outline",
+  size = "sm",
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const clearHeat = useCurrentHeatStore((s) => s.clearHeat);
@@ -22,7 +31,12 @@ export function NewHeatButton({ variant = "outline" as const, size = "sm" as con
 
   return (
     <>
-      <Button variant={variant} size={size} className="shrink-0 px-2 sm:px-3" onClick={() => (hasActiveHeat() ? setOpen(true) : startNew())}>
+      <Button
+        variant={variant}
+        size={size}
+        className="shrink-0 px-2 sm:px-3"
+        onClick={() => (hasActiveHeat() ? setOpen(true) : startNew())}
+      >
         <Flame className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">New Heat</span>
         <span className="sr-only">New Heat</span>

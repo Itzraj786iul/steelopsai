@@ -15,7 +15,7 @@ export default function UnauthorizedPage() {
         />
         <div className="mt-6 flex justify-center">
           <ActionButton asChild>
-            <Link href="/eaf/dashboard">Return to Dashboard</Link>
+            <Link href="/eaf/prediction">Return to Prediction</Link>
           </ActionButton>
         </div>
       </SectionCard>

@@ -14,7 +14,7 @@ export default function NotFoundPage() {
       />
       <div className="mt-6 flex justify-center">
         <ActionButton asChild>
-          <Link href="/eaf/dashboard">Open Dashboard</Link>
+          <Link href="/eaf/prediction">Open Prediction</Link>
         </ActionButton>
       </div>
     </PageContainer>

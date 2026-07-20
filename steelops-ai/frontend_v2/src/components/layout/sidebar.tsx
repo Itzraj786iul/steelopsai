@@ -204,12 +204,12 @@ export function Sidebar({ badges }: SidebarProps) {
 
       <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
         <div className="space-y-4">
-          <NavSection title="Production" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Heat workflow" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Operations" items={OPERATIONS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Administration" items={ADMIN_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Enterprise" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Research" items={RESEARCH_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
-          <NavSection title="Tools" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Analysis" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
 
           {!collapsed && pinnedItems.length > 0 ? (
             <>

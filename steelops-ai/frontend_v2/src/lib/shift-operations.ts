@@ -387,8 +387,8 @@ export function buildFurnaceTimeline(heat: HeatSessionSnapshot | null): FurnaceT
       fallbackMins: 4,
       stageId: "operator_review",
     },
-    { key: "charge", label: "Charging Started", iso: ts.chargingStarted, fallbackMins: 5, stageId: "actual_ttt" },
-    { key: "tap", label: "Tapped", iso: ts.tapped, fallbackMins: heat.prediction ? Math.round(heat.prediction.predicted_ttt) : 30, stageId: "actual_ttt" },
+    { key: "charge", label: "Charging Started", iso: ts.chargingStarted, fallbackMins: 5, stageId: "validation" },
+    { key: "tap", label: "Tapped", iso: ts.tapped, fallbackMins: heat.prediction ? Math.round(heat.prediction.predicted_ttt) : 30, stageId: "validation" },
     {
       key: "val",
       label: heat.validation?.validatedAt ? "Validation Complete" : "Validation Pending",
@@ -397,11 +397,18 @@ export function buildFurnaceTimeline(heat: HeatSessionSnapshot | null): FurnaceT
     },
   ];
 
+  const STAGE_ORDER = [
+    "recipe_entered",
+    "prediction_complete",
+    "optimization_complete",
+    "operator_review",
+    "validation",
+    "archived",
+  ];
+
   return events.map((e) => {
-    const stageIndex = ["recipe_entered", "prediction_complete", "optimization_complete", "hybrid_evaluation", "operator_review", "actual_ttt", "validation", "archived"].indexOf(e.stageId);
-    const currentIndex = currentStage
-      ? ["recipe_entered", "prediction_complete", "optimization_complete", "hybrid_evaluation", "operator_review", "actual_ttt", "validation", "archived"].indexOf(currentStage)
-      : -1;
+    const stageIndex = STAGE_ORDER.indexOf(e.stageId);
+    const currentIndex = currentStage ? STAGE_ORDER.indexOf(currentStage) : -1;
 
     let status: "completed" | "current" | "pending" = "pending";
     if (e.iso || (e.fallbackMins != null && stageIndex < currentIndex)) status = "completed";

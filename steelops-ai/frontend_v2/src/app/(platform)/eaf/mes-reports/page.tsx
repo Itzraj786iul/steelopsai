@@ -1,5 +1,6 @@
-import { MesReportsView } from "@/features/mes/views/mes-reports-view";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <MesReportsView />;
+/** Reports hub is /eaf/reports. */
+export default function MesReportsRedirectPage() {
+  redirect("/eaf/reports");
 }

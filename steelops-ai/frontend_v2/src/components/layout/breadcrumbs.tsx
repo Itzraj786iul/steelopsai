@@ -36,7 +36,7 @@ export function Breadcrumbs() {
 
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 overflow-hidden text-sm">
-      <Link href="/eaf/dashboard" className="shrink-0 text-muted-foreground transition-colors hover:text-foreground">
+      <Link href="/eaf/prediction" className="shrink-0 text-muted-foreground transition-colors hover:text-foreground">
         <Home className="h-4 w-4" />
       </Link>
       {crumbs.slice(0, 4).map((crumb, index) => (

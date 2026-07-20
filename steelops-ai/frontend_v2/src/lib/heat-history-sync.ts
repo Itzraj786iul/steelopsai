@@ -144,9 +144,17 @@ export async function syncHeatAfterValidation(): Promise<HeatRecord | null> {
       heat_record_id: active.heatRecordId || undefined,
       predicted_ttt: active.prediction?.predicted_ttt,
       actual_ttt: active.validation?.actualTtt ?? null,
-      operator_comments: active.validation?.operatorComments || "",
+      operator_comments: [
+        active.recommendationNotes?.trim(),
+        active.validation?.operatorComments?.trim(),
+      ]
+        .filter(Boolean)
+        .join(" | ") || "",
       recommendation_status: active.recommendationAcceptance,
-      actual_recipe: active.recipe as unknown as Record<string, unknown>,
+      actual_recipe: (active.modifiedRecipe ??
+        (active.recommendationAcceptance === "Accepted" && active.optimizer?.optimized_recipe
+          ? active.optimizer.optimized_recipe
+          : active.recipe)) as unknown as Record<string, unknown>,
       validated_by: attr.validated_by,
       furnace_id: attr.furnace_id,
       supervisor_id: attr.supervisor_id,

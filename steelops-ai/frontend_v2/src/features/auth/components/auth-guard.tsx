@@ -18,6 +18,7 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const hasToken = typeof window !== "undefined" && !!getAccessToken();
   const authed = isAuthenticated || hasToken;
+  const isFeedbackRedirect = pathname.startsWith("/eaf/feedback");
 
   useEffect(() => {
     if (isLoading) return;
@@ -27,12 +28,25 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
       return;
     }
 
+    if (isFeedbackRedirect) {
+      router.replace("/eaf/optimizer");
+      return;
+    }
+
     if (user && pathname.startsWith("/eaf") && !canAccessRoute(user.role, pathname)) {
       router.replace("/unauthorized");
     }
-  }, [authed, isLoading, pathname, router, user]);
+  }, [authed, isFeedbackRedirect, isLoading, pathname, router, user]);
 
   if (isLoading || !authed) {
+    return (
+      <div className="p-6">
+        <PageLoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (isFeedbackRedirect) {
     return (
       <div className="p-6">
         <PageLoadingSkeleton />

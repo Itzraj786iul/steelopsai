@@ -3,24 +3,13 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  CheckSquare,
   ClipboardList,
   Cpu,
   Database,
-  FileSearch,
   FileText,
-  Gauge,
-  Layers,
-  LayoutGrid,
-  LineChart,
-  ListOrdered,
-  MessageSquare,
   Sparkles,
-  UserCheck,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +38,7 @@ export function OpenPageLink({
   );
 }
 
-type StepStatus = "done" | "next" | "todo" | "optional";
+type StepStatus = "done" | "next" | "todo";
 
 interface WorkflowStep {
   step: number;
@@ -64,11 +53,6 @@ function buildHeatSteps(active: HeatSessionSnapshot | null): WorkflowStep[] {
   const hasPrediction = !!active?.prediction;
   const hasOptimizer = !!active?.optimizer;
   const hasAcceptance = !!active?.recommendationAcceptance;
-  const hasActual =
-    !!active?.validation?.actualTtt &&
-    active.validation.actualTtt !== "Pending" &&
-    !Number.isNaN(parseFloat(active.validation.actualTtt));
-  const hasFeedback = hasAcceptance; // acceptance is the operator decision gate
   const hasValidated = !!active?.validation?.validatedAt;
 
   const steps: WorkflowStep[] = [
@@ -82,56 +66,45 @@ function buildHeatSteps(active: HeatSessionSnapshot | null): WorkflowStep[] {
     },
     {
       step: 2,
-      title: "Optimize recipe",
+      title: "Optimize & decide",
       action: "Open Optimizer",
       href: "/eaf/optimizer",
-      status: !hasPrediction ? "todo" : hasOptimizer ? "done" : "next",
-      detail: "Get recommended burden / energy changes",
+      status: !hasPrediction ? "todo" : hasAcceptance ? "done" : hasOptimizer ? "next" : "next",
+      detail: "Run optimizer, then Accept / Modify / Reject",
     },
     {
       step: 3,
-      title: "Accept or modify",
-      action: "Operator decision",
-      href: "/eaf/optimizer",
-      status: !hasOptimizer ? "todo" : hasAcceptance ? "done" : "next",
-      detail: "Accept, modify, or reject recommendation",
+      title: "Validate heat",
+      action: "Open Validation",
+      href: "/eaf/validation",
+      status: !hasAcceptance ? "todo" : hasValidated ? "done" : "next",
+      detail: "Enter actual TTT and save permanently",
     },
     {
       step: 4,
-      title: "Record actual TTT",
-      action: "Open Validation",
-      href: "/eaf/validation",
-      status: !hasPrediction ? "todo" : hasActual || hasValidated ? "done" : hasOptimizer ? "next" : "todo",
-      detail: "Enter actual tap-to-tap after the heat",
-    },
-    {
-      step: 5,
-      title: "Operator feedback",
-      action: "Open Feedback",
-      href: "/eaf/feedback",
-      status: hasFeedback ? "done" : "optional",
-      detail: "Capture floor notes for this heat",
-    },
-    {
-      step: 6,
-      title: "Close & report",
+      title: "Heat report",
       action: "Open Reports",
       href: "/eaf/reports",
-      status: hasValidated ? "done" : "optional",
-      detail: "Export evidence / heat pack",
+      status: hasValidated ? "done" : "todo",
+      detail: "Export evidence / open Heat History",
     },
   ];
 
-  // Ensure only one "next" highlight (first incomplete required step).
   let nextAssigned = false;
   return steps.map((s) => {
-    if (s.status === "done" || s.status === "optional") return s;
-    if (!nextAssigned && (s.status === "next" || s.status === "todo")) {
+    if (s.status === "done") return s;
+    if (!nextAssigned) {
       nextAssigned = true;
       return { ...s, status: "next" as const };
     }
-    return { ...s, status: s.status === "next" ? ("todo" as const) : s.status };
+    return { ...s, status: "todo" as const };
   });
+}
+
+function statusBadge(status: StepStatus) {
+  if (status === "done") return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Done</Badge>;
+  if (status === "next") return <Badge className="bg-blue-600 text-white hover:bg-blue-600">Do next</Badge>;
+  return <Badge variant="secondary">Later</Badge>;
 }
 
 interface ActionItem {
@@ -139,15 +112,8 @@ interface ActionItem {
   label: string;
   description: string;
   icon: typeof Cpu;
-  status?: "ready" | "done" | "needed";
   emphasize?: boolean;
-}
-
-function statusBadge(status: StepStatus) {
-  if (status === "done") return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Done</Badge>;
-  if (status === "next") return <Badge className="bg-blue-600 text-white hover:bg-blue-600">Do next</Badge>;
-  if (status === "optional") return <Badge variant="outline">Optional</Badge>;
-  return <Badge variant="secondary">Later</Badge>;
+  status?: "ready" | "done" | "needed";
 }
 
 function ActionTile({ item }: { item: ActionItem }) {
@@ -171,11 +137,6 @@ function ActionTile({ item }: { item: ActionItem }) {
         <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100 sm:opacity-0" />
       </div>
       <p className="break-words text-xs leading-snug text-muted-foreground">{item.description}</p>
-      {item.status === "needed" ? (
-        <span className="mt-auto text-[11px] font-medium text-amber-700 dark:text-amber-400">Action needed</span>
-      ) : item.status === "done" ? (
-        <span className="mt-auto text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Completed</span>
-      ) : null}
     </Link>
   );
 }
@@ -185,302 +146,153 @@ interface PredictionNextActionsProps {
   active?: HeatSessionSnapshot | null;
 }
 
-/** Industrial operator console — all heat follow-ups without hunting the navbar. */
+/** Compact operator console — one heat path, no research sprawl. */
 export function PredictionNextActions({ className, active = null }: PredictionNextActionsProps) {
   const steps = buildHeatSteps(active);
-  const nextStep = steps.find((s) => s.status === "next") ?? steps.find((s) => s.status === "todo");
+  const nextStep = steps.find((s) => s.status === "next");
 
-  const actNow: ActionItem[] = [
+  const primary: ActionItem[] = [
     {
       href: "/eaf/optimizer",
-      label: "1 · Optimizer",
-      description: "Recommended recipe changes for this heat",
+      label: "Optimizer",
+      description: "Recommendations + Accept / Modify / Reject",
       icon: Cpu,
       emphasize: true,
-      status: active?.optimizer ? "done" : "needed",
+      status: active?.recommendationAcceptance ? "done" : "needed",
     },
     {
       href: "/eaf/validation",
-      label: "2 · Validation",
-      description: "Enter actual TTT and close the heat",
+      label: "Validation",
+      description: "Enter actual TTT and save this heat",
       icon: CheckCircle2,
       emphasize: true,
       status: active?.validation?.validatedAt ? "done" : "needed",
     },
     {
-      href: "/eaf/feedback",
-      label: "3 · Operator Feedback",
-      description: "Floor notes, issues, and heat comments",
-      icon: MessageSquare,
-      status: active?.recommendationAcceptance ? "done" : "ready",
-    },
-    {
       href: "/eaf/whatif",
       label: "What-if",
-      description: "Test alternate HM / DRI / energy before commit",
+      description: "Test alternate burden before commit",
       icon: Sparkles,
+      status: "ready",
+    },
+    {
+      href: "/eaf/historical",
+      label: "Similar history",
+      description: "Compare recipe to plant history",
+      icon: Database,
       status: "ready",
     },
   ];
 
-  const understand: ActionItem[] = [
-    {
-      href: "/eaf/historical",
-      label: "Historical Analysis",
-      description: "Compare this recipe to plant history",
-      icon: Database,
-    },
-    {
-      href: "/eaf/explainability",
-      label: "Explainability",
-      description: "Why the model predicted this TTT",
-      icon: FileSearch,
-    },
-    {
-      href: "/eaf/reliability",
-      label: "Reliability / Trust",
-      description: "Hybrid confidence and consensus",
-      icon: Gauge,
-    },
-    {
-      href: "/eaf/model",
-      label: "Model Insights",
-      description: "Feature drivers and model status",
-      icon: LineChart,
-    },
-    {
-      href: "/eaf/digital-twin-readiness",
-      label: "Digital Twin",
-      description: "Readiness score for this prediction",
-      icon: Layers,
-    },
-    {
-      href: "/eaf/health",
-      label: "Process Health",
-      description: "Operating gauges vs historical bands",
-      icon: Activity,
-    },
-  ];
-
-  const recordClose: ActionItem[] = [
+  const after: ActionItem[] = [
     {
       href: "/eaf/reports",
       label: "Reports",
-      description: "Export heat pack / evidence",
+      description: "Heat pack export after validation",
       icon: FileText,
     },
     {
       href: "/eaf/heat-history",
       label: "Heat History",
-      description: "Saved heats and prior sessions",
+      description: "Permanent saved heats",
       icon: ClipboardList,
     },
-    {
-      href: "/eaf/operator-board",
-      label: "Operator Board",
-      description: "Your shift board and assigned heats",
-      icon: UserCheck,
-    },
-    {
-      href: "/eaf/tasks",
-      label: "My Tasks",
-      description: "Approvals and follow-up tasks",
-      icon: CheckSquare,
-    },
   ];
-
-  const shiftSupport: ActionItem[] = [
-    {
-      href: "/eaf/live-board",
-      label: "Live Board",
-      description: "Current furnace / heat status",
-      icon: LayoutGrid,
-    },
-    {
-      href: "/eaf/heat-queue",
-      label: "Heat Queue",
-      description: "Upcoming heats in the queue",
-      icon: ListOrdered,
-    },
-    {
-      href: "/eaf/alerts",
-      label: "Alerts",
-      description: "Plant and system alerts",
-      icon: AlertTriangle,
-    },
-    {
-      href: "/eaf/dashboard",
-      label: "Dashboard",
-      description: "Shift overview and KPIs",
-      icon: Gauge,
-    },
-  ];
-
-  const doneCount = steps.filter((s) => s.status === "done").length;
-  const progressPct = Math.round((doneCount / Math.max(steps.length, 1)) * 100);
 
   return (
     <SectionCard
       title="Operator Heat Console"
-      description="Stay on the heat workflow — open every next page from here. No navbar hunting required."
+      description="One path: Predict → Optimize → Validate → Report"
       className={className}
-      actions={
-        nextStep ? (
-          <motion.div
-            animate={{ scale: [1, 1.03, 1] }}
-            transition={{ duration: 1.4, repeat: 2, ease: "easeInOut" }}
-          >
-            <Button asChild size="sm" className="gap-1.5 shadow-md shadow-primary/20">
-              <Link href={nextStep.href}>
-                Do next: {nextStep.title}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </motion.div>
-        ) : null
-      }
     >
-      <div className="mb-5 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-3 sm:px-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400">
-              Recommended heat path
-            </p>
-            <p className="mt-1 break-words text-sm text-muted-foreground">
-              Heat {active?.heatNumber || "—"} · Shift {active?.shift || recipeShiftFallback(active)} · Recipe stays
-              linked across all pages
-            </p>
-          </div>
-          {nextStep ? (
-            <motion.div
-              animate={{ boxShadow: ["0 0 0 0 rgba(37,99,235,0.45)", "0 0 0 10px rgba(37,99,235,0)", "0 0 0 0 rgba(37,99,235,0)"] }}
-              transition={{ duration: 1.6, repeat: 2 }}
-              className="w-full rounded-md sm:w-auto"
-            >
-              <Button asChild className="w-full sm:w-auto">
-                <Link href={nextStep.href} className="gap-2">
-                  Continue → {nextStep.action}
-                </Link>
-              </Button>
-            </motion.div>
-          ) : null}
-        </div>
+      <motion.div className="space-y-5" variants={staggerContainer} initial="initial" animate="animate">
+        {nextStep ? (
+          <motion.div variants={fadeUp} className="rounded-lg border border-primary/35 bg-primary/5 p-3 sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Do next</p>
+                <p className="mt-1 text-base font-semibold">
+                  Step {nextStep.step}: {nextStep.title}
+                </p>
+                <p className="text-sm text-muted-foreground">{nextStep.detail}</p>
+              </div>
+              <motion.div
+                animate={{ scale: [1, 1.04, 1] }}
+                transition={{ duration: 1.2, repeat: 2, ease: "easeInOut" }}
+                className="w-full sm:w-auto"
+              >
+                <Button asChild className="w-full gap-1.5 sm:w-auto">
+                  <Link href={nextStep.href}>
+                    {nextStep.action}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        ) : null}
 
-        {/* Progress rail — teaches the path at a glance */}
-        <div className="mt-4">
-          <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Heat progress</span>
-            <span className="font-mono">{progressPct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted/80">
-            <motion.div
-              className="h-full rounded-full bg-blue-600"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPct}%` }}
-              transition={{ ...industrialEase, duration: 0.5 }}
-            />
-          </div>
-          <div className="mt-3 flex gap-1">
-            {steps.map((step) => (
-              <div
-                key={`rail-${step.step}`}
-                className={cn(
-                  "h-1.5 flex-1 rounded-full transition-colors",
-                  step.status === "done" && "bg-emerald-500",
-                  step.status === "next" && "bg-blue-500 animate-pulse",
-                  (step.status === "todo" || step.status === "optional") && "bg-border"
-                )}
-                title={step.title}
-              />
+        <motion.div variants={fadeUp}>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Heat path</p>
+          <ol className="space-y-2">
+            {steps.map((step, index) => (
+              <motion.li
+                key={step.step}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ ...industrialEase, delay: index * 0.05 }}
+              >
+                <Link
+                  href={step.href}
+                  className={cn(
+                    "flex min-w-0 items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors focus-ring",
+                    step.status === "next" && "border-primary/40 bg-primary/5",
+                    step.status === "done" && "border-emerald-500/30 bg-emerald-500/5",
+                    step.status === "todo" && "border-border/50 bg-background/60"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                      step.status === "done" && "bg-emerald-600 text-white",
+                      step.status === "next" && "bg-primary text-primary-foreground",
+                      step.status === "todo" && "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {step.status === "done" ? "✓" : step.step}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{step.title}</span>
+                      {statusBadge(step.status)}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{step.detail}</span>
+                  </span>
+                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </motion.li>
+            ))}
+          </ol>
+        </motion.div>
+
+        <motion.div variants={fadeUp}>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick links</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {primary.map((item) => (
+              <ActionTile key={item.href} item={item} />
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <motion.ol
-          className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
-          {steps.map((step) => (
-            <motion.li key={step.step} variants={fadeUp} className="min-w-0">
-              <Link
-                href={step.href}
-                className={cn(
-                  "flex h-full min-w-0 items-start gap-3 rounded-lg border px-3 py-3 transition-colors focus-ring",
-                  step.status === "next" && "border-blue-500/50 bg-background shadow-sm ring-2 ring-blue-500/20",
-                  step.status === "done" && "border-emerald-500/30 bg-emerald-500/5",
-                  step.status === "todo" && "border-border/50 bg-background/50 opacity-80",
-                  step.status === "optional" && "border-dashed border-border/60 bg-background/40"
-                )}
-              >
-                <motion.span
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    step.status === "done" && "bg-emerald-600 text-white",
-                    step.status === "next" && "bg-blue-600 text-white",
-                    (step.status === "todo" || step.status === "optional") && "bg-muted text-muted-foreground"
-                  )}
-                  animate={
-                    step.status === "next"
-                      ? { scale: [1, 1.12, 1], boxShadow: ["0 0 0 0 rgba(37,99,235,0.5)", "0 0 0 8px rgba(37,99,235,0)", "0 0 0 0 rgba(37,99,235,0)"] }
-                      : undefined
-                  }
-                  transition={step.status === "next" ? { duration: 1.5, repeat: 2 } : undefined}
-                >
-                  {step.status === "done" ? "✓" : step.step}
-                </motion.span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="break-words text-sm font-semibold">{step.title}</span>
-                    {statusBadge(step.status)}
-                  </span>
-                  <span className="mt-0.5 block break-words text-xs text-muted-foreground">{step.detail}</span>
-                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary">
-                    {step.action}
-                    <ArrowRight className="h-3 w-3 shrink-0" />
-                  </span>
-                </span>
-              </Link>
-            </motion.li>
-          ))}
-        </motion.ol>
-      </div>
-
-      <ActionGroup title="Act now — decide & close the heat" items={actNow} />
-      <ActionGroup title="Understand this prediction" items={understand} className="mt-5" />
-      <ActionGroup title="Record, history & board" items={recordClose} className="mt-5" />
-      <ActionGroup title="Shift support" items={shiftSupport} className="mt-5" />
-
-      <p className="mt-4 text-xs text-muted-foreground">
-        Tip: after Predict, use <span className="font-medium text-foreground">Continue → Optimizer</span>, then
-        Validation and Feedback. Sidebar remains available, but this console is the fastest floor path.
-      </p>
+        <motion.div variants={fadeUp}>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">After validation</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {after.map((item) => (
+              <ActionTile key={item.href} item={item} />
+            ))}
+          </div>
+        </motion.div>
+      </motion.div>
     </SectionCard>
   );
-}
-
-function ActionGroup({
-  title,
-  items,
-  className,
-}: {
-  title: string;
-  items: ActionItem[];
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => (
-          <ActionTile key={item.href + item.label} item={item} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function recipeShiftFallback(active: HeatSessionSnapshot | null): string {
-  return active?.recipe?.Shift ?? "—";
 }
