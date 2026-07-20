@@ -69,13 +69,14 @@ class OptimizerEngine:
         hist_index = self._HistoricalSimilarityIndex.from_dataframe(cleaned)
 
         self.operating_windows = windows
+        # power_pct=0: freeze electrical energy on planning path (shop rejected energy cuts).
         self.optimizer = self._PhysicsGuidedRecipeOptimizer(
             model=model,
             preprocessor=preprocessor,
             feature_names=MODEL_FEATURES,
             operating_windows=windows,
             hist_index=hist_index,
-            config=AdjustmentConfig(n_generate=1000),
+            config=AdjustmentConfig(n_generate=1000, power_pct=0.0),
         )
 
     def optimize(

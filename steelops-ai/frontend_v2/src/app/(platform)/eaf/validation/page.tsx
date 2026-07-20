@@ -110,7 +110,7 @@ export default function EafValidationPage() {
             historicalActual={
               active.prediction.explainability?.similar_heats?.length
                 ? [...active.prediction.explainability.similar_heats].sort(
-                    (a, b) => b.similarity_pct - a.similarity_pct
+                    (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
                   )[0]?.actual_ttt
                 : null
             }

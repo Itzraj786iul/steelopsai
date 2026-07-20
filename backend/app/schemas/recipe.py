@@ -76,7 +76,12 @@ class SimilarHeatItem(BaseModel):
     predicted_ttt: float
     ttt_difference: float | None = None
     similarity_pct: float
+    recipe_similarity_pct: float | None = None
+    outcome_similarity_pct: float | None = None
     distance: float
+    rank: int | None = None
+    recipe_deltas: dict[str, float] = Field(default_factory=dict)
+    truly_similar: bool = False
     # Controllable recipe snapshot from historical row (for operator comparison)
     HM: float | None = None
     DRI: float | None = None
@@ -88,6 +93,25 @@ class SimilarHeatItem(BaseModel):
     POWER: float | None = None
     OXY: float | None = None
     Power_Restriction: int | None = None
+
+
+class NeighborTttBenchmark(BaseModel):
+    n: int
+    mean_actual_ttt: float
+    median_actual_ttt: float
+    std_actual_ttt: float
+    min_actual_ttt: float
+    max_actual_ttt: float
+    best_similarity_pct: float | None = None
+
+
+class NeighborTttBand(BaseModel):
+    mean: float | None = None
+    median: float | None = None
+    min: float | None = None
+    max: float | None = None
+    std: float | None = None
+    n: int | None = None
 
 
 class IndustrialObservation(BaseModel):
@@ -103,6 +127,7 @@ class DigitalTwinReadiness(BaseModel):
 
 class PredictionExplainability(BaseModel):
     similar_heats: list[SimilarHeatItem] = Field(default_factory=list)
+    neighbor_benchmark: NeighborTttBenchmark | None = None
     contributor_interpretations: list[ContributorItem] = Field(default_factory=list)
     prediction_quality: str = Field(..., description="Excellent | Good | Acceptable | Experimental")
     industrial_observations: list[IndustrialObservation] = Field(default_factory=list)
@@ -154,6 +179,7 @@ class OptimizationExplainability(BaseModel):
     recommendation_narrative: list[str] = Field(default_factory=list)
     penalty_breakdown: dict[str, float] = Field(default_factory=dict)
     similar_heats: list[SimilarHeatItem] = Field(default_factory=list)
+    neighbor_benchmark: NeighborTttBenchmark | None = None
     industrial_observations: list[IndustrialObservation] = Field(default_factory=list)
     digital_twin_readiness: DigitalTwinReadiness | None = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
@@ -178,6 +204,11 @@ class PredictionResponse(BaseModel):
     margin: float = Field(..., description="Model test MAE margin used for confidence banding (minutes)")
     ci_lower_95: float = Field(..., description="Lower bound of approximate 95% interval (minutes)")
     ci_upper_95: float = Field(..., description="Upper bound of approximate 95% interval (minutes)")
+    ci_half_width: float | None = Field(None, description="Neighbour-informed 95% half-width (minutes)")
+    neighbor_calibrated_ttt: float | None = Field(
+        None, description="Advisory neighbour-blended TTT — Phase 19 predicted_ttt remains authority"
+    )
+    neighbor_ttt_band: NeighborTttBand | None = None
     top_contributors: list[ContributorItem] = Field(..., description="Local SHAP-style contributors")
     operator_summary: dict[str, Any] = Field(..., description="Industrial operator summary")
     validation_warnings: list[ValidationWarning] = Field(default_factory=list, description="Advisory warnings — predictions are never blocked")

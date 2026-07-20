@@ -121,6 +121,8 @@ export default function EafPredictionPage() {
               predictedTtt={result.predicted_ttt}
               currentRecipe={recipe}
               optimizer={active?.optimizer ?? null}
+              neighborBenchmark={explain?.neighbor_benchmark}
+              neighborCalibratedTtt={result.neighbor_calibrated_ttt}
             />
           </motion.div>
           <motion.div variants={fadeUp}>

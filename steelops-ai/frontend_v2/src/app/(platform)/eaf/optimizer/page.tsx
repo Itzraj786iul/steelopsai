@@ -137,7 +137,9 @@ export default function EafOptimizerPage() {
               <TttComparisonBars
                 historicalActual={
                   explain?.similar_heats?.length
-                    ? [...explain.similar_heats].sort((a, b) => b.similarity_pct - a.similarity_pct)[0]?.actual_ttt
+                    ? [...explain.similar_heats].sort(
+                        (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
+                      )[0]?.actual_ttt
                     : null
                 }
                 predicted={prodResult.current_ttt}
@@ -180,6 +182,7 @@ export default function EafOptimizerPage() {
                 predictedTtt={prodResult.current_ttt}
                 currentRecipe={recipe}
                 optimizer={prodResult}
+                neighborBenchmark={explain?.neighbor_benchmark}
               />
               <DigitalTwinReadinessCard readiness={explain?.digital_twin_readiness} />
               {active ? <HeatLifecycleTimeline active={active} /> : null}

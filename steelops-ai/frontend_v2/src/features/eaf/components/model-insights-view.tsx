@@ -108,7 +108,37 @@ export function ModelInsightsView() {
               <p className="font-mono text-4xl font-bold text-primary">{prediction.predicted_ttt.toFixed(2)} min</p>
               <p className="text-sm text-muted-foreground">
                 95% interval: {prediction.ci_lower_95.toFixed(1)} – {prediction.ci_upper_95.toFixed(1)} min
+                {prediction.ci_half_width != null ? ` (±${prediction.ci_half_width.toFixed(2)})` : ""}
               </p>
+              {prediction.neighbor_calibrated_ttt != null ? (
+                <p className="text-sm text-muted-foreground">
+                  Neighbour-informed TTT:{" "}
+                  <span className="font-mono text-foreground">{prediction.neighbor_calibrated_ttt.toFixed(2)} min</span>
+                </p>
+              ) : null}
+              {prediction.explainability?.neighbor_benchmark ? (
+                <p className="text-sm text-muted-foreground">
+                  Similar-heat band:{" "}
+                  <span className="font-mono text-foreground">
+                    {prediction.explainability.neighbor_benchmark.min_actual_ttt.toFixed(1)}–
+                    {prediction.explainability.neighbor_benchmark.max_actual_ttt.toFixed(1)} min
+                  </span>{" "}
+                  (n={prediction.explainability.neighbor_benchmark.n})
+                </p>
+              ) : null}
+              {prediction.explainability?.similar_heats?.[0] ? (
+                <p className="text-sm">
+                  Closest heat{" "}
+                  <span className="font-mono font-medium">
+                    {prediction.explainability.similar_heats[0].heat_id}
+                  </span>
+                  {" · "}
+                  {prediction.explainability.similar_heats[0].similarity_pct.toFixed(0)}% similar
+                  {prediction.explainability.similar_heats[0].actual_ttt != null
+                    ? ` · actual ${prediction.explainability.similar_heats[0].actual_ttt.toFixed(1)} min`
+                    : ""}
+                </p>
+              ) : null}
               <p className="text-sm">
                 <span className="text-label">Status:</span> {prediction.operator_summary?.process_status}
               </p>

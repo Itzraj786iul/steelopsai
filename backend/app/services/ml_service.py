@@ -200,6 +200,33 @@ def predict_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
         clean_recipe, result, stats if stats_loaded else pd.DataFrame(), stats_loaded
     )
     result["top_contributors"] = result["explainability"]["contributor_interpretations"]
+
+    # Neighbor-informed CI / advisory calibration — Phase 19 pickles stay authority.
+    bench = result["explainability"].get("neighbor_benchmark")
+    sim_pct = float(result["explainability"].get("historical_similarity_pct") or 0.0)
+    half = float(CI_HALF_WIDTH_95)
+    if isinstance(bench, dict) and int(bench.get("n") or 0) >= 3:
+        n_std = float(bench.get("std_actual_ttt") or 0.0)
+        n_mean = float(bench.get("mean_actual_ttt") or predicted)
+        if sim_pct >= 70.0 and n_std < 4.0:
+            half = max(float(TEST_MAE) * 1.15, half * 0.88)
+        elif sim_pct < 50.0 or n_std > 6.0:
+            half = half * 1.12
+        # Small advisory blend only when neighbours are recipe-similar
+        if sim_pct >= 60.0:
+            alpha = min(0.12, 0.04 + 0.08 * (sim_pct / 100.0))
+            result["neighbor_calibrated_ttt"] = round((1.0 - alpha) * float(predicted) + alpha * n_mean, 2)
+        result["neighbor_ttt_band"] = {
+            "mean": bench.get("mean_actual_ttt"),
+            "median": bench.get("median_actual_ttt"),
+            "min": bench.get("min_actual_ttt"),
+            "max": bench.get("max_actual_ttt"),
+            "std": bench.get("std_actual_ttt"),
+            "n": bench.get("n"),
+        }
+    result["ci_lower_95"] = round(float(predicted) - half, 2)
+    result["ci_upper_95"] = round(float(predicted) + half, 2)
+    result["ci_half_width"] = round(half, 2)
     return result
 
 

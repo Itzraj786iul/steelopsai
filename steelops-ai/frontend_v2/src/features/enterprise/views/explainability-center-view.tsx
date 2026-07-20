@@ -52,6 +52,8 @@ export function ExplainabilityCenterView() {
           predictedTtt={prediction.predicted_ttt}
           currentRecipe={active.recipe}
           optimizer={optimizer}
+          neighborBenchmark={explain?.neighbor_benchmark}
+          neighborCalibratedTtt={prediction.neighbor_calibrated_ttt}
         />
 
         {hybrid ? <TrustFrameworkPanel trust={hybrid} /> : null}

@@ -15,6 +15,19 @@ from app.services.response_labels import ELECTRICAL_ENERGY_LABEL, format_display
 
 CONTROLLABLE_NUMERIC = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"]
 BURDEN_COLS = ["HM", "DRI", "HBI", "Bucket"]
+# Planning-safe similarity (POWER = post-heat EE outcome — do not dominate neighbour search)
+PLANNING_SIM_COLS = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "OXY"]
+# Relative importance for z-scored Euclidean (burden > flux > O₂/CPC)
+SIM_FEATURE_WEIGHTS = {
+    "HM": 1.35,
+    "DRI": 1.35,
+    "HBI": 0.90,
+    "Bucket": 1.15,
+    "LIME": 0.85,
+    "DOLO": 0.85,
+    "CPC": 0.70,
+    "OXY": 0.75,
+}
 
 SEVERITY_ORDER = ["Very Small", "Small", "Moderate", "Large", "Extreme"]
 RISK_ORDER = ["Low", "Medium", "High"]
@@ -99,43 +112,117 @@ def _historical_enriched() -> pd.DataFrame:
 
 
 @lru_cache(maxsize=1)
-def _similarity_basis() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _similarity_basis() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Planning-column matrix + mean/std + per-feature weights."""
     df = _historical_enriched()
-    matrix = df[CONTROLLABLE_NUMERIC].to_numpy(dtype=float)
+    cols = [c for c in PLANNING_SIM_COLS if c in df.columns]
+    matrix = df[cols].to_numpy(dtype=float)
     mean = matrix.mean(axis=0)
     std = matrix.std(axis=0)
     std[std < 1e-6] = 1.0
-    return matrix, mean, std
+    weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
+    return matrix, mean, std, weights
 
 
-def find_similar_heats(recipe: dict[str, Any], predicted_ttt: float, k: int = 5) -> list[dict[str, Any]]:
+def _recipe_deltas(recipe: dict[str, Any], hist_row: pd.Series) -> dict[str, float]:
+    deltas: dict[str, float] = {}
+    for col in CONTROLLABLE_NUMERIC:
+        if col not in recipe or col not in hist_row.index or pd.isna(hist_row[col]):
+            continue
+        try:
+            deltas[col] = round(float(recipe[col]) - float(hist_row[col]), 3)
+        except (TypeError, ValueError):
+            continue
+    return deltas
+
+
+def find_similar_heats(
+    recipe: dict[str, Any],
+    predicted_ttt: float,
+    k: int = 5,
+    *,
+    pool: int = 40,
+    outcome_weight: float = 0.35,
+) -> list[dict[str, Any]]:
+    """
+    Recipe-neighbour search for operator comparison.
+
+    1. Weighted z-scored Euclidean on planning variables (excludes POWER).
+    2. Retrieve a pool of nearest recipe neighbours.
+    3. Re-rank by recipe distance + outcome proximity to predicted TTT
+       (Phase 30: recipe match ≠ outcome match — prefer both).
+    4. Attach per-variable deltas vs current recipe for UI comparison.
+    """
     df = _historical_enriched()
-    matrix, mean, std = _similarity_basis()
-    vec = np.array([float(recipe[c]) for c in CONTROLLABLE_NUMERIC], dtype=float)
+    cols = [c for c in PLANNING_SIM_COLS if c in df.columns]
+    if not cols or df.empty:
+        return []
+
+    matrix, mean, std, weights = _similarity_basis()
+    # Recompute if column set drifted (cache safety)
+    if matrix.shape[1] != len(cols):
+        matrix = df[cols].to_numpy(dtype=float)
+        mean = matrix.mean(axis=0)
+        std = matrix.std(axis=0)
+        std[std < 1e-6] = 1.0
+        weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
+
+    vec = np.array([float(recipe.get(c, 0.0)) for c in cols], dtype=float)
     normed_query = (vec - mean) / std
     hist_norm = (matrix - mean) / std
-    diff = hist_norm - normed_query
+    diff = (hist_norm - normed_query) * weights
     distances = np.sqrt((diff * diff).sum(axis=1))
-    order = np.argsort(distances)[:k]
+
+    pool_n = min(max(pool, k), len(distances))
+    order = np.argsort(distances)[:pool_n]
     max_dist = float(np.percentile(distances, 95)) if len(distances) else 1.0
     max_dist = max(max_dist, 1e-6)
 
-    results: list[dict[str, Any]] = []
+    # Outcome proximity among recipe neighbours (minutes → soft score)
+    candidates: list[tuple[float, int, float]] = []
     for idx in order:
-        row = df.iloc[int(idx)]
         dist = float(distances[int(idx)])
-        actual_ttt = float(row["TTT"]) if "TTT" in row and pd.notna(row["TTT"]) else None
+        row = df.iloc[int(idx)]
+        actual = float(row["TTT"]) if "TTT" in row.index and pd.notna(row["TTT"]) else None
+        if actual is None:
+            score = dist
+        else:
+            # 8 min band from Phase 30 "truly similar" outcome window
+            outcome_pen = abs(actual - float(predicted_ttt)) / 8.0
+            score = (1.0 - outcome_weight) * (dist / max_dist) + outcome_weight * min(outcome_pen, 2.0)
+        candidates.append((score, int(idx), dist))
+    candidates.sort(key=lambda t: t[0])
+
+    results: list[dict[str, Any]] = []
+    for rank, (_score, idx, dist) in enumerate(candidates[:k], start=1):
+        row = df.iloc[idx]
+        actual_ttt = float(row["TTT"]) if "TTT" in row.index and pd.notna(row["TTT"]) else None
         charge = float(row["Total_Charge"]) if pd.notna(row.get("Total_Charge")) else total_charge(recipe)
         similarity_pct = max(0.0, min(100.0, 100.0 * (1.0 - dist / max_dist)))
+        recipe_sim = similarity_pct
+        outcome_sim = None
+        if actual_ttt is not None:
+            outcome_sim = max(0.0, min(100.0, 100.0 * (1.0 - abs(actual_ttt - float(predicted_ttt)) / 8.0)))
+            # Phase 30 style composite for display
+            similarity_pct = round(0.65 * recipe_sim + 0.35 * outcome_sim, 1)
+
+        deltas = _recipe_deltas(recipe, row)
         item: dict[str, Any] = {
             "heat_id": str(row.get("Heat Number", idx)),
             "shift": str(row.get("Shift", "—")),
             "charge_t": round(charge, 1),
             "actual_ttt": round(actual_ttt, 2) if actual_ttt is not None else None,
-            "predicted_ttt": round(predicted_ttt, 2),
-            "ttt_difference": round(actual_ttt - predicted_ttt, 2) if actual_ttt is not None else None,
-            "similarity_pct": round(similarity_pct, 1),
+            "predicted_ttt": round(float(predicted_ttt), 2),
+            "ttt_difference": round(actual_ttt - float(predicted_ttt), 2) if actual_ttt is not None else None,
+            "similarity_pct": round(float(similarity_pct), 1),
+            "recipe_similarity_pct": round(float(recipe_sim), 1),
+            "outcome_similarity_pct": round(float(outcome_sim), 1) if outcome_sim is not None else None,
             "distance": round(dist, 4),
+            "rank": rank,
+            "recipe_deltas": deltas,
+            "truly_similar": bool(
+                recipe_sim >= 75.0 and outcome_sim is not None and outcome_sim >= 75.0
+            ),
         }
         for col in CONTROLLABLE_NUMERIC:
             if col in row.index and pd.notna(row[col]):
@@ -147,6 +234,23 @@ def find_similar_heats(recipe: dict[str, Any], predicted_ttt: float, k: int = 5)
                 item["Power_Restriction"] = None
         results.append(item)
     return results
+
+
+def neighbor_ttt_benchmark(similar_heats: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Summary of neighbour actual TTTs for operator comparison + CI calibration."""
+    vals = [float(h["actual_ttt"]) for h in similar_heats if h.get("actual_ttt") is not None]
+    if not vals:
+        return None
+    arr = np.asarray(vals, dtype=float)
+    return {
+        "n": int(len(arr)),
+        "mean_actual_ttt": round(float(arr.mean()), 2),
+        "median_actual_ttt": round(float(np.median(arr)), 2),
+        "std_actual_ttt": round(float(arr.std(ddof=0)), 2),
+        "min_actual_ttt": round(float(arr.min()), 2),
+        "max_actual_ttt": round(float(arr.max()), 2),
+        "best_similarity_pct": similar_heats[0].get("similarity_pct") if similar_heats else None,
+    }
 
 
 def interpret_shap_feature(feature: str, contribution: float) -> str:
@@ -419,6 +523,7 @@ def build_prediction_explainability(
     stats_loaded: bool,
 ) -> dict[str, Any]:
     similar = find_similar_heats(recipe, float(predict_result["predicted_ttt"]))
+    bench = neighbor_ttt_benchmark(similar)
     contributors = enrich_contributors(predict_result.get("top_contributors", []))
     quality = prediction_quality_indicator(
         str(predict_result.get("confidence", "Medium")),
@@ -428,6 +533,7 @@ def build_prediction_explainability(
     )
     return {
         "similar_heats": similar,
+        "neighbor_benchmark": bench,
         "contributor_interpretations": contributors,
         "prediction_quality": quality,
         "industrial_observations": industrial_observations(recipe, stats) if stats_loaded else [],
@@ -490,6 +596,7 @@ def build_optimization_explainability(
             "historical_distance": hist_distance,
         },
         "similar_heats": similar,
+        "neighbor_benchmark": neighbor_ttt_benchmark(similar),
         "industrial_observations": industrial_observations(recipe, stats) if stats_loaded else [],
         "digital_twin_readiness": digital_twin_readiness(stats_loaded),
         "diagnostics": diagnostics,

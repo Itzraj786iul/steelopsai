@@ -38,7 +38,12 @@ export interface SimilarHeatItem {
   predicted_ttt: number;
   ttt_difference?: number | null;
   similarity_pct: number;
+  recipe_similarity_pct?: number | null;
+  outcome_similarity_pct?: number | null;
   distance: number;
+  rank?: number;
+  recipe_deltas?: Partial<Record<keyof EafRecipe, number>>;
+  truly_similar?: boolean;
   HM?: number | null;
   DRI?: number | null;
   HBI?: number | null;
@@ -49,6 +54,16 @@ export interface SimilarHeatItem {
   POWER?: number | null;
   OXY?: number | null;
   Power_Restriction?: number | null;
+}
+
+export interface NeighborTttBenchmark {
+  n: number;
+  mean_actual_ttt: number;
+  median_actual_ttt: number;
+  std_actual_ttt: number;
+  min_actual_ttt: number;
+  max_actual_ttt: number;
+  best_similarity_pct?: number | null;
 }
 
 export interface IndustrialObservation {
@@ -69,6 +84,7 @@ export interface DigitalTwinReadiness {
 
 export interface PredictionExplainability {
   similar_heats: SimilarHeatItem[];
+  neighbor_benchmark?: NeighborTttBenchmark | null;
   contributor_interpretations: ContributorItem[];
   prediction_quality: string;
   industrial_observations: IndustrialObservation[];
@@ -112,6 +128,7 @@ export interface OptimizationExplainability {
   recommendation_narrative: string[];
   penalty_breakdown: Record<string, number>;
   similar_heats: SimilarHeatItem[];
+  neighbor_benchmark?: NeighborTttBenchmark | null;
   industrial_observations: IndustrialObservation[];
   digital_twin_readiness?: DigitalTwinReadiness;
   diagnostics?: Record<string, unknown>;
@@ -131,6 +148,16 @@ export interface PredictResponse {
   margin: number;
   ci_lower_95: number;
   ci_upper_95: number;
+  ci_half_width?: number;
+  neighbor_calibrated_ttt?: number;
+  neighbor_ttt_band?: {
+    mean?: number;
+    median?: number;
+    min?: number;
+    max?: number;
+    std?: number;
+    n?: number;
+  };
   top_contributors: ContributorItem[];
   operator_summary: Record<string, string>;
   validation_warnings: ValidationWarning[];

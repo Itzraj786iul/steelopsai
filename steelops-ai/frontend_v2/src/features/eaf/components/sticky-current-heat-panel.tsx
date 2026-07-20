@@ -35,10 +35,15 @@ function PanelContent({ compact = false }: { compact?: boolean }) {
   }
 
   const charge = currentCharge(active.recipe);
+  const similarHeats = active.prediction.explainability?.similar_heats ?? [];
+  const bestSimilar = [...similarHeats].sort(
+    (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
+  )[0];
   const similarity =
     active.prediction.explainability?.historical_similarity_pct ??
-    active.prediction.explainability?.similar_heats?.[0]?.similarity_pct ??
+    bestSimilar?.similarity_pct ??
     null;
+  const bench = active.prediction.explainability?.neighbor_benchmark;
   const confKey = confidenceStatus(active.confidence);
   const warnings = active.warnings.length ? active.warnings : null;
 
@@ -56,11 +61,40 @@ function PanelContent({ compact = false }: { compact?: boolean }) {
             mono
             highlight="prediction"
           />
+          {active.prediction.neighbor_calibrated_ttt != null ? (
+            <Row
+              label="Neighbour-informed TTT"
+              value={`${active.prediction.neighbor_calibrated_ttt.toFixed(2)} min`}
+              mono
+            />
+          ) : null}
           <Row label="Confidence" value={active.confidence ?? "—"} highlight={confKey} />
           <Row
-            label="Historical Similarity"
-            value={similarity != null ? `${similarity.toFixed(0)}%` : "—"}
+            label="Closest similar heat"
+            value={
+              bestSimilar
+                ? `${bestSimilar.heat_id}${similarity != null ? ` · ${similarity.toFixed(0)}%` : ""}`
+                : similarity != null
+                  ? `${similarity.toFixed(0)}%`
+                  : "—"
+            }
+            mono
           />
+          {bestSimilar?.actual_ttt != null ? (
+            <Row
+              label="Similar heat actual TTT"
+              value={`${bestSimilar.actual_ttt.toFixed(1)} min`}
+              mono
+              highlight="validated"
+            />
+          ) : null}
+          {bench ? (
+            <Row
+              label="Neighbour band"
+              value={`${bench.min_actual_ttt.toFixed(1)}–${bench.max_actual_ttt.toFixed(1)} min`}
+              mono
+            />
+          ) : null}
           <Row
             label="Warnings"
             value={warnings ? warnings.join("; ") : "None"}

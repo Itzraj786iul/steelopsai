@@ -6,12 +6,18 @@ import { SectionCard } from "@/components/layout/section-card";
 import { Badge } from "@/components/ui/badge";
 import { OpenPageLink } from "@/features/eaf/components/prediction-next-actions";
 import { BurdenMixCompare, TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
-import type { EafRecipe, OptimizeResponse, SimilarHeatItem } from "@/lib/api/eaf";
+import type {
+  EafRecipe,
+  NeighborTttBenchmark,
+  OptimizeResponse,
+  SimilarHeatItem,
+} from "@/lib/api/eaf";
 import { RECIPE_FIELD_LABELS } from "@/lib/eaf-labels";
 import { INDUSTRIAL_STATUS } from "@/lib/industrial-colors";
 import { cn } from "@/lib/utils";
 
 const COMPARE_KEYS = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"] as const;
+const DELTA_HIGHLIGHT = ["HM", "DRI", "Bucket", "LIME", "OXY"] as const;
 
 type CompareKey = (typeof COMPARE_KEYS)[number];
 
@@ -20,6 +26,8 @@ interface SimilarHistoricalHeatCardProps {
   predictedTtt?: number;
   currentRecipe?: EafRecipe | null;
   optimizer?: OptimizeResponse | null;
+  neighborBenchmark?: NeighborTttBenchmark | null;
+  neighborCalibratedTtt?: number | null;
 }
 
 function fmtNum(value: number | null | undefined, digits = 1): string {
@@ -37,10 +45,12 @@ export function SimilarHistoricalHeatCard({
   predictedTtt,
   currentRecipe,
   optimizer,
+  neighborBenchmark,
+  neighborCalibratedTtt,
 }: SimilarHistoricalHeatCardProps) {
   if (!heats.length) return null;
 
-  const ranked = [...heats].sort((a, b) => b.similarity_pct - a.similarity_pct);
+  const ranked = [...heats].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
   const best = ranked[0];
   const others = ranked.slice(1, 5);
 
@@ -62,24 +72,60 @@ export function SimilarHistoricalHeatCard({
     ? optimizedRecipe.HM + optimizedRecipe.DRI + optimizedRecipe.HBI + optimizedRecipe.Bucket
     : null;
 
+  const recipeSim = best.recipe_similarity_pct ?? best.similarity_pct;
+  const outcomeSim = best.outcome_similarity_pct ?? null;
+
   return (
     <SectionCard
-      title="Most Similar Historical Heat"
-      description="Side-by-side burden and TTT comparison — historical reference vs current heat vs optimizer"
+      title="Similar Historical Heats"
+      description="Recipe neighbours matched to your current input — compare burden, predicted TTT, and historical actuals"
       actions={<OpenPageLink href="/eaf/historical" label="Historical Analysis" />}
     >
       <div className={`min-w-0 overflow-hidden rounded-lg border p-3 sm:p-4 ${INDUSTRIAL_STATUS.historical.className}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="grid min-w-0 flex-1 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <Metric label="Historical Heat No." value={best.heat_id} mono />
+            <Metric label="Closest Heat No." value={best.heat_id} mono />
             <Metric label="Shift" value={best.shift} />
-            <Metric label="Similarity" value={`${best.similarity_pct.toFixed(0)}%`} highlight="validated" />
+            <Metric label="Composite similarity" value={`${best.similarity_pct.toFixed(0)}%`} highlight="validated" />
             <Metric label="Charge (hist)" value={`${fmtNum(best.charge_t, 1)} t`} mono />
           </div>
-          <Badge variant="outline" className="w-fit shrink-0 gap-1">
-            <Database className="h-3 w-3" aria-hidden />
-            Historical Reference
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            {best.truly_similar ? (
+              <Badge variant="outline" className="w-fit shrink-0 border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+                Truly similar (recipe + outcome)
+              </Badge>
+            ) : null}
+            <Badge variant="outline" className="w-fit shrink-0 gap-1">
+              <Database className="h-3 w-3" aria-hidden />
+              Historical Reference
+            </Badge>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <span>
+            Recipe match: <span className="font-mono text-foreground">{fmtNum(recipeSim, 0)}%</span>
+          </span>
+          {outcomeSim != null ? (
+            <span>
+              Outcome match: <span className="font-mono text-foreground">{fmtNum(outcomeSim, 0)}%</span>
+            </span>
+          ) : null}
+          {neighborBenchmark ? (
+            <span>
+              Neighbour band ({neighborBenchmark.n}):{" "}
+              <span className="font-mono text-foreground">
+                {fmtNum(neighborBenchmark.min_actual_ttt, 1)}–{fmtNum(neighborBenchmark.max_actual_ttt, 1)} min
+              </span>{" "}
+              (mean {fmtNum(neighborBenchmark.mean_actual_ttt, 1)})
+            </span>
+          ) : null}
+          {neighborCalibratedTtt != null ? (
+            <span>
+              Neighbour-informed TTT:{" "}
+              <span className="font-mono text-foreground">{fmtNum(neighborCalibratedTtt, 2)} min</span>
+            </span>
+          ) : null}
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -215,31 +261,56 @@ export function SimilarHistoricalHeatCard({
       {others.length ? (
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Next closest historical heats
+            Next closest historical heats — recipe vs current input
           </p>
           <div className="overflow-x-auto rounded-lg border border-border/50">
-            <table className="w-full min-w-[480px] text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2">Heat</th>
                   <th className="px-3 py-2">Shift</th>
                   <th className="px-3 py-2">Charge</th>
                   <th className="px-3 py-2">Actual TTT</th>
-                  <th className="px-3 py-2">Similarity</th>
+                  <th className="px-3 py-2">vs Pred</th>
+                  <th className="px-3 py-2">Recipe %</th>
+                  <th className="px-3 py-2">Outcome %</th>
+                  <th className="px-3 py-2">Key Δ vs current</th>
                 </tr>
               </thead>
               <tbody>
-                {others.map((h) => (
-                  <tr key={h.heat_id} className="border-t border-border/40">
-                    <td className="px-3 py-2 font-mono">{h.heat_id}</td>
-                    <td className="px-3 py-2">{h.shift}</td>
-                    <td className="px-3 py-2 font-mono">{fmtNum(h.charge_t, 1)} t</td>
-                    <td className="px-3 py-2 font-mono">
-                      {h.actual_ttt != null ? `${fmtNum(h.actual_ttt, 2)} min` : "—"}
-                    </td>
-                    <td className="px-3 py-2 font-mono">{fmtNum(h.similarity_pct, 0)}%</td>
-                  </tr>
-                ))}
+                {others.map((h) => {
+                  const vsPred =
+                    h.actual_ttt != null && currentPredicted != null
+                      ? h.actual_ttt - currentPredicted
+                      : h.ttt_difference ?? null;
+                  return (
+                    <tr key={h.heat_id} className="border-t border-border/40">
+                      <td className="px-3 py-2 font-mono">
+                        {h.heat_id}
+                        {h.truly_similar ? (
+                          <span className="ml-1 text-[10px] text-emerald-600 dark:text-emerald-400">★</span>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2">{h.shift}</td>
+                      <td className="px-3 py-2 font-mono">{fmtNum(h.charge_t, 1)} t</td>
+                      <td className="px-3 py-2 font-mono">
+                        {h.actual_ttt != null ? `${fmtNum(h.actual_ttt, 2)} min` : "—"}
+                      </td>
+                      <td className={cn("px-3 py-2 font-mono", deltaClass(vsPred))}>
+                        {vsPred != null ? `${vsPred >= 0 ? "+" : ""}${fmtNum(vsPred, 1)}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 font-mono">
+                        {fmtNum(h.recipe_similarity_pct ?? h.similarity_pct, 0)}%
+                      </td>
+                      <td className="px-3 py-2 font-mono">
+                        {h.outcome_similarity_pct != null ? `${fmtNum(h.outcome_similarity_pct, 0)}%` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {formatKeyDeltas(h, currentRecipe)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -247,6 +318,23 @@ export function SimilarHistoricalHeatCard({
       ) : null}
     </SectionCard>
   );
+}
+
+function formatKeyDeltas(heat: SimilarHeatItem, current?: EafRecipe | null): string {
+  const parts: string[] = [];
+  for (const key of DELTA_HIGHLIGHT) {
+    const fromDeltas = heat.recipe_deltas?.[key];
+    let d: number | null =
+      typeof fromDeltas === "number" && Number.isFinite(fromDeltas) ? fromDeltas : null;
+    if (d == null && current) {
+      const hist = readHist(heat, key);
+      if (hist != null) d = current[key] - hist;
+    }
+    if (d == null || Math.abs(d) < 0.05) continue;
+    const digits = key === "OXY" ? 0 : 1;
+    parts.push(`${key} ${d >= 0 ? "+" : ""}${d.toFixed(digits)}`);
+  }
+  return parts.length ? parts.join(", ") : "near match";
 }
 
 function readHist(heat: SimilarHeatItem, key: CompareKey): number | null {

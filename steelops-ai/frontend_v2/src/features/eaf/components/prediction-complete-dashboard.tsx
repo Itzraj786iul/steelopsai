@@ -37,9 +37,11 @@ export function PredictionCompleteDashboard({
     result.explainability?.similar_heats?.[0]?.similarity_pct ??
     null;
   const bestSimilar = [...(result.explainability?.similar_heats ?? [])].sort(
-    (a, b) => b.similarity_pct - a.similarity_pct
+    (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
   )[0];
   const histActual = bestSimilar?.actual_ttt ?? null;
+  const bench = result.explainability?.neighbor_benchmark ?? null;
+  const calibrated = result.neighbor_calibrated_ttt ?? null;
   const reliability =
     active?.hybrid?.reliability_index ??
     (result as { hybrid_trust?: { reliability_index?: number } }).hybrid_trust?.reliability_index ??
@@ -54,7 +56,7 @@ export function PredictionCompleteDashboard({
       <motion.div variants={fadeUp} className="min-w-0">
         <SectionCard
           title="Prediction Complete"
-          description="Heat session saved — compare TTT and trust, then follow the workflow strip"
+          description="Heat session saved — compare TTT with similar historical heats, then follow the workflow strip"
           className={INDUSTRIAL_STATUS.prediction.className}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
@@ -64,12 +66,27 @@ export function PredictionCompleteDashboard({
                 {result.predicted_ttt.toFixed(2)}{" "}
                 <span className="text-lg font-semibold sm:text-xl">min</span>
               </p>
+              {calibrated != null ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Neighbour-informed:{" "}
+                  <span className="font-mono text-foreground">{calibrated.toFixed(2)} min</span>
+                </p>
+              ) : null}
             </div>
             <div className="min-w-0">
               <p className="text-xs uppercase text-muted-foreground">95% Interval</p>
               <p className="break-words font-mono text-lg font-semibold sm:text-xl">
                 {result.ci_lower_95.toFixed(1)} – {result.ci_upper_95.toFixed(1)} min
               </p>
+              {bench ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Neighbour band:{" "}
+                  <span className="font-mono text-foreground">
+                    {bench.min_actual_ttt.toFixed(1)}–{bench.max_actual_ttt.toFixed(1)}
+                  </span>{" "}
+                  ({bench.n} heats)
+                </p>
+              ) : null}
             </div>
             <Link href="/eaf/reliability" className="min-w-0 rounded-lg focus-ring">
               <p className="text-xs uppercase text-muted-foreground">Confidence</p>
@@ -77,11 +94,20 @@ export function PredictionCompleteDashboard({
               <p className="mt-1 text-xs text-primary">Open reliability →</p>
             </Link>
             <Link href="/eaf/historical" className="min-w-0 rounded-lg focus-ring">
-              <p className="text-xs uppercase text-muted-foreground">Historical Similarity</p>
+              <p className="text-xs uppercase text-muted-foreground">Closest similar heat</p>
               <p className="font-mono text-xl font-semibold">
                 {similarity != null ? `${similarity.toFixed(0)}%` : "—"}
               </p>
-              <p className="mt-1 text-xs text-primary">Open historical analysis →</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {bestSimilar
+                  ? `Heat ${bestSimilar.heat_id}${histActual != null ? ` · actual ${histActual.toFixed(1)} min` : ""}`
+                  : "Open historical analysis →"}
+              </p>
+              {bestSimilar?.truly_similar ? (
+                <Badge variant="outline" className="mt-1 border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+                  Truly similar
+                </Badge>
+              ) : null}
             </Link>
           </div>
 

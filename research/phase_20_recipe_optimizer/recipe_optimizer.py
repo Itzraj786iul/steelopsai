@@ -35,6 +35,18 @@ MODEL_PATH = PHASE19_EXPORTS / "production_model.pkl"
 PREPROC_PATH = PHASE19_EXPORTS / "preprocessing_pipeline.pkl"
 
 CONTROLLABLE_NUMERIC = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "POWER", "OXY"]
+# Planning-safe neighbour distance (exclude POWER — post-heat EE outcome)
+PLANNING_SIM_COLS = ["HM", "DRI", "HBI", "Bucket", "LIME", "DOLO", "CPC", "OXY"]
+SIM_FEATURE_WEIGHTS = {
+    "HM": 1.35,
+    "DRI": 1.35,
+    "HBI": 0.90,
+    "Bucket": 1.15,
+    "LIME": 0.85,
+    "DOLO": 0.85,
+    "CPC": 0.70,
+    "OXY": 0.75,
+}
 BURDEN_COLS = ["HM", "DRI", "HBI", "Bucket"]
 # Advisory plant band (aligned with prediction / UI 80–150 t).
 # Hard rejection previously used 115–150 and blocked real heats (~110 t).
@@ -100,31 +112,42 @@ class HistoricalSimilarityIndex:
     matrix: np.ndarray
     mean: np.ndarray
     std: np.ndarray
+    weights: np.ndarray
+    cols: list[str]
     extreme_threshold: float
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame) -> HistoricalSimilarityIndex:
-        matrix = df[CONTROLLABLE_NUMERIC].to_numpy(dtype=float)
+        cols = [c for c in PLANNING_SIM_COLS if c in df.columns]
+        matrix = df[cols].to_numpy(dtype=float)
         mean = matrix.mean(axis=0)
         std = matrix.std(axis=0)
         std[std < 1e-6] = 1.0
+        weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
         normed = (matrix - mean) / std
         sample_size = min(2000, len(normed))
         rng = np.random.default_rng(RANDOM_STATE)
         idx = rng.choice(len(normed), size=sample_size, replace=False)
-        sample = normed[idx]
+        sample = normed[idx] * weights
         dists: list[float] = []
         for row in sample:
             diff = sample - row
             dists.extend(np.sqrt((diff * diff).sum(axis=1)))
         extreme = float(np.percentile(dists, HISTORICAL_EXTREME_PERCENTILE * 100))
-        return cls(matrix=matrix, mean=mean, std=std, extreme_threshold=extreme)
+        return cls(
+            matrix=matrix,
+            mean=mean,
+            std=std,
+            weights=weights,
+            cols=cols,
+            extreme_threshold=extreme,
+        )
 
     def nearest_distance(self, recipe: dict[str, Any]) -> float:
-        vec = np.array([recipe[c] for c in CONTROLLABLE_NUMERIC], dtype=float)
+        vec = np.array([float(recipe[c]) for c in self.cols], dtype=float)
         normed = (vec - self.mean) / self.std
         hist_norm = (self.matrix - self.mean) / self.std
-        diff = hist_norm - normed
+        diff = (hist_norm - normed) * self.weights
         return float(np.sqrt((diff * diff).sum(axis=1)).min())
 
 
