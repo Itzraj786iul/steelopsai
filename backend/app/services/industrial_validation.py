@@ -157,29 +157,29 @@ def build_advisory_warnings(
         pass
     elif charge_class == "Low":
         msg = (
-            f"Total charge {charge:.1f} t is below the historical 5th percentile "
-            f"({bounds.p5:.1f} t). Prediction uncertainty may be higher."
+            f"Total iron charge ({charge:.1f} t) is lighter than usual plant heats "
+            f"(common low end ~{bounds.p5:.1f} t). The prediction may be less certain."
         )
         warnings.append({"level": "warning", "message": msg})
         plain.append(msg)
     elif charge_class == "High":
         msg = (
-            f"Total charge {charge:.1f} t is above the historical 95th percentile "
-            f"({bounds.p95:.1f} t). Prediction uncertainty may be higher."
+            f"Total iron charge ({charge:.1f} t) is heavier than usual plant heats "
+            f"(common high end ~{bounds.p95:.1f} t). The prediction may be less certain."
         )
         warnings.append({"level": "warning", "message": msg})
         plain.append(msg)
     elif charge_class == "Very High":
         msg = (
-            f"Total charge {charge:.1f} t is well above historical experience "
-            f"(median {bounds.median:.1f} t). Review burden distribution before committing."
+            f"Total iron charge ({charge:.1f} t) is well above typical practice "
+            f"(around {bounds.median:.1f} t). Review the mix before committing."
         )
         warnings.append({"level": "warning", "message": msg})
         plain.append(msg)
     else:
         msg = (
-            f"Total charge {charge:.1f} t is outside historical operating range "
-            f"(P5–P95: {bounds.p5:.1f}–{bounds.p95:.1f} t). Prediction uncertainty may be higher."
+            f"Total iron charge ({charge:.1f} t) is outside the common plant band "
+            f"(~{bounds.p5:.1f}–{bounds.p95:.1f} t). The prediction may be less certain."
         )
         warnings.append({"level": "warning", "message": msg})
         plain.append(msg)
@@ -191,11 +191,14 @@ def build_advisory_warnings(
         row = stats.loc[col]
         label = format_display_name(col)
         if val < float(row["p5"]) * 0.85:
-            msg = f"{label} ({val:.1f}) is below historical operating range."
+            msg = f"{label} at {val:.1f} is below the usual plant range — double-check the entry."
             warnings.append({"level": "warning", "message": msg})
             plain.append(msg)
         elif val > float(row["p95"]) * 1.05:
-            msg = f"{label} ({val:.1f}) is above historical P95 ({float(row['p95']):.1f})."
+            msg = (
+                f"{label} at {val:.1f} is above what this plant usually uses "
+                f"(common high end ~{float(row['p95']):.1f})."
+            )
             warnings.append({"level": "warning", "message": msg})
             plain.append(msg)
 

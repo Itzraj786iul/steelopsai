@@ -13,9 +13,9 @@ const COLOR_MAP = { green: "#1B7A3D", yellow: "#C9A227", red: "#B83232" };
 const GAUGE_LABELS: Record<string, string> = {
   Power: "Electrical Energy",
   Oxygen: "Oxygen",
-  HM: "HM",
-  DRI: "DRI",
-  Bucket: "Bucket",
+  HM: "Hot metal",
+  DRI: "Direct reduced iron",
+  Bucket: "Scrap buckets",
   Flux: "Flux",
 };
 

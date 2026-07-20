@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 
+import { humanizeWarning } from "@/lib/humanize-warning";
 import { cn } from "@/lib/utils";
 
 interface ValidationBannerProps {
@@ -12,9 +13,11 @@ interface ValidationBannerProps {
 export function ValidationBanner({ messages, className }: ValidationBannerProps) {
   if (!messages.length) return null;
 
+  const display = messages.map(humanizeWarning);
+
   return (
     <div className={cn("mt-4 space-y-2", className)}>
-      {messages.map((message) => (
+      {display.map((message) => (
         <p
           key={message}
           className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-200"

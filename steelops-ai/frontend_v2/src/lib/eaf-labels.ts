@@ -14,15 +14,15 @@ export const TTT_FULL_LABEL = termLabel(TTT);
  * Prefer GuidedNumberField + RECIPE_FIELD_GUIDES for forms.
  */
 export const RECIPE_FIELD_LABELS: Record<string, string> = {
-  HM: "Hot metal — HM (t)",
-  DRI: "Direct reduced iron — DRI (t)",
-  HBI: "Hot briquetted iron — HBI (t)",
-  Bucket: "Scrap buckets (t)",
-  LIME: "Lime — LIME (t)",
-  DOLO: "Dolomite — DOLO (t)",
-  CPC: "Carbon program (CPC)",
+  HM: "Hot metal (HM)",
+  DRI: "Direct reduced iron (DRI)",
+  HBI: "Hot briquetted iron (HBI)",
+  Bucket: "Scrap buckets",
+  LIME: "Lime (flux)",
+  DOLO: "Dolomite (flux)",
+  CPC: "Carbon program",
   POWER: ELECTRICAL_ENERGY_LABEL,
-  OXY: "Oxygen program (OXY)",
+  OXY: "Oxygen program",
   Shift: "Shift (A / B / C)",
   Power_Restriction: "Electrical power restriction",
 };

@@ -175,7 +175,7 @@ export function ShiftDashboardView() {
 
       <SectionCard title="Plant analytics" description="Averages from HeatRecord database">
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-          <Mini label="Avg HM" value={fmt(averages.HM)} />
+          <Mini label="Avg hot metal" value={fmt(averages.HM)} />
           <Mini label="Avg DRI" value={fmt(averages.DRI)} />
           <Mini label="Avg Lime" value={fmt(averages.LIME)} />
           <Mini label="Avg Oxygen" value={fmt(averages.OXY)} />
