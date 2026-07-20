@@ -3,8 +3,8 @@ import { OPERATOR_CONSOLE_ROUTES } from "@/lib/navigation";
 
 const ROLE_DEFAULT_ROUTES: Record<string, string> = {
   [UserRole.Admin]: "/eaf/admin",
-  [UserRole.PlantManager]: "/eaf/shift-dashboard",
-  [UserRole.ProductionManager]: "/eaf/shift-dashboard",
+  [UserRole.PlantManager]: "/eaf/plant-manager-board",
+  [UserRole.ProductionManager]: "/eaf/production-manager",
   [UserRole.ShiftEngineer]: "/eaf/prediction",
   [UserRole.Operator]: "/eaf/prediction",
   [UserRole.QualityEngineer]: "/eaf/validation",

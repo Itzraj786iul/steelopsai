@@ -207,9 +207,9 @@ export function Sidebar({ badges }: SidebarProps) {
           <NavSection title="Heat workflow" items={PRODUCTION_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Operations" items={OPERATIONS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Administration" items={ADMIN_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
-          <NavSection title="Enterprise" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Compliance" items={ENTERPRISE_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
           <NavSection title="Research" items={RESEARCH_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
-          <NavSection title="Analysis" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
+          <NavSection title="Tools" items={TOOLS_NAV} collapsed={collapsed} pathname={pathname} searchParams={searchParams} badges={badges} canShow={canShowNavItem} />
 
           {!collapsed && pinnedItems.length > 0 ? (
             <>

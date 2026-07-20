@@ -9,12 +9,13 @@ import { normalizeRole } from "@/lib/rbac/permissions";
 import { UserRole } from "@/lib/enums";
 import { useOpsContextStore } from "@/stores/ops-context-store";
 
+/** Shortcuts use canonical routes only (no redirect orphans / Operator-blocked pages). */
 const ROLE_WIDGETS: Record<string, { title: string; href: string; kpi: string }[]> = {
   [UserRole.Operator]: [
     { title: "Predict heat", href: "/eaf/prediction", kpi: "Primary" },
-    { title: "My tasks", href: "/eaf/tasks", kpi: "Tasks" },
-    { title: "My performance", href: "/eaf/operator-performance", kpi: "KPIs" },
-    { title: "Queue", href: "/eaf/heat-queue", kpi: "Production" },
+    { title: "Optimizer", href: "/eaf/optimizer", kpi: "Decision" },
+    { title: "Heat History", href: "/eaf/heat-history", kpi: "Records" },
+    { title: "Reports", href: "/eaf/reports", kpi: "Export" },
   ],
   [UserRole.ShiftEngineer]: [
     { title: "Shift handover", href: "/eaf/shift-handover", kpi: "Handover" },
@@ -23,22 +24,22 @@ const ROLE_WIDGETS: Record<string, { title: string; href: string; kpi: string }[
     { title: "Delays", href: "/eaf/delays", kpi: "Downtime" },
   ],
   [UserRole.ProductionManager]: [
-    { title: "Live production", href: "/eaf/production-manager", kpi: "Live" },
+    { title: "Live Board", href: "/eaf/live-board", kpi: "Floor" },
     { title: "Heat queue", href: "/eaf/heat-queue", kpi: "Queue" },
     { title: "Approvals", href: "/eaf/approvals", kpi: "Backlog" },
-    { title: "Ops reports", href: "/eaf/ops-reports", kpi: "Reports" },
+    { title: "Run heat path", href: "/eaf/prediction", kpi: "Heat" },
   ],
   [UserRole.PlantManager]: [
-    { title: "Plant dashboard", href: "/eaf/plant-dashboard", kpi: "Plant" },
-    { title: "Calendar", href: "/eaf/calendar", kpi: "Schedule" },
-    { title: "Analytics", href: "/eaf/production-manager", kpi: "Trends" },
+    { title: "Live Board", href: "/eaf/live-board", kpi: "Floor" },
+    { title: "Production Plan", href: "/eaf/production-plan", kpi: "Plan" },
+    { title: "Shift Analytics", href: "/eaf/shift-dashboard", kpi: "Trends" },
     { title: "Announcements", href: "/eaf/announcements", kpi: "Comms" },
   ],
   [UserRole.Admin]: [
     { title: "Users", href: "/eaf/users", kpi: "RBAC" },
     { title: "Audit log", href: "/eaf/audit-log", kpi: "Compliance" },
     { title: "Furnaces", href: "/eaf/furnaces", kpi: "Assets" },
-    { title: "Shifts", href: "/eaf/shifts", kpi: "Roster" },
+    { title: "Settings", href: "/eaf/settings", kpi: "Plant" },
   ],
 };
 

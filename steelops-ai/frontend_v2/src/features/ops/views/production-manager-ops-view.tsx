@@ -39,8 +39,22 @@ export function ProductionManagerOpsView() {
   const running = (dash?.running_heats || []) as { heat_number: string; furnace_id?: string }[];
 
   return (
-    <PageContainer title="Production Manager" description="Live production, backlogs, shift KPIs, analytics">
+    <PageContainer
+      title="Production Hub"
+      description="Live production home — queue, approvals, and running heats. Use Shift Analytics for period charts."
+    >
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      <SectionCard title="Do next" description="Primary production actions" className="mb-4">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm"><Link href="/eaf/live-board">Live Board</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/heat-queue">Heat Queue</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/approvals">Approvals</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/production-plan">Production Plan</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/prediction">Run heat path</Link></Button>
+          <Button asChild size="sm" variant="ghost"><Link href="/eaf/shift-dashboard">Shift Analytics</Link></Button>
+        </div>
+      </SectionCard>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Object.entries(live).map(([k, v]) => (
@@ -64,7 +78,7 @@ export function ProductionManagerOpsView() {
           </dl>
         </SectionCard>
 
-        <SectionCard title="Analytics">
+        <SectionCard title="Throughput snapshot">
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div>
               <dt className="text-muted-foreground">Heat throughput</dt>
@@ -78,10 +92,9 @@ export function ProductionManagerOpsView() {
             </div>
           </dl>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/approvals">Approvals</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/heat-queue">Queue</Link></Button>
             <Button asChild size="sm" variant="outline"><Link href="/eaf/delays">Delays</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link href="/eaf/ops-reports">Reports</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link href="/eaf/reports">Reports</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link href="/eaf/shift-handover">Handover</Link></Button>
           </div>
         </SectionCard>
       </div>
@@ -97,10 +110,19 @@ export function ProductionManagerOpsView() {
           <EnterpriseTableBody>
             {running.map((r) => (
               <EnterpriseTableRow key={r.heat_number}>
-                <EnterpriseTableCell>{r.heat_number}</EnterpriseTableCell>
+                <EnterpriseTableCell>
+                  <Link className="text-primary underline" href={`/eaf/heat-queue?q=${encodeURIComponent(r.heat_number)}`}>
+                    {r.heat_number}
+                  </Link>
+                </EnterpriseTableCell>
                 <EnterpriseTableCell>{r.furnace_id || "—"}</EnterpriseTableCell>
               </EnterpriseTableRow>
             ))}
+            {!running.length ? (
+              <EnterpriseTableRow>
+                <EnterpriseTableCell colSpan={2} className="text-muted-foreground">No running heats</EnterpriseTableCell>
+              </EnterpriseTableRow>
+            ) : null}
           </EnterpriseTableBody>
         </EnterpriseTable>
       </SectionCard>
@@ -109,12 +131,18 @@ export function ProductionManagerOpsView() {
         <SectionCard title="Approval backlog">
           <ul className="space-y-1 text-sm">
             {approvals.map((a) => (
-              <li key={a.id}>{a.heat_number} · {a.stage}</li>
+              <li key={a.id}>
+                <Link className="text-primary underline" href="/eaf/approvals">
+                  {a.heat_number}
+                </Link>
+                {" · "}
+                {a.stage}
+              </li>
             ))}
             {!approvals.length ? <li className="text-muted-foreground">Clear</li> : null}
           </ul>
         </SectionCard>
-        <SectionCard title="Open delays (heatmap source)">
+        <SectionCard title="Open delays">
           <ul className="space-y-1 text-sm">
             {delays.map((d) => (
               <li key={d.id}>{d.category} · {d.heat_number || "—"}</li>

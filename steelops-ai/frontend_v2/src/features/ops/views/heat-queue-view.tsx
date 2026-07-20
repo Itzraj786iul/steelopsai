@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
@@ -32,11 +33,18 @@ interface QueueRow {
 }
 
 export function HeatQueueView() {
+  const searchParams = useSearchParams();
+  const highlight = searchParams.get("q") || "";
   const [rows, setRows] = useState<QueueRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [query, setQuery] = useState(highlight);
   const furnaceId = useOpsContextStore((s) => s.furnaceId);
   const [heatNumber, setHeatNumber] = useState("");
+
+  useEffect(() => {
+    if (highlight) setQuery(highlight);
+  }, [highlight]);
 
   const load = () => {
     opsApi
@@ -52,6 +60,12 @@ export function HeatQueueView() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, furnaceId]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.heat_number.toLowerCase().includes(q));
+  }, [rows, query]);
 
   const add = async () => {
     if (!heatNumber.trim()) return;
@@ -108,6 +122,10 @@ export function HeatQueueView() {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Find heat</Label>
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search heat #" />
+          </div>
         </div>
         {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
@@ -124,27 +142,31 @@ export function HeatQueueView() {
             </EnterpriseTableRow>
           </EnterpriseTableHead>
           <EnterpriseTableBody>
-            {rows.map((r, i) => (
-              <EnterpriseTableRow key={r.id}>
-                <EnterpriseTableCell>{i + 1}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.heat_number}</EnterpriseTableCell>
-                <EnterpriseTableCell>{r.furnace_id}</EnterpriseTableCell>
-                <EnterpriseTableCell>
-                  <Select value={r.status} onValueChange={(v) => void setStatus(r.id, v)}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {STATUSES.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </EnterpriseTableCell>
-                <EnterpriseTableCell className="space-x-1">
-                  <Button size="sm" variant="outline" onClick={() => void move(i, -1)}>↑</Button>
-                  <Button size="sm" variant="outline" onClick={() => void move(i, 1)}>↓</Button>
-                </EnterpriseTableCell>
-              </EnterpriseTableRow>
-            ))}
+            {visible.map((r) => {
+              const i = rows.findIndex((x) => x.id === r.id);
+              const highlighted = highlight && r.heat_number.toLowerCase().includes(highlight.toLowerCase());
+              return (
+                <EnterpriseTableRow key={r.id} className={highlighted ? "bg-primary/5" : undefined}>
+                  <EnterpriseTableCell>{i + 1}</EnterpriseTableCell>
+                  <EnterpriseTableCell className="font-medium">{r.heat_number}</EnterpriseTableCell>
+                  <EnterpriseTableCell>{r.furnace_id}</EnterpriseTableCell>
+                  <EnterpriseTableCell>
+                    <Select value={r.status} onValueChange={(v) => void setStatus(r.id, v)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EnterpriseTableCell>
+                  <EnterpriseTableCell className="space-x-1">
+                    <Button size="sm" variant="outline" onClick={() => void move(i, -1)}>↑</Button>
+                    <Button size="sm" variant="outline" onClick={() => void move(i, 1)}>↓</Button>
+                  </EnterpriseTableCell>
+                </EnterpriseTableRow>
+              );
+            })}
           </EnterpriseTableBody>
         </EnterpriseTable>
       </SectionCard>

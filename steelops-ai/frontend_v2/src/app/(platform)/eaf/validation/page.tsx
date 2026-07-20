@@ -22,6 +22,7 @@ export default function EafValidationPage() {
   const router = useRouter();
   const active = useCurrentHeatStore((s) => s.active);
   const updateValidation = useCurrentHeatStore((s) => s.updateValidation);
+  const setHeatNumber = useCurrentHeatStore((s) => s.setHeatNumber);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
@@ -60,16 +61,37 @@ export default function EafValidationPage() {
       ? "Production optimizer"
       : "—";
 
+  /** Allow typing heat # only when Prediction left it blank. */
+  const heatNumberMissing = !(active?.heatNumber?.trim() || form.heat_number.trim());
+  const heatNumberEditable = !active?.heatNumber?.trim();
+
+  const onHeatNumberChange = (value: string) => {
+    setForm((f) => ({ ...f, heat_number: value }));
+    setHeatNumber(value);
+  };
+
   const submit = async () => {
+    const heatNumber = form.heat_number.trim() || active?.heatNumber?.trim() || "";
+    if (!heatNumber) {
+      setError("Enter the heat number before saving.");
+      return;
+    }
+    if (!form.actual_ttt.trim()) {
+      setError("Enter actual TTT before saving.");
+      return;
+    }
     setSaving(true);
     setSavedOk(false);
     setError(null);
     try {
+      if (heatNumber !== active?.heatNumber) {
+        setHeatNumber(heatNumber);
+      }
       const applied =
         active?.recommendationAcceptance === "Accepted" ||
         active?.recommendationAcceptance === "Modified";
       await eafApi.validationCreate({
-        heat_number: form.heat_number,
+        heat_number: heatNumber,
         predicted_ttt: parseFloat(form.predicted_ttt),
         actual_ttt: form.actual_ttt || "Pending",
         optimizer_used: optimizerUsedLabel,
@@ -85,7 +107,7 @@ export default function EafValidationPage() {
       const { syncHeatAfterValidation } = await import("@/lib/heat-history-sync");
       const record = await syncHeatAfterValidation();
       setSavedOk(true);
-      const heatQ = encodeURIComponent(form.heat_number || active?.heatNumber || "");
+      const heatQ = encodeURIComponent(heatNumber);
       const recordQ = record?.id ? `&recordId=${encodeURIComponent(record.id)}` : "";
       router.push(`/eaf/reports?completed=1&heat=${heatQ}${recordQ}`);
     } catch (e: unknown) {
@@ -96,6 +118,13 @@ export default function EafValidationPage() {
   };
 
   const missingDecision = !!active?.optimizer && !active?.recommendationLocked;
+  const canSave =
+    !!form.heat_number.trim() &&
+    !!form.predicted_ttt &&
+    !!form.actual_ttt.trim() &&
+    !missingDecision &&
+    !saving;
+
   const histActual = active?.prediction?.explainability?.similar_heats?.length
     ? [...active.prediction.explainability.similar_heats].sort(
         (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
@@ -134,16 +163,39 @@ export default function EafValidationPage() {
 
       <SectionCard
         title="Save production result"
-        description="Heat number and prediction come from earlier steps — enter actual TTT only"
+        description={
+          heatNumberEditable
+            ? "Heat number was missing from Prediction — enter it here, then actual TTT"
+            : "Heat number and prediction come from earlier steps — enter actual TTT only"
+        }
       >
         {!active?.prediction ? (
           <p className="text-sm text-muted-foreground">Predict a heat first.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label>Heat Number</Label>
-              <Input className="mt-1" value={form.heat_number || "—"} readOnly disabled />
-              <p className="mt-1 text-xs text-muted-foreground">From Prediction — not re-entered here</p>
+              <Label>
+                Heat Number
+                {heatNumberEditable ? <span className="text-destructive"> *</span> : null}
+              </Label>
+              {heatNumberEditable ? (
+                <>
+                  <Input
+                    className="mt-1"
+                    value={form.heat_number}
+                    onChange={(e) => onHeatNumberChange(e.target.value)}
+                    placeholder="e.g. 4618213"
+                  />
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                    Required — not set during Prediction. Enter it to enable Save.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Input className="mt-1" value={form.heat_number} readOnly disabled />
+                  <p className="mt-1 text-xs text-muted-foreground">From Prediction — not re-entered here</p>
+                </>
+              )}
             </div>
             <div>
               <Label>Predicted TTT (min)</Label>
@@ -154,6 +206,7 @@ export default function EafValidationPage() {
               value={form.actual_ttt}
               onChange={(v) => setForm((f) => ({ ...f, actual_ttt: v }))}
               placeholder="Enter after heat completes"
+              required
             />
             <div>
               <Label>Decision (from Optimizer)</Label>
@@ -173,16 +226,7 @@ export default function EafValidationPage() {
           </div>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button
-            onClick={submit}
-            disabled={
-              saving ||
-              !form.heat_number ||
-              !form.predicted_ttt ||
-              !form.actual_ttt.trim() ||
-              missingDecision
-            }
-          >
+          <Button onClick={submit} disabled={!canSave}>
             {saving ? "Saving…" : "Save & open heat report"}
           </Button>
           {savedOk ? (
@@ -192,9 +236,15 @@ export default function EafValidationPage() {
             </span>
           ) : null}
         </div>
-        {missingDecision ? (
+        {!canSave && active?.prediction ? (
           <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">
-            Lock Accept / Modify / Reject on Optimizer before saving.
+            {missingDecision
+              ? "Lock Accept / Modify / Reject on Optimizer before saving."
+              : heatNumberMissing
+                ? "Enter heat number to enable Save."
+                : !form.actual_ttt.trim()
+                  ? "Enter actual TTT to enable Save."
+                  : null}
           </p>
         ) : null}
         {error ? (
@@ -212,16 +262,22 @@ function Field({
   value,
   onChange,
   placeholder,
+  required,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  required?: boolean;
 }) {
   return (
     <div>
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {required ? <span className="text-destructive"> *</span> : null}
+      </Label>
       <Input className="mt-1" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );
 }
+

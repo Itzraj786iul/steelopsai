@@ -43,7 +43,7 @@ export function MesSearchView() {
                   {items.map((item, i) => (
                     <li key={i}>
                       {bucket === "planned_heats" && item.heat_number ? (
-                        <Link className="text-primary underline" href="/eaf/heat-scheduler">
+                        <Link className="text-primary underline" href="/eaf/heat-queue">
                           {JSON.stringify(item)}
                         </Link>
                       ) : (

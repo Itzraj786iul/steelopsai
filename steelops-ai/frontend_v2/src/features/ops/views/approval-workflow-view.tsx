@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
@@ -15,6 +15,9 @@ import {
   EnterpriseTableHeaderCell,
   EnterpriseTableRow,
 } from "@/features/enterprise/components/enterprise-table";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@/lib/enums";
+import { normalizeRole } from "@/lib/rbac/permissions";
 import { opsApi } from "@/lib/api/ops";
 import { getApiErrorMessage } from "@/services/api-client";
 
@@ -31,19 +34,30 @@ interface ApprovalRow {
   validated_at?: string;
 }
 
-const ACTIONS = [
-  { action: "submit", label: "Submit (Operator)" },
-  { action: "approve_shift", label: "Approve (Shift Eng)" },
-  { action: "approve_pm", label: "Approve (PM)" },
-  { action: "execute", label: "Mark Executed" },
-  { action: "validate", label: "Validate" },
-  { action: "reject", label: "Reject" },
-];
+const ALL_ACTIONS = [
+  { action: "submit", label: "Submit (Operator)", roles: [UserRole.Operator, UserRole.Admin] },
+  { action: "approve_shift", label: "Approve (Shift Eng)", roles: [UserRole.ShiftEngineer, UserRole.Admin] },
+  { action: "approve_pm", label: "Approve (PM)", roles: [UserRole.ProductionManager, UserRole.Admin] },
+  { action: "execute", label: "Mark Executed", roles: [UserRole.ProductionManager, UserRole.ShiftEngineer, UserRole.Admin] },
+  { action: "validate", label: "Validate", roles: [UserRole.QualityEngineer, UserRole.ProductionManager, UserRole.Admin] },
+  { action: "reject", label: "Reject", roles: [UserRole.ShiftEngineer, UserRole.ProductionManager, UserRole.PlantManager, UserRole.Admin] },
+] as const;
 
 export function ApprovalWorkflowView() {
+  const { user } = useAuth();
+  const role = normalizeRole(user?.role || "operator");
   const [rows, setRows] = useState<ApprovalRow[]>([]);
   const [heatNumber, setHeatNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const actions = useMemo(
+    () => ALL_ACTIONS.filter((a) => a.roles.includes(role as UserRole) || role === UserRole.Admin),
+    [role]
+  );
+
+  const canStart = [UserRole.Operator, UserRole.ShiftEngineer, UserRole.ProductionManager, UserRole.Admin].includes(
+    role as UserRole
+  );
 
   const load = () => {
     opsApi
@@ -81,16 +95,27 @@ export function ApprovalWorkflowView() {
       title="Approval Workflow"
       description="Operator → Shift Engineer → Production Manager → Approved → Executed → Validated"
     >
-      <SectionCard title="Start recommendation approval">
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <Label>Heat number</Label>
-            <Input value={heatNumber} onChange={(e) => setHeatNumber(e.target.value)} />
+      {canStart ? (
+        <SectionCard title="Start recommendation approval">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <Label>Heat number</Label>
+              <Input value={heatNumber} onChange={(e) => setHeatNumber(e.target.value)} />
+            </div>
+            <Button className="mt-6" onClick={() => void start()}>
+              Start
+            </Button>
           </div>
-          <Button className="mt-6" onClick={() => void start()}>Start</Button>
-        </div>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
-      </SectionCard>
+          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+        </SectionCard>
+      ) : (
+        <SectionCard title="Oversight mode" className="mb-4">
+          <p className="text-sm text-muted-foreground">
+            Your role can review and reject workflows. Stage approvals are handled by Shift Engineer / Production Manager.
+          </p>
+          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+        </SectionCard>
+      )}
 
       <SectionCard title="Workflows">
         <EnterpriseTable>
@@ -121,11 +146,12 @@ export function ApprovalWorkflowView() {
                     .join(" · ") || "—"}
                 </EnterpriseTableCell>
                 <EnterpriseTableCell className="flex flex-wrap gap-1">
-                  {ACTIONS.map((a) => (
+                  {actions.map((a) => (
                     <Button key={a.action} size="sm" variant="outline" onClick={() => void act(r.id, a.action)}>
                       {a.label}
                     </Button>
                   ))}
+                  {!actions.length ? <span className="text-xs text-muted-foreground">View only</span> : null}
                 </EnterpriseTableCell>
               </EnterpriseTableRow>
             ))}

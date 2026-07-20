@@ -17,6 +17,8 @@ import {
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { EafKpiCard } from "@/features/eaf/components/eaf-kpi-card";
 import { eafApi, type HeatDashboardResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
@@ -53,10 +55,10 @@ export function ShiftDashboardView() {
 
   return (
     <PageContainer
-      title="Shift Dashboard"
-      description="Production statistics from the HeatRecord database — not session-only"
+      title="Shift Analytics"
+      description="Period HeatRecord statistics — not the live floor. Use Live Board for real-time status."
     >
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Period" />
@@ -69,6 +71,9 @@ export function ShiftDashboardView() {
             <SelectItem value="all">All time</SelectItem>
           </SelectContent>
         </Select>
+        <Button asChild size="sm" variant="outline"><Link href="/eaf/live-board">Live Board</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link href="/eaf/heat-history">Heat History</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link href="/eaf/reports">Reports</Link></Button>
       </div>
 
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}

@@ -1,5 +1,6 @@
-import { KpiWallView } from "@/features/mes/views/kpi-wall-view";
+import { redirect } from "next/navigation";
 
+/** KPI Wall folded into Shift Dashboard (period analytics). */
 export default function Page() {
-  return <KpiWallView />;
+  redirect("/eaf/shift-dashboard");
 }

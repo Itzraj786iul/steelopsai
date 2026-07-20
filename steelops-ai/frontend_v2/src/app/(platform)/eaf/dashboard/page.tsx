@@ -1,5 +1,6 @@
-import { EafDashboardView } from "@/features/eaf/components/dashboard-view";
+import { redirect } from "next/navigation";
 
+/** Demoted duplicate overview — use role-specific home via Shift Dashboard as safe default. */
 export default function EafDashboardPage() {
-  return <EafDashboardView />;
+  redirect("/eaf/shift-dashboard");
 }

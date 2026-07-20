@@ -72,7 +72,10 @@ export function LiveBoardView() {
                   )}
                 >
                   <div className="flex items-start justify-between gap-1">
-                    <Link href={`/eaf/heat-scheduler`} className="font-semibold text-sm hover:underline">
+                    <Link
+                      href={`/eaf/heat-queue?q=${encodeURIComponent(h.heat_number)}`}
+                      className="font-semibold text-sm hover:underline"
+                    >
                       {h.heat_number}
                     </Link>
                     <Badge variant="outline" className="text-[10px]">{h.priority || "—"}</Badge>

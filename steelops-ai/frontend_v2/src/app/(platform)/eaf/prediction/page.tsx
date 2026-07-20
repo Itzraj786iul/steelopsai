@@ -33,7 +33,8 @@ export default function EafPredictionPage() {
 
   const handlePredict = () => {
     if (sessionComplete) return;
-    predict(recipe, heatNumber);
+    if (!heatNumber.trim()) return;
+    predict(recipe, heatNumber.trim());
   };
 
   return (
@@ -56,7 +57,9 @@ export default function EafPredictionPage() {
 
       <SectionCard title="Heat input" className="mt-6" description="Heat number and burden recipe">
         <div className="mb-4 max-w-xs space-y-2">
-          <Label htmlFor="heat-number">Heat Number</Label>
+          <Label htmlFor="heat-number">
+            Heat Number <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="heat-number"
             placeholder="e.g. 4618213"
@@ -68,9 +71,12 @@ export default function EafPredictionPage() {
         <RecipeForm recipe={recipe} onChange={update} charge={charge} />
         <ValidationBanner messages={apiWarnings} />
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={handlePredict} disabled={loading || sessionComplete}>
+          <Button onClick={handlePredict} disabled={loading || sessionComplete || !heatNumber.trim()}>
             {loading ? "Predicting…" : "Predict TTT"}
           </Button>
+          {!heatNumber.trim() && !sessionComplete ? (
+            <p className="self-center text-sm text-amber-700 dark:text-amber-400">Enter heat number first</p>
+          ) : null}
         </div>
         {error ? (
           <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">

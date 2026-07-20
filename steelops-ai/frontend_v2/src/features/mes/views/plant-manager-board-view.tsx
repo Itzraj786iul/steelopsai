@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
+import { Button } from "@/components/ui/button";
 import { mesApi } from "@/lib/api/mes";
 import { getApiErrorMessage } from "@/services/api-client";
 
@@ -24,8 +26,23 @@ export function PlantManagerBoardView() {
   const targets = board?.targets as { summary?: Record<string, unknown> | Record<string, unknown>[] } | undefined;
 
   return (
-    <PageContainer title="Plant Manager Board" description="Today · weekly/monthly trends · shift & furnace comparison">
+    <PageContainer
+      title="Plant Overview"
+      description="Plant-level home — today, shift & furnace comparison. Oversight only (no heat console)."
+    >
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      <SectionCard title="Do next" description="Oversight actions" className="mb-4">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm"><Link href="/eaf/live-board">Live Board</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/production-plan">Production Plan</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/heat-queue">Heat Queue</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/approvals">Approvals</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link href="/eaf/shift-dashboard">Shift Analytics</Link></Button>
+          <Button asChild size="sm" variant="ghost"><Link href="/eaf/reports">Reports</Link></Button>
+        </div>
+      </SectionCard>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Today production", today.today_production],
@@ -43,13 +60,14 @@ export function PlantManagerBoardView() {
         <div className="grid gap-3 md:grid-cols-3">
           {Object.entries(shifts).map(([code, sc]) => (
             <div key={code} className="rounded border border-border/60 p-3 text-sm">
-              <p className="font-semibold mb-2">Shift {code}</p>
+              <p className="mb-2 font-semibold">Shift {code}</p>
               <p>Completed: {String(sc.completed ?? "—")}</p>
               <p>Avg TTT: {String(sc.average_ttt ?? "—")}</p>
               <p>Delay %: {String(sc.delay_pct ?? "—")}</p>
               <p>Acceptance: {String(sc.recommendation_acceptance ?? "—")}</p>
             </div>
           ))}
+          {!Object.keys(shifts).length ? <p className="text-sm text-muted-foreground">No shift comparison yet.</p> : null}
         </div>
       </SectionCard>
 
@@ -64,6 +82,7 @@ export function PlantManagerBoardView() {
               <p>Delay h: {String(u.delay_hours ?? "—")}</p>
             </div>
           ))}
+          {!Object.keys(util).length ? <p className="text-sm text-muted-foreground">No furnace data yet.</p> : null}
         </div>
       </SectionCard>
 
