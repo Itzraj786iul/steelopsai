@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 import { PageAlert } from "@/components/feedback/page-alert";
 import { PageExplainer } from "@/components/feedback/page-explainer";
+import { PredictionShimmer } from "@/components/feedback/loading-skeleton";
 import { TermTip } from "@/components/feedback/term-tip";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
@@ -56,7 +57,6 @@ export default function EafPredictionPage() {
         title={PAGE_EXPLAINERS.prediction.title}
         body={PAGE_EXPLAINERS.prediction.body}
         steps={PAGE_EXPLAINERS.prediction.steps}
-        defaultOpen
       />
 
       {sessionComplete ? (
@@ -101,7 +101,9 @@ export default function EafPredictionPage() {
       />
       <ValidationBanner messages={apiWarnings} />
 
-      <div className="flex flex-wrap items-center gap-3">
+      {loading ? <PredictionShimmer /> : null}
+
+      <div className="sticky bottom-0 z-20 -mx-3 flex flex-wrap items-center gap-3 border-t border-border/60 bg-background/95 px-3 py-3 backdrop-blur sm:-mx-4 sm:px-4 md:-mx-8 md:px-8">
         <Button size="lg" onClick={handlePredict} disabled={loading || sessionComplete || !heatNumber.trim()}>
           {loading ? "Estimating cycle time…" : "Predict cycle time"}
         </Button>
@@ -109,7 +111,7 @@ export default function EafPredictionPage() {
           <p className="text-sm text-warning">Enter a heat number first — then press predict.</p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Result is minutes of furnace time (TTT). Defaults already look like a real heat.
+            Result is minutes of furnace time. Defaults already look like a real heat.
           </p>
         )}
       </div>

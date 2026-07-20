@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
+import { PageExplainer } from "@/components/feedback/page-explainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
@@ -16,6 +17,7 @@ import {
   APP_VERSION,
   PRODUCTION_MODEL_PHASE,
 } from "@/lib/constants";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { currentCharge, useCurrentHeatStore } from "@/stores/current-heat-store";
 import { eafApi } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
@@ -138,10 +140,11 @@ export function ReportsView() {
   return (
     <PageContainer
       title="Reports"
-      description="Production-grade heat report with interactive charts, then daily exports"
+      description="Operator summary for this heat first — exports and daily packs are secondary"
     >
       <div className="print:hidden">
         <HeatWorkflowStrip active={active} currentPage="reports" className="mb-6" />
+        <PageExplainer {...PAGE_EXPLAINERS.reports} className="mb-6" />
       </div>
 
       {completed ? (

@@ -1,15 +1,17 @@
-/** Industrial HMI color tokens — always pair with icons and labels. */
+/** Industrial HMI color tokens — always pair with icons and labels. Prefer CSS vars. */
 
 export const INDUSTRIAL_STATUS = {
   validated: {
     label: "Validated",
-    className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-    dotClassName: "bg-emerald-500",
+    className:
+      "border-success/40 bg-success/10 text-success dark:border-success/40 dark:bg-success/10 dark:text-success",
+    dotClassName: "bg-success",
   },
   prediction: {
     label: "Prediction",
-    className: "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400",
-    dotClassName: "bg-blue-500",
+    className:
+      "border-prediction/40 bg-prediction/10 text-prediction dark:border-prediction/40 dark:bg-prediction/10 dark:text-prediction",
+    dotClassName: "bg-prediction",
   },
   historical: {
     label: "Historical",
@@ -18,13 +20,15 @@ export const INDUSTRIAL_STATUS = {
   },
   warning: {
     label: "Warning",
-    className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    dotClassName: "bg-amber-500",
+    className:
+      "border-warning/40 bg-warning/10 text-warning dark:border-warning/40 dark:bg-warning/10 dark:text-warning",
+    dotClassName: "bg-warning",
   },
   critical: {
     label: "Critical",
-    className: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
-    dotClassName: "bg-red-500",
+    className:
+      "border-destructive/40 bg-destructive/10 text-destructive dark:border-destructive/40 dark:bg-destructive/10 dark:text-destructive",
+    dotClassName: "bg-destructive",
   },
 } as const;
 

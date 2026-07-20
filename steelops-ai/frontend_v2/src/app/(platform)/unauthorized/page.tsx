@@ -26,7 +26,7 @@ export default function UnauthorizedPage() {
   return (
     <PageContainer
       title="Access restricted"
-      description="This page belongs to a different role. Use the sidebar links for your account, or switch to the matching demo user."
+      description="This area belongs to another role. Use your sidebar, or switch to a demo account that owns this flow."
     >
       <SectionCard>
         <EmptyState

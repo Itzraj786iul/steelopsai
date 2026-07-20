@@ -110,7 +110,7 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
         </div>
         {pathComplete ? (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <Badge className="w-fit bg-emerald-600 text-white hover:bg-emerald-600">Heat saved</Badge>
+            <Badge className="w-fit bg-success text-background hover:bg-success">Heat saved</Badge>
             <NewHeatButton />
           </div>
         ) : showDoNext ? (
@@ -156,7 +156,7 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
                 href={stage.href}
                 className={cn(
                   "flex h-full items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors focus-ring",
-                  status === "done" && "border-emerald-500/35 bg-emerald-500/5",
+                  status === "done" && "border-success/35 bg-success/5",
                   status === "current" && "border-primary/45 bg-primary/8 ring-2 ring-primary/15",
                   status === "todo" && "border-border/50 bg-background/50 opacity-80",
                   isHere && "outline outline-1 outline-offset-1 outline-foreground/20"
@@ -165,7 +165,7 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
                 <span
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    status === "done" && "bg-emerald-600 text-white",
+                    status === "done" && "bg-success text-background",
                     status === "current" && "bg-primary text-primary-foreground",
                     status === "todo" && "bg-muted text-muted-foreground"
                   )}

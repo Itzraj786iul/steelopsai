@@ -4,12 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { ChartSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { eafApi, type EafRecipe } from "@/lib/api/eaf";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { formatVariableLabel } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
@@ -98,8 +102,9 @@ export default function EafWhatIfPage() {
       title="What-if explorer"
       description="Move a few sliders to see how cycle time (minutes) might change. Everyday names first; plant codes stay visible."
     >
+      <PageExplainer {...PAGE_EXPLAINERS.whatif} />
       <SectionCard title="Estimated cycle time" description="Minutes for this working copy — not saved until you apply">
-        <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
+        <p className="font-mono text-4xl font-bold text-prediction">{pred?.toFixed(1) ?? "—"} min</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={() => run(recipe)} disabled={loading}>
             {loading ? "Running…" : "Recalculate cycle time"}
@@ -111,7 +116,8 @@ export default function EafWhatIfPage() {
             Apply to Optimize
           </Button>
         </div>
-        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+        {error ? <PageAlert tone="error" className="mt-3">{error}</PageAlert> : null}
+        {loading ? <ChartSkeleton className="mt-4" /> : null}
       </SectionCard>
       <SectionCard title="Adjust inputs" description="Drag sliders — ranges show what is usual at the plant">
         <div className="grid gap-6 sm:grid-cols-2">

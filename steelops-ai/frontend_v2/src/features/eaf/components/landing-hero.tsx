@@ -88,9 +88,9 @@ export function EafLandingHero() {
               </span>
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Built so a visitor can follow along: predict how long a heat takes (tap-to-tap / TTT),
-              suggest a safer faster charge mix, then record what really happened. Operators stay in control —
-              the AI is advisory on the frozen {PRODUCTION_MODEL_PHASE} production model.
+              Built so anyone can follow along: predict how long a heat takes (minutes), suggest a better
+              charge mix, record what really happened, and keep every heat in History. Operators stay in
+              control — the AI is advisory on the frozen {PRODUCTION_MODEL_PHASE} model.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">

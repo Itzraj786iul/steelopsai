@@ -16,6 +16,8 @@ import {
 import Link from "next/link";
 
 import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { PageLoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { KpiStrip } from "@/components/layout/kpi-strip";
@@ -28,6 +30,7 @@ import {
   industrialGridProps,
   industrialTooltipStyle,
 } from "@/components/industrial/chart-theme";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { eafApi, type HeatDashboardResponse } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 
@@ -57,12 +60,11 @@ export function ShiftDashboardView() {
   const pie = data?.pie;
   const trends = data?.trends;
   const averages = (analytics?.averages || {}) as Record<string, number | null>;
-  const metrics = (analytics?.validation_metrics || {}) as Record<string, number | null>;
 
   return (
     <PageContainer
       title="Shift Analytics"
-      description="Period HeatRecord statistics — not the live floor. Use Live Board for real-time status."
+      description="Charts and KPIs for this period’s heats — use Live Board for real-time floor status."
       actions={
         <>
           <Select value={period} onValueChange={setPeriod}>
@@ -89,100 +91,83 @@ export function ShiftDashboardView() {
         </>
       }
     >
+      <PageExplainer {...PAGE_EXPLAINERS.shiftAnalytics} />
+
       {error ? <PageAlert tone="error">{error}</PageAlert> : null}
-      {loading ? <p className="text-sm text-muted-foreground">Loading production statistics…</p> : null}
 
-      {cards ? (
+      {loading && !data ? (
+        <PageLoadingSkeleton />
+      ) : (
         <>
-          <KpiStrip
-            items={[
-              { label: "Total Heats", value: cards.total_heats },
-              { label: "Completed", value: cards.completed },
-              { label: "Pending Validation", value: cards.pending_validation },
-              { label: "Average cycle time", value: cards.average_ttt != null ? `${cards.average_ttt.toFixed(2)} min` : "—" },
-            ]}
-          />
-          <KpiStrip
-            items={[
-              {
-                label: "Average Error",
-                value: cards.average_error != null ? `${cards.average_error.toFixed(2)} min` : "—",
-              },
-              {
-                label: "Average Saving",
-                value: cards.average_saving != null ? `${cards.average_saving.toFixed(2)} min` : "—",
-                highlight: true,
-              },
-              {
-                label: "Acceptance Rate",
-                value: cards.acceptance_rate != null ? `${cards.acceptance_rate}%` : "—",
-              },
-              {
-                label: "Reliability",
-                value: cards.reliability != null ? cards.reliability.toFixed(1) : "—",
-              },
-            ]}
-          />
-          <KpiStrip
-            items={[
-              { label: "Prediction Confidence", value: cards.prediction_confidence ?? "—" },
-              {
-                label: "Optimization Success",
-                value: cards.optimization_success != null ? `${cards.optimization_success}%` : "—",
-              },
-              {
-                label: "Validation Rate",
-                value: cards.validation_rate != null ? `${cards.validation_rate}%` : "—",
-              },
-              { label: "MAE (DB)", value: metrics.mae != null ? String(metrics.mae) : "—" },
-            ]}
-          />
+          {cards ? (
+            <KpiStrip
+              columns={6}
+              items={[
+                { label: "Total heats", value: cards.total_heats },
+                { label: "Completed", value: cards.completed },
+                { label: "Pending validation", value: cards.pending_validation },
+                {
+                  label: "Avg cycle time",
+                  value: cards.average_ttt != null ? `${cards.average_ttt.toFixed(2)} min` : "—",
+                },
+                {
+                  label: "Avg error",
+                  value: cards.average_error != null ? `${cards.average_error.toFixed(2)} min` : "—",
+                },
+                {
+                  label: "Acceptance rate",
+                  value: cards.acceptance_rate != null ? `${cards.acceptance_rate}%` : "—",
+                  highlight: true,
+                },
+              ]}
+            />
+          ) : null}
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <PieCard title="Shift distribution" data={pie?.shift_distribution ?? []} />
+            <PieCard title="Recommendation acceptance" data={pie?.recommendation_acceptance ?? []} />
+            <PieCard title="Confidence distribution" data={pie?.confidence_distribution ?? []} />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <TrendCard
+              title="Average cycle time vs heat"
+              data={(trends?.ttt_vs_heat ?? []).map((d, i) => ({
+                i: i + 1,
+                value: d.predicted_ttt ?? null,
+                label: d.heat_number,
+              }))}
+            />
+            <TrendCard
+              title="Minutes saved vs heat"
+              data={(trends?.saving_vs_heat ?? []).map((d, i) => ({
+                i: i + 1,
+                value: d.expected_saving ?? null,
+                label: d.heat_number,
+              }))}
+            />
+            <TrendCard
+              title="Prediction error vs heat"
+              data={(trends?.error_vs_heat ?? []).map((d, i) => ({
+                i: i + 1,
+                value: d.prediction_error ?? null,
+                label: d.heat_number,
+              }))}
+            />
+          </div>
+
+          <SectionCard title="Plant averages" description="Typical charge and energy levels for this period">
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+              <Mini label="Avg hot metal" value={fmt(averages.HM)} />
+              <Mini label="Avg DRI" value={fmt(averages.DRI)} />
+              <Mini label="Avg Lime" value={fmt(averages.LIME)} />
+              <Mini label="Avg Oxygen" value={fmt(averages.OXY)} />
+              <Mini label="Avg Electrical Energy" value={fmt(averages.Electrical_Energy_kWh)} />
+              <Mini label="Avg Charge" value={fmt(averages.charge)} />
+            </div>
+          </SectionCard>
         </>
-      ) : null}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <PieCard title="Shift distribution" data={pie?.shift_distribution ?? []} />
-        <PieCard title="Recommendation acceptance" data={pie?.recommendation_acceptance ?? []} />
-        <PieCard title="Confidence distribution" data={pie?.confidence_distribution ?? []} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <TrendCard
-          title="Average cycle time vs heat"
-          data={(trends?.ttt_vs_heat ?? []).map((d, i) => ({
-            i: i + 1,
-            value: d.predicted_ttt ?? null,
-            label: d.heat_number,
-          }))}
-        />
-        <TrendCard
-          title="Saving vs Heat"
-          data={(trends?.saving_vs_heat ?? []).map((d, i) => ({
-            i: i + 1,
-            value: d.expected_saving ?? null,
-            label: d.heat_number,
-          }))}
-        />
-        <TrendCard
-          title="Prediction Error vs Heat"
-          data={(trends?.error_vs_heat ?? []).map((d, i) => ({
-            i: i + 1,
-            value: d.prediction_error ?? null,
-            label: d.heat_number,
-          }))}
-        />
-      </div>
-
-      <SectionCard title="Plant analytics" description="Averages from HeatRecord database">
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-          <Mini label="Avg hot metal" value={fmt(averages.HM)} />
-          <Mini label="Avg DRI" value={fmt(averages.DRI)} />
-          <Mini label="Avg Lime" value={fmt(averages.LIME)} />
-          <Mini label="Avg Oxygen" value={fmt(averages.OXY)} />
-          <Mini label="Avg Electrical Energy" value={fmt(averages.Electrical_Energy_kWh)} />
-          <Mini label="Avg Charge" value={fmt(averages.charge)} />
-        </div>
-      </SectionCard>
+      )}
     </PageContainer>
   );
 }
@@ -230,7 +215,13 @@ function TrendCard({
               <XAxis dataKey="i" {...industrialAxisProps} />
               <YAxis {...industrialAxisProps} />
               <Tooltip contentStyle={industrialTooltipStyle} />
-              <Line type="monotone" dataKey="value" stroke={INDUSTRIAL_CHART.primary} strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={INDUSTRIAL_CHART.primary}
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

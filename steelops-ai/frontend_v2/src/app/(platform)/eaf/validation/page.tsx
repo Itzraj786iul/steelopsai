@@ -172,7 +172,7 @@ export default function EafValidationPage() {
       ) : null}
 
       {active?.recommendationAcceptance === "Modified" && active.modifiedRecipe ? (
-        <SectionCard title="Modified recipe note">
+        <SectionCard title="What you changed">
           <p className="text-sm text-muted-foreground">{active.recommendationNotes || "—"}</p>
         </SectionCard>
       ) : null}
@@ -190,9 +190,14 @@ export default function EafValidationPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label>
-                Heat Number
-                {heatNumberEditable ? <span className="text-destructive"> *</span> : null}
+              <Label className="leading-snug">
+                <span className="block text-sm font-medium">
+                  Heat number
+                  {heatNumberEditable ? <span className="text-destructive"> *</span> : null}
+                </span>
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  {heatNumberEditable ? "Required — enter plant batch ID" : "From Prediction — read only"}
+                </span>
               </Label>
               {heatNumberEditable ? (
                 <>
@@ -229,11 +234,17 @@ export default function EafValidationPage() {
               required
             />
             <div>
-              <Label>Decision (from Optimizer)</Label>
+              <Label className="leading-snug">
+                <span className="block text-sm font-medium">Recommendation decision</span>
+                <span className="text-[11px] font-normal text-muted-foreground">Locked on Optimize</span>
+              </Label>
               <Input className="mt-1" value={recommendationAppliedLabel} readOnly disabled />
             </div>
             <div>
-              <Label>Optimizer used</Label>
+              <Label className="leading-snug">
+                <span className="block text-sm font-medium">Which optimizer ran</span>
+                <span className="text-[11px] font-normal text-muted-foreground">Production or research path</span>
+              </Label>
               <Input className="mt-1" value={optimizerUsedLabel} readOnly disabled />
             </div>
             <div className="md:col-span-2">

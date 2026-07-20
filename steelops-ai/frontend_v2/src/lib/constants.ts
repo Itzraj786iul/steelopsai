@@ -1,5 +1,5 @@
 export const APP_NAME = "JSPL EAF TTT";
-export const APP_VERSION = "2.10.1";
+export const APP_VERSION = "2.11.0";
 export const RESEARCH_VERSION = "Phase 33 (frozen)";
 export const PRODUCTION_MODEL_PHASE = "Phase 19";
 export const OPTIMIZER_PHASE = "Phase 20.2";

@@ -12,11 +12,14 @@ import {
 } from "lucide-react";
 
 import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { PageLoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { ShortcutBar } from "@/components/layout/shortcut-bar";
 import { KpiStrip, humanizeKey } from "@/components/layout/kpi-strip";
 import { Button } from "@/components/ui/button";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { mesApi } from "@/lib/api/mes";
 import { getApiErrorMessage } from "@/services/api-client";
 
@@ -49,13 +52,15 @@ export function PlantManagerBoardView() {
   return (
     <PageContainer
       title="Plant Overview"
-      description="Plant-level home — today, shift & furnace comparison. Oversight only (no heat console)."
+      description="Plant snapshot for the day — shifts, furnaces, and targets. Oversight only (no heat console)."
       actions={
         <Button asChild size="sm" variant="outline">
           <Link href="/eaf/reports">Reports</Link>
         </Button>
       }
     >
+      <PageExplainer {...PAGE_EXPLAINERS.plantOverview} />
+
       {error ? <PageAlert tone="error">{error}</PageAlert> : null}
 
       <ShortcutBar
@@ -72,14 +77,14 @@ export function PlantManagerBoardView() {
       />
 
       {loading && !board ? (
-        <p className="text-sm text-muted-foreground">Loading plant overview…</p>
+        <PageLoadingSkeleton />
       ) : (
         <KpiStrip
           items={[
             { label: "Today production", value: formatMetric(today.today_production) },
             { label: "Avg cycle time", value: formatMetric(today.average_ttt) },
             { label: "Avg saving", value: formatMetric(today.average_saving) },
-            { label: "Running", value: formatMetric(today.running_heats), highlight: true },
+            { label: "Running now", value: formatMetric(today.running_heats), highlight: true },
           ]}
         />
       )}

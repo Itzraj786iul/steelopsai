@@ -14,12 +14,15 @@ import {
 } from "lucide-react";
 
 import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { PageLoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { ShortcutBar } from "@/components/layout/shortcut-bar";
 import { KpiStrip, humanizeKey } from "@/components/layout/kpi-strip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { eafClient } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 
@@ -51,8 +54,8 @@ export function AdminDashboardView() {
 
   return (
     <PageContainer
-      title="Admin Dashboard"
-      description="Platform health, IAM, and plant configuration"
+      title="Admin"
+      description="System health, users, and plant setup for demos and support."
       actions={
         <Button asChild size="sm" variant="outline">
           <Link href="/eaf/system-health">
@@ -62,43 +65,30 @@ export function AdminDashboardView() {
         </Button>
       }
     >
+      <PageExplainer {...PAGE_EXPLAINERS.admin} />
+
       {error ? <PageAlert tone="error">{error}</PageAlert> : null}
 
       <ShortcutBar
         title="Admin console"
-        description="Primary jobs — identity, compliance, plant config"
+        description="Users, audit, and plant configuration"
         items={ADMIN_SHORTCUTS}
       />
 
       {loading && !data ? (
-        <p className="text-sm text-muted-foreground">Loading platform metrics…</p>
+        <PageLoadingSkeleton />
       ) : (
-        <>
-          <KpiStrip
-            items={[
-              { label: "API Health", value: String(data?.api_health ?? "—"), highlight: true },
-              { label: "Database", value: String(data?.database ?? "—") },
-              { label: "Active Users", value: String(data?.active_users ?? "—") },
-              { label: "Active Sessions", value: String(data?.active_sessions ?? "—") },
-            ]}
-          />
-          <KpiStrip
-            items={[
-              { label: "Predictions (DB)", value: String(data?.prediction_count ?? "—") },
-              { label: "Optimizations (DB)", value: String(data?.optimization_count ?? "—") },
-              { label: "Open Alerts", value: String(data?.open_alerts ?? "—") },
-              { label: "Audit Events", value: String(data?.audit_events ?? "—") },
-            ]}
-          />
-          <KpiStrip
-            columns={3}
-            items={[
-              { label: "Failed Logins", value: String(data?.failed_logins ?? "—") },
-              { label: "Locked Accounts", value: String(data?.locked_accounts ?? "—") },
-              { label: "App Version", value: String(data?.app_version ?? "—") },
-            ]}
-          />
-        </>
+        <KpiStrip
+          columns={6}
+          items={[
+            { label: "API health", value: String(data?.api_health ?? "—"), highlight: true },
+            { label: "Database", value: String(data?.database ?? "—") },
+            { label: "Active users", value: String(data?.active_users ?? "—") },
+            { label: "Open alerts", value: String(data?.open_alerts ?? "—") },
+            { label: "Predictions", value: String(data?.prediction_count ?? "—") },
+            { label: "App version", value: String(data?.app_version ?? "—") },
+          ]}
+        />
       )}
 
       <SectionCard title="Model registry" description="Deployed model artifacts and versions">

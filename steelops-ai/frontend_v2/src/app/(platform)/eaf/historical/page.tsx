@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
+import { KpiStrip } from "@/components/layout/kpi-strip";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +16,7 @@ import { useEafHistorical } from "@/features/eaf/hooks/use-eaf-historical";
 import { useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
 import { assessCharge, historicalStatusLabel } from "@/lib/charge-validation";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { formatVariableLabel } from "@/lib/eaf-labels";
 
 export default function EafHistoricalPage() {
@@ -49,54 +54,63 @@ export default function EafHistoricalPage() {
   }, [data?.distribution]);
 
   const statusToneClass = useCallback((tone: "normal" | "caution" | "outside") => {
-    if (tone === "normal") return "text-green-600";
-    if (tone === "caution") return "text-amber-600";
-    return "text-orange-600";
+    if (tone === "normal") return "text-success";
+    if (tone === "caution") return "text-warning";
+    return "text-destructive";
   }, []);
 
   return (
-    <PageContainer title="Historical Analysis" description="Compare current heat burden composition against plant operating history">
+    <PageContainer
+      title="Historical comparison"
+      description="Compare your recipe to what this plant usually runs — common low / typical / high bands"
+    >
+      <PageExplainer {...PAGE_EXPLAINERS.historical} />
       {!hasActiveHeat ? <EmptyHeatState className="mb-6" /> : null}
-      <div className="mt-4">
+      <div className="mt-2">
         <Button variant="outline" onClick={() => refresh(recipe)} disabled={loading}>
-          {loading ? "Loading…" : "Load historical bands"}
+          {loading ? "Loading…" : "Load plant bands"}
         </Button>
       </div>
       <RecipeForm recipe={recipe} onChange={update} charge={charge} historicalVariables={vars} />
 
-      {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
+      {error ? <PageAlert tone="error" className="mt-4">{error}</PageAlert> : null}
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <SectionCard title="Current Recipe">
-          <p className="font-mono text-3xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
-          <p className="mt-1 text-sm text-muted-foreground">Predicted tap-to-tap</p>
-        </SectionCard>
-        <SectionCard title="Total Charge">
-          <p className="font-mono text-3xl">{charge.toFixed(1)} t</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Historical P5–P95: {chargeAssessment.bounds.p5.toFixed(0)}–{chargeAssessment.bounds.p95.toFixed(0)} t
-          </p>
-        </SectionCard>
-        <SectionCard title="Confidence">
-          <p className="text-3xl font-semibold">{chargeAssessment.confidence}</p>
-          <p className="mt-1 text-sm text-muted-foreground">Based on charge vs historical distribution</p>
-        </SectionCard>
-      </div>
+      <KpiStrip
+        className="mt-6"
+        columns={3}
+        items={[
+          {
+            label: "Predicted cycle time",
+            value: pred != null ? `${pred.toFixed(1)} min` : "—",
+            highlight: true,
+          },
+          {
+            label: "Total charge",
+            value: `${charge.toFixed(1)} t`,
+            delta: `Usual ~${chargeAssessment.bounds.p5.toFixed(0)}–${chargeAssessment.bounds.p95.toFixed(0)} t`,
+          },
+          {
+            label: "Confidence",
+            value: chargeAssessment.confidence,
+            delta: "From charge vs plant history",
+          },
+        ]}
+      />
 
-      <SectionCard title="Operating Comparison" className="mt-6">
+      <SectionCard title="Operating comparison" className="mt-6" description="Flagged for review only — never blocked">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading historical bands…</p>
+          <LoadingSkeleton rows={6} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-muted-foreground">
                   <th className="py-2 text-left">Variable</th>
-                  <th>Current Recipe</th>
-                  <th>Historical Median</th>
-                  <th>P5</th>
-                  <th>P95</th>
-                  <th>Recommendation</th>
+                  <th>Current</th>
+                  <th>Typical (median)</th>
+                  <th>Low end</th>
+                  <th>High end</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,8 +134,8 @@ export default function EafHistoricalPage() {
           </div>
         )}
         <p className="mt-4 text-sm text-muted-foreground">
-          Values outside the historical P5–P95 band are flagged for operator review — not blocked. Adjust burden or
-          energy inputs toward the median when seeking stable cycle times.
+          Values outside the usual plant band are flagged for review — not blocked. Move toward the typical
+          (median) value when you want more stable cycle times.
         </p>
       </SectionCard>
 
@@ -135,8 +149,8 @@ export default function EafHistoricalPage() {
                 <YAxis />
                 <Tooltip formatter={(value) => [value ?? 0, "Heats"]} labelFormatter={(l) => `${Number(l).toFixed(0)} kWh`} />
                 <ReferenceArea x1={powerVar.p5} x2={powerVar.p95} fill="hsl(var(--primary))" fillOpacity={0.08} />
-                <ReferenceLine x={powerVar.median} stroke="#0B3D6B" strokeDasharray="4 4" label={{ value: "Median", position: "top" }} />
-                <ReferenceLine x={powerVar.current} stroke="#B83232" label={{ value: "Current", position: "insideTopRight" }} />
+                <ReferenceLine x={powerVar.median} stroke="hsl(var(--secondary))" strokeDasharray="4 4" label={{ value: "Typical", position: "top" }} />
+                <ReferenceLine x={powerVar.current} stroke="hsl(var(--destructive))" label={{ value: "Current", position: "insideTopRight" }} />
                 <Bar dataKey="count" fill="hsl(var(--primary))" opacity={0.55} />
               </BarChart>
             </ResponsiveContainer>

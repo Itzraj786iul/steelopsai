@@ -242,4 +242,88 @@ export const PAGE_EXPLAINERS = {
       "Save to open the heat report.",
     ],
   },
+  heatHistory: {
+    title: "What is this page?",
+    body: "Every predicted heat is saved in the plant database. Use this list to find past batches, export records, or open a heat for review.",
+    steps: [
+      "Search by heat number or operator.",
+      "Filter by shift, status, or time period if needed.",
+      "Click a row to open details.",
+    ],
+  },
+  reports: {
+    title: "What is this page?",
+    body: "A printable summary of the heat you just ran — prediction, recommendation, and actual minutes when available.",
+    steps: [
+      "Confirm the active heat in the workflow strip.",
+      "Review the operator summary first.",
+      "Export PDF/CSV only if you need a file for others.",
+    ],
+  },
+  whatif: {
+    title: "What is this page?",
+    body: "Move a few sliders to explore how cycle time might change if you tweak the charge mix. This does not save a new heat until you apply it to Optimize.",
+    steps: [
+      "Start from the heat you already predicted.",
+      "Adjust one variable at a time.",
+      "Recalculate, then apply to Optimize if you like the mix.",
+    ],
+  },
+  historical: {
+    title: "What is this page?",
+    body: "Compare your current recipe numbers against what this plant usually runs (common low / typical / high bands).",
+    steps: [
+      "Load or keep the demo recipe.",
+      "Scan which inputs sit outside the usual band.",
+      "Adjust on Predict if something looks extreme.",
+    ],
+  },
+  health: {
+    title: "What is this page?",
+    body: "Quick gauges of whether the main charge and energy inputs look healthy versus plant practice — advisory only.",
+    steps: [
+      "Green means inside a comfortable band.",
+      "Yellow/red means review the recipe before committing.",
+    ],
+  },
+  productionHub: {
+    title: "What is this page?",
+    body: "Shift and production overview — queue, delays, and heats that need attention today.",
+    steps: [
+      "Check the attention items first.",
+      "Use shortcuts to open Live Board, Approvals, or History.",
+    ],
+  },
+  plantOverview: {
+    title: "What is this page?",
+    body: "Plant-level snapshot for managers — furnaces, today’s plan, and high-level KPIs.",
+    steps: [
+      "Scan KPIs for the day.",
+      "Drill into Live Board or Heat History for detail.",
+    ],
+  },
+  admin: {
+    title: "What is this page?",
+    body: "System health and administration — users, audits, and configuration for demos and support.",
+    steps: [
+      "Check health and open alerts first.",
+      "Use Users / Audit only when managing access or investigating issues.",
+    ],
+  },
+  liveBoard: {
+    title: "What is this page?",
+    body: "Kanban of heats across the floor — from waiting to validated. Drag is not required; open a heat to act.",
+    steps: [
+      "Find heats waiting on validation or approval.",
+      "Open a card to continue the heat path.",
+    ],
+  },
+  shiftAnalytics: {
+    title: "What is this page?",
+    body: "Charts and KPIs for the current shift’s heats — useful for stand-up and end-of-shift review.",
+    steps: [
+      "Pick the period (today / week).",
+      "Use History for row-level detail.",
+    ],
+  },
 } as const;

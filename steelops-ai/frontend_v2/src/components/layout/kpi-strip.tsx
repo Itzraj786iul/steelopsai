@@ -1,6 +1,7 @@
 "use client";
 
 import { MetricCard } from "@/components/data-display/metric-card";
+import { kpiLabel } from "@/lib/kpi-labels";
 import { cn } from "@/lib/utils";
 
 export interface KpiItem {
@@ -50,11 +51,7 @@ export function KpiStrip({ items, className, columns }: KpiStripProps) {
   );
 }
 
-/** Humanize snake_case / camelCase API keys for KPI labels. */
+/** Humanize snake_case / camelCase API keys for KPI labels (domain map first). */
 export function humanizeKey(key: string): string {
-  return key
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
+  return kpiLabel(key);
 }

@@ -24,7 +24,7 @@ import { usePermissions } from "@/hooks/use-auth";
 import { useEafOptimize, useEafOptimizeV2, useEafRecipe } from "@/features/eaf/hooks/use-eaf";
 import type { EafRecipe } from "@/lib/api/eaf";
 import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
-import { formatVariableLabel, TTT_SHORT_LABEL } from "@/lib/eaf-labels";
+import { formatVariableLabel } from "@/lib/eaf-labels";
 import { getApiErrorMessage } from "@/services/api-client";
 import { currentCharge, useCurrentHeatStore } from "@/stores/current-heat-store";
 
@@ -89,7 +89,7 @@ export default function EafOptimizerPage() {
           <div className="flex flex-wrap gap-2">
             {(["production", "research", "compare"] as const).map((m) => (
               <Button key={m} variant={effectiveMode === m ? "default" : "outline"} size="sm" onClick={() => setMode(m)}>
-                {m === "production" ? "Production" : m === "research" ? "Research V2" : "Compare"}
+                {m === "production" ? "Production" : m === "research" ? "Lab / research" : "Compare"}
               </Button>
             ))}
           </div>
@@ -140,9 +140,9 @@ export default function EafOptimizerPage() {
           <KpiStrip
             columns={3}
             items={[
-              { label: `Current ${TTT_SHORT_LABEL}`, value: `${prodResult.current_ttt.toFixed(2)} min` },
-              { label: `Suggested ${TTT_SHORT_LABEL}`, value: `${prodResult.optimized_ttt.toFixed(2)} min`, highlight: true },
-              { label: "Minutes you might save", value: `${prodResult.improvement_min.toFixed(2)} min` },
+              { label: "Current cycle", value: `${prodResult.current_ttt.toFixed(1)} min` },
+              { label: "Suggested cycle", value: `${prodResult.optimized_ttt.toFixed(1)} min`, highlight: true },
+              { label: "Minutes you might save", value: `${prodResult.improvement_min.toFixed(1)} min` },
             ]}
           />
 
@@ -170,7 +170,7 @@ export default function EafOptimizerPage() {
             open={showDetails}
             onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
           >
-            <summary className="cursor-pointer text-sm font-medium">More details (optional)</summary>
+            <summary className="cursor-pointer text-sm font-medium">Engineering details (optional)</summary>
             <div className="mt-4 space-y-6">
               <FullRecommendationExplanation
                 explanation={
@@ -196,7 +196,7 @@ export default function EafOptimizerPage() {
 
       {effectiveMode === "research" && v2Result ? (
         <div className="space-y-6">
-          <Badge className="border-warning/40 bg-warning/10 text-foreground">Research optimizer</Badge>
+          <Badge className="border-warning/40 bg-warning/10 text-foreground">Lab / research mode</Badge>
           <FullRecommendationExplanation explanation={v2Best?.explanation} />
           <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
           <OptimizerChangeCards

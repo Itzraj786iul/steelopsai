@@ -6,6 +6,8 @@ import { Download, Search, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { PageAlert } from "@/components/feedback/page-alert";
+import { PageExplainer } from "@/components/feedback/page-explainer";
+import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ import {
   EnterpriseTableRow,
 } from "@/features/enterprise/components/enterprise-table";
 import { eafApi, type HeatRecord } from "@/lib/api/eaf";
+import { PAGE_EXPLAINERS } from "@/lib/eaf-glossary";
 import { INDUSTRIAL_STATUS } from "@/lib/industrial-colors";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/services/api-client";
@@ -172,45 +175,59 @@ export function HeatHistoryView() {
   return (
     <PageContainer
       title="Heat History"
-      description="Permanent production records — delete test heats anytime"
+      description="Saved production heats from Predict — they stay in the database after you close the browser"
     >
-      <SectionCard title="Filters">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[180px] flex-1">
-            <label className="mb-1 block text-xs text-muted-foreground" htmlFor="heat-search">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
-              <Input
-                id="heat-search"
-                className="pl-8"
-                placeholder="Heat number, operator…"
-                value={q}
-                onChange={(e) => {
-                  setPage(1);
-                  setQ(e.target.value);
-                }}
-              />
+      <PageExplainer {...PAGE_EXPLAINERS.heatHistory} />
+
+      <SectionCard title="Find a heat" description="Search first — filters are optional">
+        <div className="flex flex-col gap-4">
+          <div className="relative max-w-xl">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
+            <Input
+              id="heat-search"
+              className="pl-8"
+              placeholder="Heat number, operator…"
+              value={q}
+              onChange={(e) => {
+                setPage(1);
+                setQ(e.target.value);
+              }}
+            />
+          </div>
+          <details className="rounded-lg border border-border/50 bg-muted/5">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-muted-foreground">
+              More filters (period, shift, status)
+            </summary>
+            <div className="flex flex-wrap items-end gap-3 border-t border-border/40 p-3">
+              <FilterSelect label="Period" value={period} onChange={(v) => { setPage(1); setPeriod(v); }} options={PERIODS.map((p) => ({ value: p.value, label: p.label }))} />
+              <FilterSelect label="Shift" value={shift} onChange={(v) => { setPage(1); setShift(v); }} options={[{ value: "all", label: "All" }, ...SHIFTS.map((s) => ({ value: s, label: `Shift ${s}` }))]} />
+              <FilterSelect label="Status" value={status} onChange={(v) => { setPage(1); setStatus(v); }} options={[{ value: "all", label: "All" }, ...STATUSES.map((s) => ({ value: s, label: s }))]} />
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => void exportFmt("csv")}>
+                  <Download className="mr-1 h-3.5 w-3.5" /> CSV
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void exportFmt("excel")}>
+                  <Download className="mr-1 h-3.5 w-3.5" /> Excel
+                </Button>
+                {selected.size > 0 ? (
+                  <Button size="sm" variant="destructive" disabled={deleting} onClick={() => void deleteSelected()}>
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    Delete ({selected.size})
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          </div>
-          <FilterSelect label="Period" value={period} onChange={(v) => { setPage(1); setPeriod(v); }} options={PERIODS.map((p) => ({ value: p.value, label: p.label }))} />
-          <FilterSelect label="Shift" value={shift} onChange={(v) => { setPage(1); setShift(v); }} options={[{ value: "all", label: "All" }, ...SHIFTS.map((s) => ({ value: s, label: `Shift ${s}` }))]} />
-          <FilterSelect label="Status" value={status} onChange={(v) => { setPage(1); setStatus(v); }} options={[{ value: "all", label: "All" }, ...STATUSES.map((s) => ({ value: s, label: s }))]} />
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => void exportFmt("csv")}>
-              <Download className="mr-1 h-3.5 w-3.5" /> CSV
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void exportFmt("excel")}>
-              <Download className="mr-1 h-3.5 w-3.5" /> Excel
-            </Button>
-            {selected.size > 0 ? (
-              <Button size="sm" variant="destructive" disabled={deleting} onClick={() => void deleteSelected()}>
-                <Trash2 className="mr-1 h-3.5 w-3.5" />
-                Delete ({selected.size})
+          </details>
+          {selected.size === 0 ? (
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => void exportFmt("csv")}>
+                <Download className="mr-1 h-3.5 w-3.5" /> Export CSV
               </Button>
-            ) : null}
-          </div>
+              <Button size="sm" variant="outline" onClick={() => void exportFmt("excel")}>
+                <Download className="mr-1 h-3.5 w-3.5" /> Export Excel
+              </Button>
+            </div>
+          ) : null}
         </div>
       </SectionCard>
 
@@ -248,7 +265,7 @@ export function HeatHistoryView() {
           </PageAlert>
         ) : null}
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading heat records…</p>
+          <LoadingSkeleton rows={8} />
         ) : error ? null : !items.length ? (
           <EmptyState
             title="No heats yet"

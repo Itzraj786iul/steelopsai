@@ -154,39 +154,63 @@ export function RecipeForm({
         ))}
       </FieldGroup>
 
-      <FieldGroup title="2. Fluxes" subtitle="Helps make slag and protect the furnace (smaller tonnages)">
-        {fluxes.map(({ key, step }) => (
-          <GuidedNumberField
-            key={key}
-            id={key}
-            guide={RECIPE_FIELD_GUIDES[key]}
-            step={step}
-            value={displayValue(key)}
-            onChange={(raw) => handleNumericChange(key, raw)}
-            onBlur={() => commitNumeric(key)}
-            suggestedValue={DEFAULT_RECIPE[key] as number}
-            onUseSuggested={(v) => applySuggested(key, v)}
-            outOfRange={softOutOfRange(key, Number(recipe[key]))}
-          />
-        ))}
-      </FieldGroup>
+      <details className="mt-6 rounded-lg border border-border/50 bg-muted/5 open:pb-1">
+        <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center justify-between gap-2">
+            <span>
+              2. Fluxes{" "}
+              <span className="font-normal text-muted-foreground">(lime &amp; dolomite — optional tweak)</span>
+            </span>
+            <span className="text-xs font-normal text-muted-foreground">Show / hide</span>
+          </span>
+        </summary>
+        <p className="mb-3 px-3 text-xs text-muted-foreground">Helps make slag and protect the furnace (smaller tonnages)</p>
+        <div className="grid gap-3 px-3 pb-3 sm:grid-cols-2 lg:grid-cols-3">
+          {fluxes.map(({ key, step }) => (
+            <GuidedNumberField
+              key={key}
+              id={key}
+              guide={RECIPE_FIELD_GUIDES[key]}
+              step={step}
+              value={displayValue(key)}
+              onChange={(raw) => handleNumericChange(key, raw)}
+              onBlur={() => commitNumeric(key)}
+              suggestedValue={DEFAULT_RECIPE[key] as number}
+              onUseSuggested={(v) => applySuggested(key, v)}
+              outOfRange={softOutOfRange(key, Number(recipe[key]))}
+            />
+          ))}
+        </div>
+      </details>
 
-      <FieldGroup title="3. Energy & process programs" subtitle="Electricity, oxygen, and carbon practice">
-        {programs.map(({ key, step }) => (
-          <GuidedNumberField
-            key={key}
-            id={key}
-            guide={RECIPE_FIELD_GUIDES[key]}
-            step={step}
-            value={displayValue(key)}
-            onChange={(raw) => handleNumericChange(key, raw)}
-            onBlur={() => commitNumeric(key)}
-            suggestedValue={DEFAULT_RECIPE[key] as number}
-            onUseSuggested={(v) => applySuggested(key, v)}
-            outOfRange={softOutOfRange(key, Number(recipe[key]))}
-          />
-        ))}
-      </FieldGroup>
+      <details className="mt-4 rounded-lg border border-border/50 bg-muted/5 open:pb-1">
+        <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center justify-between gap-2">
+            <span>
+              3. Energy &amp; process programs{" "}
+              <span className="font-normal text-muted-foreground">(advanced)</span>
+            </span>
+            <span className="text-xs font-normal text-muted-foreground">Show / hide</span>
+          </span>
+        </summary>
+        <p className="mb-3 px-3 text-xs text-muted-foreground">Electricity, oxygen, and carbon practice</p>
+        <div className="grid gap-3 px-3 pb-3 sm:grid-cols-2 lg:grid-cols-3">
+          {programs.map(({ key, step }) => (
+            <GuidedNumberField
+              key={key}
+              id={key}
+              guide={RECIPE_FIELD_GUIDES[key]}
+              step={step}
+              value={displayValue(key)}
+              onChange={(raw) => handleNumericChange(key, raw)}
+              onBlur={() => commitNumeric(key)}
+              suggestedValue={DEFAULT_RECIPE[key] as number}
+              onUseSuggested={(v) => applySuggested(key, v)}
+              outOfRange={softOutOfRange(key, Number(recipe[key]))}
+            />
+          ))}
+        </div>
+      </details>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 rounded-lg border border-border/50 bg-muted/10 p-3">

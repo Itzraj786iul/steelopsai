@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { PageAlert } from "@/components/feedback/page-alert";
+import { EmptyState } from "@/components/feedback/empty-state";
+import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,7 @@ interface ShiftRow {
 export function ShiftManagementView() {
   const [rows, setRows] = useState<ShiftRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     code: "A",
     name: "Shift A",
@@ -44,10 +47,12 @@ export function ShiftManagementView() {
   });
 
   const load = () => {
+    setLoading(true);
     opsApi
       .shifts()
       .then(({ data }) => setRows(data as ShiftRow[]))
-      .catch((e: unknown) => setError(getApiErrorMessage(e, "Failed to load shifts")));
+      .catch((e: unknown) => setError(getApiErrorMessage(e, "Failed to load shifts")))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export function ShiftManagementView() {
   };
 
   return (
-    <PageContainer title="Shift Management" description="Create, assign, and archive production shifts A / B / C">
+    <PageContainer title="Shift management" description="Create and archive production windows (A / B / C)">
       {error ? <PageAlert tone="error">{error}</PageAlert> : null}
       <SectionCard title="Create shift" description="Registers the next production window">
         <div className="grid gap-3 md:grid-cols-3">
@@ -109,7 +114,16 @@ export function ShiftManagementView() {
         <Button className="mt-4" onClick={() => void create()}>Create shift</Button>
       </SectionCard>
 
-      <SectionCard title="Shifts">
+      <SectionCard title="Shifts" description="Active and upcoming production windows">
+        {loading ? (
+          <LoadingSkeleton rows={4} />
+        ) : !rows.length ? (
+          <EmptyState
+            title="No shifts yet"
+            description="Create Shift A, B, or C to register the next production window."
+            className="py-8"
+          />
+        ) : (
         <EnterpriseTable>
           <EnterpriseTableHead>
             <EnterpriseTableRow>
@@ -138,6 +152,7 @@ export function ShiftManagementView() {
             ))}
           </EnterpriseTableBody>
         </EnterpriseTable>
+        )}
       </SectionCard>
     </PageContainer>
   );
