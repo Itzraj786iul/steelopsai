@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
-import { SectionCard } from "@/components/layout/section-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
