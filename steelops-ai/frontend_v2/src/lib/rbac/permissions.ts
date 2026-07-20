@@ -257,7 +257,10 @@ const LEGACY_ROLE_MAP: Record<string, string> = {
 };
 
 export function normalizeRole(role: string): string {
-  const normalized = role.toLowerCase().replace(/\s+/g, "_");
+  const normalized = String(role ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
   if (LEGACY_ROLE_MAP[normalized]) return LEGACY_ROLE_MAP[normalized];
   if (Object.values(UserRole).includes(normalized as UserRole)) return normalized;
   return UserRole.Operator;
@@ -268,7 +271,9 @@ export function getDefaultRouteForRole(role: string): string {
 }
 
 function pathMatchesRoute(path: string, route: string): boolean {
-  return path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`);
+  const bare = path.split("?")[0] ?? path;
+  const routeBare = route.split("?")[0] ?? route;
+  return bare === routeBare || bare.startsWith(`${routeBare}/`);
 }
 
 function isOperatorConsolePath(path: string): boolean {
@@ -278,16 +283,19 @@ function isOperatorConsolePath(path: string): boolean {
 
 export function canAccessRoute(role: string, path: string): boolean {
   const normalizedRole = normalizeRole(role);
+  const barePath = (path.split("?")[0] ?? path) || "/";
+
+  // Platform admins can open every EAF route (support / demos).
   if (normalizedRole === UserRole.Admin) return true;
 
   // Core open paths for authenticated users
-  if (path === "/" || path === "/eaf/about" || path === "/unauthorized") return true;
+  if (barePath === "/" || barePath === "/eaf/about" || barePath === "/unauthorized") return true;
 
   // Feedback is retired — no role should land here (page also redirects).
-  if (pathMatchesRoute(path, "/eaf/feedback")) return false;
+  if (pathMatchesRoute(barePath, "/eaf/feedback")) return false;
 
   const restricted = Object.entries(ROUTE_ROLE_ACCESS)
-    .filter(([route]) => pathMatchesRoute(path, route))
+    .filter(([route]) => pathMatchesRoute(barePath, route))
     .sort((a, b) => b[0].length - a[0].length)[0];
 
   if (restricted) {
@@ -296,10 +304,10 @@ export function canAccessRoute(role: string, path: string): boolean {
     return restricted[1].includes(normalizedRole);
   }
 
-  if (path.startsWith("/eaf")) {
+  if (barePath.startsWith("/eaf")) {
     // Operators: only the heat console + What-if / About / Announcements
     if (normalizedRole === UserRole.Operator) {
-      return isOperatorConsolePath(path);
+      return isOperatorConsolePath(barePath);
     }
     return [
       UserRole.ShiftEngineer,

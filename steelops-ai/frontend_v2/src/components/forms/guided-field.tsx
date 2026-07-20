@@ -4,6 +4,7 @@ import { HelpCircle } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { FieldGuide } from "@/lib/eaf-glossary";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,9 @@ interface GuidedNumberFieldProps {
   value: string;
   onChange: (raw: string) => void;
   onBlur?: () => void;
+  /** Apply a known-good demo/suggested number into the field */
+  onUseSuggested?: (value: number) => void;
+  suggestedValue?: number;
   step?: string;
   min?: number;
   disabled?: boolean;
@@ -29,6 +33,8 @@ export function GuidedNumberField({
   value,
   onChange,
   onBlur,
+  onUseSuggested,
+  suggestedValue,
   step,
   min = 0,
   disabled,
@@ -36,12 +42,12 @@ export function GuidedNumberField({
   outOfRange,
 }: GuidedNumberFieldProps) {
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("space-y-1.5 rounded-lg border border-border/50 bg-muted/10 p-3", className)}>
       <div className="flex items-start justify-between gap-2">
         <Label htmlFor={id} className="leading-snug">
-          <span className="block text-sm font-medium text-foreground">{guide.plain}</span>
+          <span className="block text-sm font-semibold text-foreground">{guide.plain}</span>
           <span className="text-[11px] font-normal text-muted-foreground">
-            {guide.code} · {guide.unit}
+            Plant code: {guide.code} · Unit: {guide.unit}
           </span>
         </Label>
         <TooltipProvider delayDuration={150}>
@@ -55,9 +61,10 @@ export function GuidedNumberField({
                 <HelpCircle className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-xs space-y-1 p-3 text-left">
+            <TooltipContent side="left" className="max-w-xs space-y-1.5 p-3 text-left">
               <p className="font-semibold">{guide.plain}</p>
               <p className="leading-relaxed text-muted-foreground">{guide.why}</p>
+              <p className="text-muted-foreground">{guide.typical}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -73,13 +80,26 @@ export function GuidedNumberField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className={cn(outOfRange && "border-warning/60 focus-visible:ring-warning/40")}
+        className={cn("bg-background", outOfRange && "border-warning/60 focus-visible:ring-warning/40")}
         aria-describedby={`${id}-hint`}
       />
-      <p id={`${id}-hint`} className={cn("text-[11px] leading-snug text-muted-foreground", outOfRange && "text-warning")}>
-        {guide.typical}
-        {outOfRange ? " · Outside the usual band — check the value." : ""}
-      </p>
+      <div id={`${id}-hint`} className="space-y-1">
+        <p className={cn("text-[11px] leading-snug text-muted-foreground", outOfRange && "text-warning")}>
+          {guide.typical}
+          {outOfRange ? " · This looks unusual — double-check or use the suggested value." : ""}
+        </p>
+        {suggestedValue != null && onUseSuggested && !disabled ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px] text-primary"
+            onClick={() => onUseSuggested(suggestedValue)}
+          >
+            Use suggested {suggestedValue}
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -43,6 +43,14 @@ describe("permissions", () => {
     expect(isNavItemVisible("shift_engineer", { href: "/eaf/live-board", roles: [UserRole.ShiftEngineer] })).toBe(true);
   });
 
+  it("lets admin open every flow home", () => {
+    expect(canAccessRoute("admin", "/eaf/admin")).toBe(true);
+    expect(canAccessRoute("admin", "/eaf/prediction")).toBe(true);
+    expect(canAccessRoute("admin", "/eaf/production-manager")).toBe(true);
+    expect(canAccessRoute("admin", "/eaf/plant-manager-board")).toBe(true);
+    expect(canAccessRoute(" ADMIN ", "/eaf/users")).toBe(true);
+  });
+
   it("keeps Administration nav slim for Admin", () => {
     const adminAdminLinks = ADMIN_NAV.filter((i) => i.roles?.includes(UserRole.Admin)).map((i) => i.href);
     expect(adminAdminLinks).toEqual(

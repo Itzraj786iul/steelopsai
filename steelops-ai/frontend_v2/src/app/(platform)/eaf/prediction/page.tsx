@@ -24,7 +24,7 @@ import { fadeUp, staggerContainer } from "@/lib/motion";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
 
 export default function EafPredictionPage() {
-  const { recipe, update, charge, heatNumber, setHeatNumber } = useEafRecipe();
+  const { recipe, update, charge, heatNumber, setHeatNumber, setRecipe } = useEafRecipe();
   const { predict, loading, error, result } = useEafPredict();
   const active = useCurrentHeatStore((s) => s.active);
   const explain = result?.explainability;
@@ -52,7 +52,12 @@ export default function EafPredictionPage() {
       }
     >
       <HeatWorkflowStrip active={active} currentPage="predict" />
-      <PageExplainer {...PAGE_EXPLAINERS.prediction} />
+      <PageExplainer
+        title={PAGE_EXPLAINERS.prediction.title}
+        body={PAGE_EXPLAINERS.prediction.body}
+        steps={PAGE_EXPLAINERS.prediction.steps}
+        defaultOpen
+      />
 
       {sessionComplete ? (
         <PageAlert
@@ -88,7 +93,12 @@ export default function EafPredictionPage() {
         </div>
       </SectionCard>
 
-      <RecipeForm recipe={recipe} onChange={update} charge={charge} />
+      <RecipeForm
+        recipe={recipe}
+        onChange={update}
+        charge={charge}
+        onReplaceRecipe={setRecipe}
+      />
       <ValidationBanner messages={apiWarnings} />
 
       <div className="flex flex-wrap items-center gap-3">

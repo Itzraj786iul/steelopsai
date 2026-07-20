@@ -51,11 +51,11 @@ export interface NavDefinition extends NavItem {
 
 const R = UserRole;
 
-/** Floor execution — operators & shift crew. */
-const FLOOR = [R.Operator, R.ShiftEngineer, R.ProductionManager];
+/** Floor execution — operators & shift crew (+ Admin for support / demos). */
+const FLOOR = [R.Operator, R.ShiftEngineer, R.ProductionManager, R.Admin];
 
 /** Shift / production oversight. */
-const SUPERVISION = [R.ShiftEngineer, R.ProductionManager, R.PlantManager];
+const SUPERVISION = [R.ShiftEngineer, R.ProductionManager, R.PlantManager, R.Admin];
 
 /** Planning & plant oversight. */
 const PLANNING = [R.ProductionManager, R.PlantManager, R.Admin];
@@ -84,8 +84,8 @@ export const PRODUCTION_NAV: NavDefinition[] = [
  * Demoted (redirect): KPI Wall → Shift Dashboard, Supervisor Board → Live Board, Shift Overview → Shift Dashboard.
  */
 export const OPERATIONS_NAV: NavDefinition[] = [
-  { href: "/eaf/production-manager", label: "Production Hub", icon: Gauge, section: "operations", roles: [R.ProductionManager] },
-  { href: "/eaf/plant-manager-board", label: "Plant Overview", icon: Building2, section: "operations", roles: [R.PlantManager] },
+  { href: "/eaf/production-manager", label: "Production Hub", icon: Gauge, section: "operations", roles: [R.ProductionManager, R.Admin] },
+  { href: "/eaf/plant-manager-board", label: "Plant Overview", icon: Building2, section: "operations", roles: [R.PlantManager, R.Admin] },
   { href: "/eaf/shift-dashboard", label: "Shift Analytics", icon: Gauge, section: "operations", roles: [...SUPERVISION, R.MaintenanceEngineer] },
   { href: "/eaf/live-board", label: "Live Board", icon: LayoutGrid, section: "operations", roles: SUPERVISION },
   { href: "/eaf/production-plan", label: "Production Plan", icon: CalendarRange, section: "operations", roles: PLANNING },

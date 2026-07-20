@@ -1,21 +1,48 @@
+"use client";
+
 import Link from "next/link";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionCard } from "@/components/layout/section-card";
 import { ActionButton } from "@/components/data-display/action-button";
+import { useAuth } from "@/hooks/use-auth";
+import { getDefaultRouteForRole } from "@/lib/rbac/permissions";
 
 export default function UnauthorizedPage() {
+  const { user } = useAuth();
+  const home = getDefaultRouteForRole(user?.role ?? "operator");
+  const homeLabel =
+    home.includes("admin")
+      ? "Return to Admin Dashboard"
+      : home.includes("production-manager")
+        ? "Return to Production Hub"
+        : home.includes("plant-manager")
+          ? "Return to Plant Overview"
+          : home.includes("validation")
+            ? "Return to Validation"
+            : "Return to your home";
+
   return (
-    <PageContainer title="Unauthorized" description="Your role does not have access to this area.">
+    <PageContainer
+      title="Access restricted"
+      description="This page belongs to a different role. Use the sidebar links for your account, or switch to the matching demo user."
+    >
       <SectionCard>
         <EmptyState
-          title="Access restricted"
-          description="Contact your plant administrator if you need additional permissions."
+          title="You don’t have access to this area"
+          description={
+            user?.role
+              ? `Signed in as ${user.full_name || user.email} (${user.role}). Open a page from your sidebar, or sign in with Operator / Production Manager / Plant Manager / Admin to walk that flow.`
+              : "Sign in with the role that owns this flow, then use the sidebar."
+          }
         />
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <ActionButton asChild>
-            <Link href="/eaf/prediction">Return to Prediction</Link>
+            <Link href={home}>{homeLabel}</Link>
+          </ActionButton>
+          <ActionButton asChild variant="outline">
+            <Link href="/login">Switch account</Link>
           </ActionButton>
         </div>
       </SectionCard>

@@ -215,29 +215,30 @@ export function termLabel(term: GlossaryTerm, showCode = true): string {
 /** Friendly page intros for newcomers. */
 export const PAGE_EXPLAINERS = {
   prediction: {
-    title: "What happens on this page?",
-    body: "You describe one furnace batch (a “heat”) — materials and energy — and the model estimates how long that heat will take. That duration is called tap-to-tap time (TTT): the productivity clock of the furnace.",
+    title: "What is this page? (for first-time visitors)",
+    body: "You describe one furnace batch (a “heat”) — what materials go in and how much energy. The model then estimates how many minutes that batch will take. Steelmakers call that tap-to-tap time (TTT). Shorthand: cycle time in minutes.",
     steps: [
-      "Enter a heat number (batch ID from the plant).",
-      "Adjust the charge mix if needed — defaults are a realistic demo recipe.",
-      "Press Predict to get cycle time in minutes, then continue to Optimizer.",
+      "Enter any heat number (batch ID) — visitors can use 4618213.",
+      "Leave the demo recipe as-is, or tap “Load demo recipe” / “Use suggested”.",
+      "Press “Predict cycle time” — you get minutes, not a mysterious “TTT” score.",
+      "Continue to Optimize if you want a suggested better mix.",
     ],
   },
   optimizer: {
-    title: "What happens on this page?",
-    body: "The optimizer suggests small recipe changes that may shorten cycle time without breaking physics constraints. You Accept, Modify, or Reject the suggestion before validation.",
+    title: "What is this page? (for first-time visitors)",
+    body: "The optimizer suggests small recipe changes that may shorten cycle time without breaking plant physics rules. You Accept, Modify, or Reject before recording the real result.",
     steps: [
-      "Run Optimizer on the heat you just predicted.",
-      "Compare current vs suggested cycle time.",
+      "Run the suggestion on the heat you just predicted.",
+      "Compare current vs suggested cycle time (minutes).",
       "Lock Accept / Modify / Reject, then go to Validation.",
     ],
   },
   validation: {
-    title: "What happens on this page?",
-    body: "After the real heat finishes on the floor, you record the actual cycle time. That closes the loop so the plant can compare prediction vs reality.",
+    title: "What is this page? (for first-time visitors)",
+    body: "After the real furnace heat finishes, you type the actual minutes it took. That closes the loop so the plant can compare prediction vs reality.",
     steps: [
       "Confirm heat number and predicted minutes.",
-      "Enter actual tap-to-tap time from the shop floor.",
+      "Enter actual cycle time from the shop floor (typical ~50–80 min).",
       "Save to open the heat report.",
     ],
   },

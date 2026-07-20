@@ -82,7 +82,10 @@ export default function EafWhatIfPage() {
 
   if (!activeRecipe) {
     return (
-      <PageContainer title="What-if Analysis" description="Sensitivity analysis on the current heat">
+      <PageContainer
+        title="What-if explorer"
+        description="Try alternate charge mixes after you have a predicted heat."
+      >
         <EmptyHeatState />
       </PageContainer>
     );
@@ -91,28 +94,34 @@ export default function EafWhatIfPage() {
   const recipe = workingCopy ?? activeRecipe;
 
   return (
-    <PageContainer title="What-if Analysis" description="Working copy — changes do not overwrite Current Heat until applied">
-      <SectionCard title="Live Prediction (working copy)" className="mt-6">
+    <PageContainer
+      title="What-if explorer"
+      description="Move a few sliders to see how cycle time (minutes) might change. Everyday names first; plant codes stay visible."
+    >
+      <SectionCard title="Estimated cycle time" description="Minutes for this working copy — not saved until you apply">
         <p className="font-mono text-4xl font-bold text-primary">{pred?.toFixed(2) ?? "—"} min</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={() => run(recipe)} disabled={loading}>
-            {loading ? "Running…" : "Run What-if"}
+            {loading ? "Running…" : "Recalculate cycle time"}
           </Button>
           <Button variant="outline" onClick={resetToCurrent}>
-            Reset to Current Heat
+            Reset to current heat
           </Button>
           <Button variant="secondary" onClick={applyToOptimizer}>
-            Apply to Optimizer
+            Apply to Optimize
           </Button>
         </div>
         {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </SectionCard>
-      <SectionCard title="Adjust Variables (working copy)" className="mt-6">
+      <SectionCard title="Adjust inputs" description="Drag sliders — ranges show what is usual at the plant">
         <div className="grid gap-6 sm:grid-cols-2">
           {SLIDERS.map(({ key, min, max, step }) => (
-            <div key={key} className="space-y-2">
-              <Label>
-                {formatVariableLabel(key)}: {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)}
+            <div key={key} className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-3">
+              <Label className="leading-snug">
+                <span className="block text-sm font-semibold">{formatVariableLabel(key)}</span>
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  Now {Number(recipe[key]).toFixed(key === "POWER" || key === "OXY" ? 0 : 1)} · usual {min}–{max}
+                </span>
               </Label>
               <input
                 type="range"
@@ -127,7 +136,7 @@ export default function EafWhatIfPage() {
           ))}
         </div>
       </SectionCard>
-      <SectionCard title="Tornado Sensitivity" className="mt-6">
+      <SectionCard title="What moves cycle time most?" description="After recalculate — bigger bars mean bigger impact">
         <div className="h-80">
           {chartData.length ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -142,7 +151,7 @@ export default function EafWhatIfPage() {
             </ResponsiveContainer>
           ) : (
             <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Click Run What-if to compute sensitivity.
+              Click Recalculate cycle time to see sensitivity.
             </p>
           )}
         </div>

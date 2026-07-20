@@ -27,6 +27,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 const DEMO_ACCOUNTS = [
   { email: "admin@jspl.local", password: "Admin@123", role: "Admin" },
   { email: "operator@jspl.local", password: "Oper@123", role: "Operator" },
+  { email: "shift.a@jspl.local", password: "Shift@123", role: "Shift Engineer" },
+  { email: "prod.manager@jspl.local", password: "Prod@123", role: "Production Manager" },
   { email: "plant.manager@jspl.local", password: "Plant@123", role: "Plant Manager" },
 ];
 
