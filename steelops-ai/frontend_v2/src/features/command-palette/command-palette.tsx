@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { startTransition, useMemo } from "react";
 
 import {
   CommandDialog,
@@ -29,7 +29,7 @@ export function CommandPalette() {
   const router = useRouter();
   const { user } = useAuth();
   const { open, setOpen, query, setQuery, addRecent } = useCommandPaletteStore();
-  const debouncedQuery = useDebounce(query, 250);
+  const debouncedQuery = useDebounce(query, 120);
 
   const baseItems = useMemo(() => {
     const role = user?.role ?? "operator";
@@ -50,7 +50,12 @@ export function CommandPalette() {
     addRecent(item.label);
     setOpen(false);
     setQuery("");
-    if (item.href) router.push(item.href);
+    if (item.href) {
+      const href = item.href;
+      startTransition(() => {
+        router.push(href);
+      });
+    }
   };
 
   return (
@@ -61,7 +66,14 @@ export function CommandPalette() {
         {Object.entries(grouped).map(([group, groupItems]) => (
           <CommandGroup key={group} heading={GROUP_LABELS[group as keyof typeof GROUP_LABELS] ?? group}>
             {groupItems.map((item) => (
-              <CommandItem key={item.id} value={item.id} onSelect={handleSelect}>
+              <CommandItem
+                key={item.id}
+                value={item.id}
+                onSelect={handleSelect}
+                onMouseEnter={() => {
+                  if (item.href) router.prefetch(item.href.split("?")[0]);
+                }}
+              >
                 {item.label}
               </CommandItem>
             ))}

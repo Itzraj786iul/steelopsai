@@ -112,15 +112,13 @@ export default function EafValidationPage() {
         recommendationApplied: recommendationAppliedLabel,
         operatorComments: form.operator_comments,
       });
-      const { syncHeatAfterValidation } = await import("@/lib/heat-history-sync");
-      const record = await syncHeatAfterValidation();
       setSavedOk(true);
       const heatQ = encodeURIComponent(heatNumber);
-      const recordQ = record?.id ? `&recordId=${encodeURIComponent(record.id)}` : "";
-      router.push(`/eaf/reports?completed=1&heat=${heatQ}${recordQ}`);
+      // Navigate immediately — heat history sync continues in the background.
+      router.push(`/eaf/reports?completed=1&heat=${heatQ}`);
+      void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterValidation());
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "Failed to save validation record"));
-    } finally {
       setSaving(false);
     }
   };

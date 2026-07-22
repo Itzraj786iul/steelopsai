@@ -103,7 +103,7 @@ export function TttComparisonBars({
                   className={cn("h-full rounded-full", row.barClass, row.value == null && "opacity-30")}
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
-                  transition={{ ...industrialEase, delay: 0.08 + index * 0.08, duration: 0.45 }}
+                  transition={{ ...industrialEase, delay: index * 0.02, duration: 0.18 }}
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ function StackedBurdenBar({
                   title={`${RECIPE_FIELD_LABELS[key]}: ${v.toFixed(1)} t`}
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
-                  transition={{ ...industrialEase, delay: delay + i * 0.05, duration: 0.4 }}
+                  transition={{ ...industrialEase, delay: i * 0.02, duration: 0.16 }}
                 />
               );
             })
@@ -282,7 +282,7 @@ export function TrustMeterGauge({
             pathLength={1}
             initial={{ pathLength: 0 }}
             animate={{ pathLength: score != null ? score / 100 : 0 }}
-            transition={{ ...industrialEase, duration: 0.55 }}
+            transition={{ ...industrialEase, duration: 0.2 }}
           />
         </svg>
         <div className="pointer-events-none absolute inset-x-0 bottom-1 text-center">

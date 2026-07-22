@@ -50,20 +50,23 @@ function rememberRecordId(data: HeatRecord | null | undefined) {
 
 /** Load a MES planned heat into the current session (recipe pre-filled). */
 export async function openPlannedHeat(heatNumber: string): Promise<boolean> {
-  try {
-    const { data } = await mesApi.getHeatByNumber(heatNumber);
-    const recipe = { ...DEFAULT_RECIPE, ...(data.recipe || {}) } as EafRecipe;
-    const store = useCurrentHeatStore.getState();
-    store.setHeatNumber(heatNumber);
-    store.setRecipe(recipe);
-    if (data.assigned_furnace) {
-      useOpsContextStore.getState().setFurnaceId(data.assigned_furnace);
+  // Instant local handoff so navigation never waits on MES.
+  const store = useCurrentHeatStore.getState();
+  store.setHeatNumber(heatNumber);
+  void (async () => {
+    try {
+      const { data } = await mesApi.getHeatByNumber(heatNumber);
+      const recipe = { ...DEFAULT_RECIPE, ...(data.recipe || {}) } as EafRecipe;
+      store.setRecipe(recipe);
+      if (data.assigned_furnace) {
+        useOpsContextStore.getState().setFurnaceId(data.assigned_furnace);
+      }
+      void notifyMes(heatNumber, "heat_start", store.active?.id);
+    } catch {
+      /* prediction page still usable with heat number + defaults */
     }
-    await notifyMes(heatNumber, "heat_start", store.active?.id);
-    return true;
-  } catch {
-    return false;
-  }
+  })();
+  return true;
 }
 
 export async function archiveHeatRecord(heatRecordId: string): Promise<void> {

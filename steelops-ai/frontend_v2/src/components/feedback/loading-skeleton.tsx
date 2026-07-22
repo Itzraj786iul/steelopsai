@@ -18,18 +18,17 @@ export function LoadingSkeleton({ rows = 4, className }: LoadingSkeletonProps) {
 
 export function PageLoadingSkeleton() {
   return (
-    <div className="space-y-8 animate-fade-in" role="status" aria-label="Loading page">
-      <div className="space-y-3">
-        <Skeleton className="h-10 w-72 shimmer" />
-        <Skeleton className="h-4 w-96 shimmer" />
+    <div className="space-y-4 animate-fade-in" role="status" aria-label="Loading page">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-56 shimmer" />
+        <Skeleton className="h-4 w-80 shimmer" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl shimmer" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-lg shimmer" />
         ))}
       </div>
-      <Skeleton className="h-64 rounded-xl shimmer" />
-      <LoadingSkeleton rows={6} />
+      <Skeleton className="h-40 rounded-lg shimmer" />
     </div>
   );
 }

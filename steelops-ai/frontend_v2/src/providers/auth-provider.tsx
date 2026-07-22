@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isHydrated, setUser, clearAuth } = useAuthStore();
 
-  const { isLoading: isMeLoading, isFetching } = useQuery({
+  useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: async () => {
       const response = await authApi.me();
@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     enabled: isHydrated && !!getAccessToken() && !isGuestAuthMode() && !user,
     retry: false,
+    staleTime: 60_000,
   });
 
   useEffect(() => {
@@ -50,8 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.assign("/login");
   };
 
-  // Don't flip back into a blocking loading state after login already set the user.
-  const isLoading = !isHydrated || ((isMeLoading || isFetching) && !user && !!getAccessToken());
+  // Never block the shell on /me — token + persisted user is enough to paint.
+  // Hydration finishes almost instantly; treat missing hydrate + no token as the only hard wait.
+  const isLoading = !isHydrated && !getAccessToken() && !user;
 
   return (
     <AuthContext.Provider

@@ -13,7 +13,7 @@ interface AppSplashProps {
 
 const SKIP_KEY = "steelops_skip_splash";
 
-export function AppSplash({ minDurationMs = 180 }: AppSplashProps) {
+export function AppSplash({ minDurationMs = 0 }: AppSplashProps) {
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
     // Skip after login redirect / when already authenticated this session.
@@ -28,6 +28,10 @@ export function AppSplash({ minDurationMs = 180 }: AppSplashProps) {
 
   useEffect(() => {
     if (!visible) return;
+    if (minDurationMs <= 0) {
+      setVisible(false);
+      return;
+    }
     const timer = window.setTimeout(() => setVisible(false), minDurationMs);
     return () => window.clearTimeout(timer);
   }, [minDurationMs, visible]);

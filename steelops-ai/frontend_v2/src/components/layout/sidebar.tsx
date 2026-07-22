@@ -150,14 +150,14 @@ export function Sidebar({ badges }: SidebarProps) {
   const { canShowNavItem } = usePermissions();
   const { plant } = usePlantContext();
 
-  const flatNav = flattenNavItems(ALL_SECTIONS);
-
-  // Prefetch common production routes so first click isn't waiting on compile/chunk load.
+  // Prefetch every visible nav route so sidebar clicks feel instant.
   useEffect(() => {
-    for (const item of flattenNavItems(PRODUCTION_NAV)) {
+    for (const item of flattenNavItems(ALL_SECTIONS)) {
       if (canShowNavItem(item)) router.prefetch(item.href.split("?")[0]);
     }
   }, [canShowNavItem, router]);
+
+  const flatNav = flattenNavItems(ALL_SECTIONS);
 
   const pinnedItems = pinned
     .map((href) => flatNav.find((item) => item.href === href))

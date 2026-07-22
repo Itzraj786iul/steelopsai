@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Search, Trash2 } from "lucide-react";
 
@@ -53,6 +53,7 @@ export function HeatHistoryView() {
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState(() => searchParams.get("q") || searchParams.get("highlight") || "");
   const [shift, setShift] = useState<string>("all");
@@ -62,16 +63,19 @@ export function HeatHistoryView() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const recoveredRef = useRef(false);
+  const hasLoadedOnce = useRef(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (!hasLoadedOnce.current) setLoading(true);
+    else setRefreshing(true);
     setError(null);
     try {
-      try {
-        const { recoverSessionHistoryToServer } = await import("@/lib/heat-history-sync");
-        await recoverSessionHistoryToServer();
-      } catch {
-        /* non-fatal */
+      if (!recoveredRef.current) {
+        recoveredRef.current = true;
+        void import("@/lib/heat-history-sync")
+          .then((m) => m.recoverSessionHistoryToServer())
+          .catch(() => undefined);
       }
       const { data } = await eafApi.heatsList({
         q: q || undefined,
@@ -87,10 +91,12 @@ export function HeatHistoryView() {
       setTotal(data.total);
       setPages(data.pages);
       setSelected(new Set());
+      hasLoadedOnce.current = true;
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, "Failed to load heat history"));
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [q, shift, status, period, sortBy, sortDir, page]);
 
@@ -278,6 +284,7 @@ export function HeatHistoryView() {
           />
         ) : (
           <>
+            <div className={cn(refreshing && "pointer-events-none opacity-60 transition-opacity")}>
             <EnterpriseTable>
               <EnterpriseTableHead>
                 <EnterpriseTableHeaderCell>
@@ -367,10 +374,12 @@ export function HeatHistoryView() {
                 ))}
               </EnterpriseTableBody>
             </EnterpriseTable>
+            </div>
             <div className="mt-4 flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 Page {page} of {pages}
                 {selected.size ? ` · ${selected.size} selected` : ""}
+                {refreshing ? " · updating…" : ""}
               </p>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

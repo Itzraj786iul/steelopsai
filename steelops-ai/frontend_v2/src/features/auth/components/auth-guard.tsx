@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { PageLoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccessRoute } from "@/lib/rbac/permissions";
 import { getAccessToken } from "@/services/api-client";
@@ -13,6 +12,10 @@ interface AuthGuardProps {
   pathname: string;
 }
 
+/**
+ * Keep the shell visible. Only redirect when we know auth failed —
+ * never blank the whole app while hydrating or refreshing /me.
+ */
 export function AuthGuard({ children, pathname }: AuthGuardProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -21,6 +24,7 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
   const isFeedbackRedirect = pathname.startsWith("/eaf/feedback");
 
   useEffect(() => {
+    // Wait for persist hydrate before deciding to kick to login.
     if (isLoading) return;
 
     if (!authed || !getAccessToken()) {
@@ -38,29 +42,22 @@ export function AuthGuard({ children, pathname }: AuthGuardProps) {
     }
   }, [authed, isFeedbackRedirect, isLoading, pathname, router, user]);
 
-  if (isLoading || !authed) {
-    return (
-      <div className="p-6">
-        <PageLoadingSkeleton />
-      </div>
-    );
+  // Soft gate: if we already have a token/user, render immediately.
+  if (authed && !isFeedbackRedirect) {
+    if (user && pathname.startsWith("/eaf") && !canAccessRoute(user.role, pathname)) {
+      return (
+        <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-muted-foreground">
+          Checking access…
+        </div>
+      );
+    }
+    return <>{children}</>;
   }
 
-  if (isFeedbackRedirect) {
-    return (
-      <div className="p-6">
-        <PageLoadingSkeleton />
-      </div>
-    );
-  }
-
-  if (user && pathname.startsWith("/eaf") && !canAccessRoute(user.role, pathname)) {
-    return (
-      <div className="p-6">
-        <PageLoadingSkeleton />
-      </div>
-    );
-  }
-
-  return <>{children}</>;
+  // No token yet — tiny placeholder while hydrate/redirect runs (not a full skeleton wall).
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-muted-foreground">
+      {isLoading ? "Restoring session…" : "Redirecting to sign in…"}
+    </div>
+  );
 }
