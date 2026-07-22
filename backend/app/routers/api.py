@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from typing import Literal
+from typing import Any, Callable, Literal
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request, Response
 
 from app.core.config import DEFAULT_RECIPE
 from app.schemas.recipe import (
@@ -46,8 +47,13 @@ from app.services.validation_store import (
 )
 from app.services.ml_service import (
     generate_report,
+    get_historical_stats,
+    get_optimizer_engine,
+    get_prediction_engine,
     historical_comparison,
     historical_statistics,
+    mark_ml_warm,
+    ml_is_warm,
     ml_service,
     optimize_recipe,
     predict_recipe,
@@ -57,6 +63,37 @@ from app.services.ml_service import (
 
 logger = logging.getLogger("eaf.api")
 router = APIRouter()
+
+
+async def _run_ml(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    """Run blocking ML off the event loop so login/health stay responsive."""
+    if kwargs:
+        return await asyncio.to_thread(lambda: fn(*args, **kwargs))
+    return await asyncio.to_thread(fn, *args)
+
+
+def _persist_prediction(req: PredictRequest, data: dict[str, Any], user: dict[str, Any] | None) -> None:
+    try:
+        from app.services import heat_history_service as heat_svc
+
+        persist = req.persistence_payload()
+        user = user or {}
+        heat_svc.upsert_from_prediction(
+            {
+                **persist,
+                "recipe_inputs": req.to_dict(),
+                "prediction": data,
+                "hybrid": {},
+                "operator_id": persist.get("operator_id") or user.get("id") or "",
+                "operator_name": persist.get("operator_name")
+                or user.get("full_name")
+                or user.get("email")
+                or "",
+                "predicted_by": user.get("id"),
+            }
+        )
+    except Exception:
+        logger.exception("Background Heat History persist failed after prediction")
 
 
 @router.get(
@@ -70,6 +107,19 @@ router = APIRouter()
 )
 async def health() -> HealthResponse:
     return HealthResponse(**ml_service.health())
+
+
+@router.post(
+    "/ml/warm",
+    summary="Warm ML engines",
+    description="Loads prediction/optimizer artifacts into memory. Safe to call from the login page.",
+)
+async def ml_warm() -> dict[str, Any]:
+    if ml_is_warm():
+        return {"status": "ready", "warmed": False}
+    await _run_ml(lambda: (get_prediction_engine(), get_optimizer_engine(), get_historical_stats()))
+    mark_ml_warm()
+    return {"status": "ready", "warmed": True}
 
 
 @router.get(
@@ -132,34 +182,11 @@ async def model_info() -> ModelInfoResponse:
         }
     },
 )
-async def predict(req: PredictRequest, request: Request) -> PredictionResponse:
-    data = predict_recipe(req.to_dict())
-    # Always persist to Heat History SQLite so records survive browser close
-    # (frontend sync remains as a secondary path for optimizer/validation updates).
-    try:
-        from app.services import heat_history_service as heat_svc
-
-        user = getattr(request.state, "user", None) or {}
-        persist = req.persistence_payload()
-        record = heat_svc.upsert_from_prediction(
-            {
-                **persist,
-                "recipe_inputs": req.to_dict(),
-                "prediction": data,
-                "hybrid": {},
-                "operator_id": persist.get("operator_id") or user.get("id") or "",
-                "operator_name": persist.get("operator_name")
-                or user.get("full_name")
-                or user.get("email")
-                or "",
-                "predicted_by": user.get("id"),
-            }
-        )
-        meta = dict(data.get("metadata") or {})
-        meta["heat_record_id"] = record.get("id")
-        data["metadata"] = meta
-    except Exception:
-        logger.exception("Heat History persist failed after prediction — ML result still returned")
+async def predict(req: PredictRequest, request: Request, background_tasks: BackgroundTasks) -> PredictionResponse:
+    data = await _run_ml(predict_recipe, req.to_dict())
+    # Persist off the critical path — frontend already has a secondary sync.
+    user = getattr(request.state, "user", None) or {}
+    background_tasks.add_task(_persist_prediction, req, data, user)
     return PredictionResponse(**data)
 
 
@@ -176,7 +203,8 @@ async def predict(req: PredictRequest, request: Request) -> PredictionResponse:
     ),
 )
 async def optimize(req: OptimizeRequest) -> OptimizeResponse:
-    return OptimizeResponse(**optimize_recipe(req.to_dict(), n_generate=req.n_generate))
+    data = await _run_ml(optimize_recipe, req.to_dict(), n_generate=req.n_generate)
+    return OptimizeResponse(**data)
 
 
 @router.post(
@@ -186,7 +214,8 @@ async def optimize(req: OptimizeRequest) -> OptimizeResponse:
     description="Evaluates local TTT sensitivity by perturbing selected recipe variables around the current operating point.",
 )
 async def whatif(req: WhatIfRequest) -> WhatIfResponse:
-    return WhatIfResponse(**whatif_analysis(req.to_dict(), req.variables))
+    data = await _run_ml(whatif_analysis, req.to_dict(), req.variables)
+    return WhatIfResponse(**data)
 
 
 @router.get(
@@ -271,7 +300,7 @@ async def report_get(
 )
 async def hybrid_evaluate(req: HybridEvaluateRequest) -> HybridTrustResponse:
     try:
-        data = evaluate_hybrid(req.to_dict(), heat_id=req.heat_id)
+        data = await _run_ml(evaluate_hybrid, req.to_dict(), heat_id=req.heat_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Hybrid evaluation failed: {exc}") from exc
     return HybridTrustResponse(**data)
@@ -288,7 +317,7 @@ async def hybrid_evaluate(req: HybridEvaluateRequest) -> HybridTrustResponse:
 )
 async def optimize_v2_route(req: PredictRequest) -> OptimizeV2Response:
     try:
-        data = optimize_v2(req.to_dict())
+        data = await _run_ml(optimize_v2, req.to_dict())
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Optimizer V2 failed: {exc}") from exc
     return OptimizeV2Response(**data)

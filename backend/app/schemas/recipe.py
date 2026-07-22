@@ -83,7 +83,12 @@ class PredictRequest(RecipeInput):
 
 
 class OptimizeRequest(RecipeInput):
-    n_generate: int = Field(1000, ge=100, le=2000, description="Candidate recipes evaluated by the optimizer")
+    n_generate: int = Field(
+        250,
+        ge=100,
+        le=2000,
+        description="Candidate recipes evaluated by the optimizer (250 default for interactive UI)",
+    )
 
 
 class WhatIfRequest(RecipeInput):

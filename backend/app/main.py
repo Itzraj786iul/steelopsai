@@ -45,10 +45,19 @@ async def lifespan(app: FastAPI):
         loop = asyncio.get_running_loop()
         start = time.perf_counter()
         try:
-            await loop.run_in_executor(
-                None,
-                lambda: (get_prediction_engine(), get_optimizer_engine(), get_historical_stats()),
-            )
+            def _warm() -> None:
+                get_prediction_engine()
+                get_optimizer_engine()
+                get_historical_stats()
+                # Precompute neighbour search matrices used on every /predict.
+                try:
+                    from app.services.explainability_service import _similarity_basis
+
+                    _similarity_basis()
+                except Exception:
+                    logger.exception("Explainability warm skipped")
+
+            await loop.run_in_executor(None, _warm)
             from app.services.ml_service import mark_ml_warm
 
             mark_ml_warm()

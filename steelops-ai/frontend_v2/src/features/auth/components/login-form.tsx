@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Flame } from "lucide-react";
 
+import { skipAppSplashOnce } from "@/components/feedback/app-splash";
 import { ActionButton } from "@/components/data-display/action-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,11 +50,18 @@ function useApiConfigWarning(): string | null {
   }, []);
 }
 
+function warmApi() {
+  // Wake host + load ML into RAM so first Predict is warm.
+  void fetch(`${EAF_API_URL}/health`).catch(() => undefined);
+  void fetch(`${EAF_API_URL}/ml/warm`, { method: "POST" }).catch(() => undefined);
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setTokens, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const [statusHint, setStatusHint] = useState<string | null>(null);
   const configWarning = useApiConfigWarning();
 
   const {
@@ -65,16 +73,19 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Lightweight wake-up (version does not load ML) so first click is not cold.
   useEffect(() => {
-    const ctrl = new AbortController();
-    fetch(`${EAF_API_URL}/version`, { signal: ctrl.signal }).catch(() => undefined);
-    return () => ctrl.abort();
+    warmApi();
+    const keepAlive = window.setInterval(warmApi, 4 * 60 * 1000);
+    return () => window.clearInterval(keepAlive);
   }, []);
 
   const onSubmit = async (values: LoginValues) => {
     setError(null);
+    setStatusHint("Signing in…");
+    const started = performance.now();
     try {
+      // Kick ML warm in parallel with auth (does not require token).
+      warmApi();
       const tokenResponse = await authApi.login(values);
       const data = tokenResponse.data as EnterpriseLoginResponse;
       setTokens(data.access_token, data.refresh_token, data.expires_in);
@@ -83,14 +94,14 @@ export function LoginForm() {
       const next = searchParams.get("next");
       const nextPath = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
       const destination = nextPath || getDefaultRouteForRole(user.role);
-      // Soft nav is fast; hard assign only as fallback if soft nav stalls.
+      skipAppSplashOnce();
+      const elapsed = Math.round(performance.now() - started);
+      if (elapsed > 2500) {
+        setStatusHint("API was waking up — next actions will be faster.");
+      }
       router.replace(destination);
-      window.setTimeout(() => {
-        if (window.location.pathname.startsWith("/login")) {
-          window.location.assign(destination);
-        }
-      }, 800);
     } catch (err) {
+      setStatusHint(null);
       setError(getApiErrorMessage(err, "Invalid email or password"));
     }
   };
@@ -122,6 +133,7 @@ export function LoginForm() {
             {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {!error && statusHint ? <p className="text-sm text-muted-foreground">{statusHint}</p> : null}
           <ActionButton type="submit" className="w-full" disabled={isSubmitting || !!configWarning}>
             {isSubmitting ? "Signing in…" : "Sign in"}
           </ActionButton>

@@ -14,7 +14,9 @@ import {
 } from "@/lib/api/eaf";
 import { getApiErrorMessage } from "@/services/api-client";
 import { useAuditStore } from "@/stores/audit-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { useCurrentHeatStore } from "@/stores/current-heat-store";
+import { useOpsContextStore } from "@/stores/ops-context-store";
 import { usePerformanceStore } from "@/stores/performance-store";
 
 export function useEafRecipe() {
@@ -84,12 +86,9 @@ export function useEafPredict() {
       const start = performance.now();
       try {
         const activeBefore = useCurrentHeatStore.getState().active;
-        const { useAuthStore } = await import("@/stores/auth-store");
-        const { useOpsContextStore } = await import("@/stores/ops-context-store");
         const user = useAuthStore.getState().user;
         const ctx = useOpsContextStore.getState();
 
-        // Show core prediction as soon as ML returns — don't block on hybrid trust.
         const { data } = await eafApi.predict(recipe, {
           heat_number: heatId || activeBefore?.heatNumber || undefined,
           session_id: activeBefore?.id,
@@ -130,24 +129,10 @@ export function useEafPredict() {
           });
         }
 
-        // Secondary sync (optimizer fields / MES) — primary persist already happened on /predict
+        // Persist once via lightweight sync (backend also writes in background).
         void import("@/lib/heat-history-sync").then((m) => m.syncHeatAfterPrediction());
 
-        void eafApi
-          .hybridEvaluate(recipe, heatId)
-          .then((hybridRes) => {
-            const hybrid = hybridRes.data;
-            const hybridElapsed = performance.now() - start;
-            usePerformanceStore.getState().record({ type: "hybrid", ms: hybridElapsed });
-            updatePrediction(data, hybrid, warnings);
-            setResult({ ...data, hybrid_trust: hybrid } as PredictResponse & {
-              hybrid_trust?: HybridTrustResponse;
-            });
-          })
-          .catch(() => {
-            /* hybrid is optional enrichment */
-          });
-
+        // Hybrid trust is research enrichment — do not block or tax every operator Predict.
         return data;
       } catch (e: unknown) {
         const msg = getApiErrorMessage(e, "Prediction failed");

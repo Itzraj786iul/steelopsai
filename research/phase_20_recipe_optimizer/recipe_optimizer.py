@@ -88,7 +88,7 @@ class AdjustmentConfig:
     power_pct: float = 0.05
     oxy_pct: float = 0.05
     charge_tolerance_t: float = 2.0
-    n_generate: int = 1000
+    n_generate: int = 250
 
 
 @dataclass
@@ -115,6 +115,7 @@ class HistoricalSimilarityIndex:
     weights: np.ndarray
     cols: list[str]
     extreme_threshold: float
+    hist_norm: np.ndarray | None = None
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame) -> HistoricalSimilarityIndex:
@@ -124,11 +125,11 @@ class HistoricalSimilarityIndex:
         std = matrix.std(axis=0)
         std[std < 1e-6] = 1.0
         weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
-        normed = (matrix - mean) / std
-        sample_size = min(2000, len(normed))
+        hist_norm = (matrix - mean) / std
+        sample_size = min(2000, len(hist_norm))
         rng = np.random.default_rng(RANDOM_STATE)
-        idx = rng.choice(len(normed), size=sample_size, replace=False)
-        sample = normed[idx] * weights
+        idx = rng.choice(len(hist_norm), size=sample_size, replace=False)
+        sample = hist_norm[idx] * weights
         dists: list[float] = []
         for row in sample:
             diff = sample - row
@@ -141,12 +142,16 @@ class HistoricalSimilarityIndex:
             weights=weights,
             cols=cols,
             extreme_threshold=extreme,
+            hist_norm=hist_norm,
         )
 
     def nearest_distance(self, recipe: dict[str, Any]) -> float:
         vec = np.array([float(recipe[c]) for c in self.cols], dtype=float)
         normed = (vec - self.mean) / self.std
-        hist_norm = (self.matrix - self.mean) / self.std
+        # Cache hist_norm on the index — recomputing every candidate was O(n)×candidates.
+        hist_norm = self.hist_norm if self.hist_norm is not None else (self.matrix - self.mean) / self.std
+        if self.hist_norm is None:
+            self.hist_norm = hist_norm
         diff = (hist_norm - normed) * self.weights
         return float(np.sqrt((diff * diff).sum(axis=1)).min())
 

@@ -467,15 +467,17 @@ eafClient.interceptors.response.use(
 );
 
 export const eafApi = {
-  health: () => eafClient.get<{ status: string; model_loaded: boolean }>("/health"),
-  modelInfo: () => eafClient.get<ModelInfoResponse>("/model-info"),
   predict: (recipe: EafRecipe, persist?: PredictPersistMeta) =>
     eafClient.post<PredictResponse>("/predict", { ...recipe, ...persist }),
-  optimize: (recipe: EafRecipe, n_generate = 1000) =>
+  /** Interactive default 250 candidates — research can pass higher. */
+  optimize: (recipe: EafRecipe, n_generate = 250) =>
     eafClient.post<OptimizeResponse>("/optimize", { ...recipe, n_generate }),
   optimizeV2: (recipe: EafRecipe) => eafClient.post<OptimizeV2Response>("/optimize/v2", recipe),
   hybridEvaluate: (recipe: EafRecipe, heat_id = "") =>
     eafClient.post<HybridTrustResponse>("/hybrid/evaluate", { ...recipe, heat_id }),
+  warmMl: () => eafClient.post<{ status: string; warmed: boolean }>("/ml/warm"),
+  health: () => eafClient.get<{ status: string; model_loaded: boolean }>("/health"),
+  modelInfo: () => eafClient.get<ModelInfoResponse>("/model-info"),
   whatif: (recipe: EafRecipe) => eafClient.post("/whatif", recipe),
   historical: (recipe: EafRecipe) => eafClient.post<HistoricalResponse>("/historical", recipe),
   processHealth: (recipe: EafRecipe) =>

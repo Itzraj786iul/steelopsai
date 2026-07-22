@@ -112,8 +112,8 @@ def _historical_enriched() -> pd.DataFrame:
 
 
 @lru_cache(maxsize=1)
-def _similarity_basis() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Planning-column matrix + mean/std + per-feature weights."""
+def _similarity_basis() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Planning-column matrix + mean/std + weights + pre-normalized hist (critical path cache)."""
     df = _historical_enriched()
     cols = [c for c in PLANNING_SIM_COLS if c in df.columns]
     matrix = df[cols].to_numpy(dtype=float)
@@ -121,7 +121,8 @@ def _similarity_basis() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
     std = matrix.std(axis=0)
     std[std < 1e-6] = 1.0
     weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
-    return matrix, mean, std, weights
+    hist_norm = (matrix - mean) / std
+    return matrix, mean, std, weights, hist_norm
 
 
 def _recipe_deltas(recipe: dict[str, Any], hist_row: pd.Series) -> dict[str, float]:
@@ -158,7 +159,7 @@ def find_similar_heats(
     if not cols or df.empty:
         return []
 
-    matrix, mean, std, weights = _similarity_basis()
+    matrix, mean, std, weights, hist_norm = _similarity_basis()
     # Recompute if column set drifted (cache safety)
     if matrix.shape[1] != len(cols):
         matrix = df[cols].to_numpy(dtype=float)
@@ -166,10 +167,10 @@ def find_similar_heats(
         std = matrix.std(axis=0)
         std[std < 1e-6] = 1.0
         weights = np.array([SIM_FEATURE_WEIGHTS.get(c, 1.0) for c in cols], dtype=float)
+        hist_norm = (matrix - mean) / std
 
     vec = np.array([float(recipe.get(c, 0.0)) for c in cols], dtype=float)
     normed_query = (vec - mean) / std
-    hist_norm = (matrix - mean) / std
     diff = (hist_norm - normed_query) * weights
     distances = np.sqrt((diff * diff).sum(axis=1))
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from typing import Callable
 
 from fastapi import Request, Response
@@ -19,10 +20,34 @@ from app.services import enterprise_auth as auth
 
 REQUIRE_AUTH = os.environ.get("EAF_REQUIRE_AUTH", "1").strip() not in {"0", "false", "False", "no"}
 
+# Short-lived cache so every /predict does not re-hit SQLite for the same JWT subject.
+_AUTH_CACHE_TTL_S = float(os.environ.get("EAF_AUTH_CACHE_TTL", "45"))
+_auth_public_cache: dict[str, tuple[float, dict]] = {}
+
+
+def _cached_user_public(user_id: str) -> dict | None:
+    hit = _auth_public_cache.get(user_id)
+    if not hit:
+        return None
+    expires_at, public = hit
+    if time.monotonic() > expires_at:
+        _auth_public_cache.pop(user_id, None)
+        return None
+    return public
+
+
+def _store_user_public(user_id: str, public: dict) -> None:
+    _auth_public_cache[user_id] = (time.monotonic() + _AUTH_CACHE_TTL_S, public)
+    # Soft bound cache size
+    if len(_auth_public_cache) > 500:
+        oldest = min(_auth_public_cache.items(), key=lambda kv: kv[1][0])[0]
+        _auth_public_cache.pop(oldest, None)
+
 PUBLIC_EXACT = {
     "/",
     "/health",
     "/version",
+    "/ml/warm",
     "/auth/login",
     "/auth/refresh",
     "/docs",
@@ -96,18 +121,22 @@ class EnterpriseAuthMiddleware(BaseHTTPMiddleware):
 
         try:
             payload = auth.decode_access_token(token)
-            user = auth.get_user_by_id(payload["sub"])
-            if not user:
-                return JSONResponse(
-                    {"detail": "Session expired — please sign in again"},
-                    status_code=401,
-                )
-            if not user["is_active"]:
-                return JSONResponse(
-                    {"detail": "This account is deactivated — contact an admin or sign in with another user"},
-                    status_code=401,
-                )
-            public = auth.user_public(user)
+            user_id = payload["sub"]
+            public = _cached_user_public(user_id)
+            if public is None:
+                user = auth.get_user_by_id(user_id)
+                if not user:
+                    return JSONResponse(
+                        {"detail": "Session expired — please sign in again"},
+                        status_code=401,
+                    )
+                if not user["is_active"]:
+                    return JSONResponse(
+                        {"detail": "This account is deactivated — contact an admin or sign in with another user"},
+                        status_code=401,
+                    )
+                public = auth.user_public(user)
+                _store_user_public(user_id, public)
             request.state.user = public
         except Exception:
             return JSONResponse({"detail": "Invalid or expired token"}, status_code=401)

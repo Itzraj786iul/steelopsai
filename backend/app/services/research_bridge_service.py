@@ -27,7 +27,8 @@ def _hybrid_engine():
     _ensure_paths()
     from hybrid_decision_engine import HybridDecisionEngine  # noqa: WPS433
 
-    return HybridDecisionEngine(n_generate=400)
+    # Interactive UI budget — research scripts can construct with higher n.
+    return HybridDecisionEngine(n_generate=200)
 
 
 @lru_cache(maxsize=1)
@@ -35,14 +36,21 @@ def _optimizer_v2():
     _ensure_paths()
     from experimental_optimizer_v2 import ExperimentalOptimizerV2  # noqa: WPS433
 
-    return ExperimentalOptimizerV2(n_generate=400)
+    return ExperimentalOptimizerV2(n_generate=200)
 
 
 def evaluate_hybrid(recipe: dict[str, Any], heat_id: str = "") -> dict[str, Any]:
     engine = _hybrid_engine()
     result = engine.evaluate(recipe, heat_id=heat_id or "")
-    opt = _optimizer_v2().optimize(recipe)
-    best = opt.best
+    # Use hybrid engine output only — a second V2 optimize() duplicated hundreds of model calls.
+    top5 = list(getattr(result, "top5", None) or [])
+    best = top5[0] if top5 else {}
+    if not isinstance(best, dict):
+        best = {
+            "historical_similarity_pct": getattr(best, "historical_similarity_pct", 0),
+            "stability": getattr(best, "stability", 0),
+            "explanation": getattr(best, "explanation", {}),
+        }
     return {
         "heat_id": heat_id,
         "current_ttt": result.current_ttt,
@@ -55,8 +63,8 @@ def evaluate_hybrid(recipe: dict[str, Any], heat_id: str = "") -> dict[str, Any]
         "physics_confidence": result.physics_confidence,
         "ai_confidence": result.ai_confidence,
         "industrial_confidence": result.industrial_confidence,
-        "historical_similarity_pct": best.historical_similarity_pct if best else 0,
-        "recommendation_stability": best.stability if best else 0,
+        "historical_similarity_pct": best.get("historical_similarity_pct", 0) or 0,
+        "recommendation_stability": best.get("stability", 0) or 0,
         "agreement_pct": result.agreement_pct,
         "consensus": result.consensus,
         "decision_tree": result.decision_tree,
@@ -64,7 +72,7 @@ def evaluate_hybrid(recipe: dict[str, Any], heat_id: str = "") -> dict[str, Any]
         "digital_twin": result.digital_twin,
         "recommended_recipe": result.recommended_recipe,
         "top5": result.top5,
-        "explanation": best.explanation if best else {},
+        "explanation": best.get("explanation") or {},
     }
 
 
