@@ -202,6 +202,15 @@
     @apply min-h-[7rem];
   }
 
+  /* Operator floor density — less card chrome, clearer primary actions */
+  .operator-flow .operator-primary-input {
+    @apply h-12 text-base font-mono tracking-wide;
+  }
+
+  .operator-flow .operator-decision-grid {
+    @apply grid gap-2 sm:grid-cols-3;
+  }
+
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }

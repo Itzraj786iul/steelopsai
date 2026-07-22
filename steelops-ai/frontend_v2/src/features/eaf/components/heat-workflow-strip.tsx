@@ -59,10 +59,10 @@ const STAGES: StageDef[] = [
 ];
 
 const STAGE_BLURBS: Record<StageId, string> = {
-  predict: "Estimate cycle time",
-  optimize: "Improve the mix",
+  predict: "Estimate minutes",
+  optimize: "Safer mix options",
   validate: "Enter real minutes",
-  complete: "View the heat report",
+  complete: "Heat package",
 };
 
 function stageStatuses(active: HeatSessionSnapshot | null): { id: StageId; status: StageStatus }[] {
@@ -85,7 +85,7 @@ interface HeatWorkflowStripProps {
 
 /**
  * Shared industrial step strip: Predict → Optimize → Validate → Report.
- * Hides redundant "Do next" when the operator is already on that step.
+ * Dense HMI chrome — one job signal, clear current step, minimal chrome height.
  */
 export function HeatWorkflowStrip({ active = null, currentPage, className }: HeatWorkflowStripProps) {
   const page: StageId | undefined = currentPage === "reports" ? "complete" : currentPage;
@@ -99,14 +99,28 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
   const showDoNext = !!next && page !== next.id && !pathComplete;
 
   return (
-    <div className={cn("min-w-0 overflow-hidden rounded-xl border border-border/70 bg-muted/15 p-3 sm:p-4", className)}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+    <div
+      className={cn(
+        "min-w-0 overflow-hidden rounded-lg border border-border/80 bg-card shadow-elevation-sm",
+        className
+      )}
+    >
+      <div className="flex flex-col gap-2 border-b border-border/60 bg-muted/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">One heat, four steps</p>
-          <p className="text-sm text-muted-foreground">
-            Predict cycle time → Improve mix → Record real result → Report
-            {active?.heatNumber ? ` · Heat ${active.heatNumber}` : ""}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Heat path</p>
+            {active?.heatNumber ? (
+              <Badge variant="outline" className="font-mono text-[11px]">
+                {active.heatNumber}
+              </Badge>
+            ) : (
+              <span className="text-[11px] text-muted-foreground">No heat ID yet</span>
+            )}
+            <span className="hidden text-[11px] text-muted-foreground sm:inline">·</span>
+            <span className="text-[11px] text-muted-foreground">
+              {doneCount}/{STAGES.length} done · {progressPct}%
+            </span>
+          </div>
         </div>
         {pathComplete ? (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -116,21 +130,17 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
         ) : showDoNext ? (
           <Button asChild size="sm" className="w-full gap-1.5 sm:w-auto">
             <Link href={next.href}>
-              Do next: {next.label}
+              Next: {next.label}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         ) : next ? (
-          <p className="text-sm text-muted-foreground">You are on {next.label} — continue below</p>
+          <p className="text-xs font-medium text-primary">On {next.label} — finish this step below</p>
         ) : null}
       </div>
 
-      <div className="mt-3">
-        <div className="mb-1.5 flex justify-between text-[11px] text-muted-foreground">
-          <span>Progress</span>
-          <span className="font-mono">{progressPct}%</span>
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-muted/80">
+      <div className="px-3 pb-1 pt-2 sm:px-4">
+        <div className="h-1 overflow-hidden rounded-full bg-muted">
           <motion.div
             className="h-full rounded-full bg-primary"
             initial={{ width: 0 }}
@@ -141,7 +151,7 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
       </div>
 
       <motion.div
-        className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0"
+        className="-mx-0.5 flex gap-0 overflow-x-auto px-2 pb-3 pt-2 sm:grid sm:grid-cols-4 sm:gap-0 sm:overflow-visible sm:px-3"
         variants={staggerContainer}
         initial="initial"
         animate="animate"
@@ -150,37 +160,48 @@ export function HeatWorkflowStrip({ active = null, currentPage, className }: Hea
           const status = byId[stage.id];
           const Icon = stage.icon;
           const isHere = page === stage.id;
+          const isLast = index === STAGES.length - 1;
           return (
-            <motion.div key={stage.id} variants={fadeUp} className="min-w-[9.5rem] shrink-0 sm:min-w-0">
+            <motion.div key={stage.id} variants={fadeUp} className="relative min-w-[8.75rem] shrink-0 sm:min-w-0">
+              {!isLast ? (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-[calc(50%+1.75rem)] right-0 top-[1.15rem] hidden h-px sm:block",
+                    status === "done" || byId[STAGES[index + 1].id] !== "todo" ? "bg-success/50" : "bg-border"
+                  )}
+                />
+              ) : null}
               <Link
                 href={stage.href}
+                aria-current={isHere ? "step" : undefined}
                 className={cn(
-                  "flex h-full items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors focus-ring",
-                  status === "done" && "border-success/35 bg-success/5",
-                  status === "current" && "border-primary/45 bg-primary/8 ring-2 ring-primary/15",
-                  status === "todo" && "border-border/50 bg-background/50 opacity-80",
-                  isHere && "outline outline-1 outline-offset-1 outline-foreground/20"
+                  "relative z-[1] mx-1 flex h-full flex-col gap-1 rounded-md border px-2.5 py-2.5 transition-colors focus-ring",
+                  status === "done" && "border-success/40 bg-success/5 hover:bg-success/10",
+                  status === "current" && "border-primary/50 bg-primary/8 ring-2 ring-primary/20 hover:bg-primary/12",
+                  status === "todo" && "border-transparent bg-transparent opacity-70 hover:border-border hover:bg-muted/40 hover:opacity-100",
+                  isHere && "outline outline-1 outline-offset-1 outline-foreground/25"
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    status === "done" && "bg-success text-background",
-                    status === "current" && "bg-primary text-primary-foreground",
-                    status === "todo" && "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {status === "done" ? "✓" : index + 1}
+                <span className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      status === "done" && "bg-success text-background",
+                      status === "current" && "bg-primary text-primary-foreground",
+                      status === "todo" && "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {status === "done" ? "✓" : index + 1}
+                  </span>
+                  <span className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="truncate">{stage.label}</span>
+                  </span>
                 </span>
-                <span className="min-w-0">
-                  <span className="flex items-center gap-1 truncate text-sm font-semibold">
-                    <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    {stage.label}
-                  </span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {STAGE_BLURBS[stage.id]}
-                    {isHere ? " · here" : status === "done" ? " · done" : ""}
-                  </span>
+                <span className="pl-8 text-[11px] leading-snug text-muted-foreground">
+                  {STAGE_BLURBS[stage.id]}
+                  {isHere ? " · you are here" : status === "done" ? " · done" : ""}
                 </span>
               </Link>
             </motion.div>

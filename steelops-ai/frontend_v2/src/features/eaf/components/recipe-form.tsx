@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SectionCard } from "@/components/layout/section-card";
-import { PageAlert } from "@/components/feedback/page-alert";
 import { ValidationBanner } from "@/features/eaf/components/validation-banner";
 import { DEFAULT_RECIPE, type EafRecipe } from "@/lib/api/eaf";
 import { RECIPE_FIELD_GUIDES } from "@/lib/eaf-glossary";
@@ -113,8 +112,9 @@ export function RecipeForm({
 
   return (
     <SectionCard
+      tone="quiet"
       title="Furnace charge mix"
-      description="These are the materials and energy for one furnace batch. Not a metallurgist? Keep the demo numbers — they are a realistic plant recipe — then press Predict."
+      description="Materials and energy for this batch. Defaults are a realistic demo — adjust iron feeds, then predict."
       actions={
         <Button type="button" size="sm" variant="outline" onClick={loadDemo}>
           <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
@@ -122,17 +122,22 @@ export function RecipeForm({
         </Button>
       }
     >
-      <PageAlert tone="info" title="New here? You do not need to invent numbers.">
-        Click <strong>Load demo recipe</strong> (or leave the defaults). Each box shows a plain name, the plant
-        code in parentheses, and a typical range. Hover the ? for a short explanation.
-      </PageAlert>
+      <details className="rounded-lg border border-info/20 bg-info/5 px-3 py-2">
+        <summary className="cursor-pointer text-sm font-medium text-foreground">
+          New here? Keep the demo numbers
+        </summary>
+        <p className="mt-2 text-sm leading-snug text-muted-foreground">
+          Click <strong>Load demo recipe</strong> (or leave defaults). Each box shows a plain name, the plant
+          code in parentheses, and a typical range. Hover the ? for a short explanation.
+        </p>
+      </details>
 
-      <p className="mt-4 text-sm text-muted-foreground">
-        Total iron charge right now:{" "}
-        <span className="font-mono font-semibold text-foreground">{charge.toFixed(1)} tonnes</span>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Total iron charge:{" "}
+        <span className="font-mono font-semibold text-foreground">{charge.toFixed(1)} t</span>
         {" · "}
-        most plant heats sit near {chargeAssessment.bounds.median.toFixed(0)} t (about{" "}
-        {chargeAssessment.bounds.p5.toFixed(0)}–{chargeAssessment.bounds.p95.toFixed(0)} t is common).
+        typical ~{chargeAssessment.bounds.median.toFixed(0)} t (
+        {chargeAssessment.bounds.p5.toFixed(0)}–{chargeAssessment.bounds.p95.toFixed(0)} common)
       </p>
 
       <ValidationBanner messages={chargeAssessment.warnings} className="mt-3" />

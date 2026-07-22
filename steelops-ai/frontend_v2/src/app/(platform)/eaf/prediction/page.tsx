@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
 import { NewHeatButton } from "@/features/eaf/components/new-heat-button";
+import {
+  OperatorStickyActionBar,
+  OperatorWorkSurface,
+} from "@/features/eaf/components/operator-work-surface";
 import { PredictionCompleteDashboard } from "@/features/eaf/components/prediction-complete-dashboard";
 import { RecipeForm } from "@/features/eaf/components/recipe-form";
 import { SimilarHistoricalHeatCard } from "@/features/eaf/components/similar-historical-heat-card";
@@ -44,125 +48,152 @@ export default function EafPredictionPage() {
 
   return (
     <PageContainer
+      density="operator"
+      eyebrow="Step 1 of 4 · Operator flow"
       title="Predict cycle time"
       description={
         <>
-          Tell the model what this furnace batch looks like — it estimates{" "}
-          <TermTip term={TTT} /> in minutes.
+          Enter heat ID + charge mix. The model estimates <TermTip term={TTT} /> in minutes — advice only.
         </>
       }
     >
-      <HeatWorkflowStrip active={active} currentPage="predict" />
-      <PageExplainer
-        title={PAGE_EXPLAINERS.prediction.title}
-        body={PAGE_EXPLAINERS.prediction.body}
-        steps={PAGE_EXPLAINERS.prediction.steps}
-      />
+      <OperatorWorkSurface>
+        <HeatWorkflowStrip active={active} currentPage="predict" />
+        <PageExplainer
+          title={PAGE_EXPLAINERS.prediction.title}
+          body={PAGE_EXPLAINERS.prediction.body}
+          steps={PAGE_EXPLAINERS.prediction.steps}
+        />
 
-      {sessionComplete ? (
-        <PageAlert
-          tone="success"
-          title={`Heat ${active?.heatNumber || "session"} is already saved`}
-          actions={<NewHeatButton variant="default" />}
-        >
-          Start a new heat before entering the next recipe — this keeps history clean.
-        </PageAlert>
-      ) : null}
+        {sessionComplete ? (
+          <PageAlert
+            tone="success"
+            title={`Heat ${active?.heatNumber || "session"} is already saved`}
+            actions={<NewHeatButton variant="default" />}
+          >
+            Start a new heat before entering the next recipe — this keeps history clean.
+          </PageAlert>
+        ) : null}
 
-      <SectionCard
-        title="Identify the heat"
-        description="A heat number is the plant’s ID for one furnace batch. Use a real ID from the shop floor, or a demo number while exploring."
-      >
-        <div className="mb-2 max-w-sm space-y-1.5">
-          <Label htmlFor="heat-number" className="leading-snug">
-            <span className="block text-sm font-medium">
-              Heat number <span className="text-destructive">*</span>
-            </span>
-            <span className="text-[11px] font-normal text-muted-foreground">Batch ID · required before predict</span>
-          </Label>
-          <Input
-            id="heat-number"
-            placeholder="e.g. 4618213"
-            value={heatNumber}
-            onChange={(e) => setHeatNumber(e.target.value)}
-            disabled={sessionComplete}
-          />
-          <p className="text-[11px] text-muted-foreground">
-            Example format: 7-digit plant heat ID. Visitors can type any demo number like 4618213.
-          </p>
-        </div>
-      </SectionCard>
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-start">
+          <div className="min-w-0 space-y-4">
+            <SectionCard
+              tone="emphasis"
+              title="Heat identity"
+              description="Plant batch ID first — required before predict."
+            >
+              <div className="max-w-md space-y-1.5">
+                <Label htmlFor="heat-number" className="leading-snug">
+                  <span className="block text-sm font-medium">
+                    Heat number <span className="text-destructive">*</span>
+                  </span>
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    Shop-floor / MES ID · e.g. 4618213
+                  </span>
+                </Label>
+                <Input
+                  id="heat-number"
+                  className="operator-primary-input"
+                  placeholder="e.g. 4618213"
+                  value={heatNumber}
+                  onChange={(e) => setHeatNumber(e.target.value)}
+                  disabled={sessionComplete}
+                  autoComplete="off"
+                />
+              </div>
+            </SectionCard>
 
-      <RecipeForm
-        recipe={recipe}
-        onChange={update}
-        charge={charge}
-        onReplaceRecipe={setRecipe}
-      />
-      <ValidationBanner messages={apiWarnings} />
-
-      {loading ? <PredictionShimmer /> : null}
-
-      <div className="sticky bottom-0 z-20 -mx-3 flex flex-wrap items-center gap-3 border-t border-border/60 bg-background/95 px-3 py-3 backdrop-blur sm:-mx-4 sm:px-4 md:-mx-8 md:px-8">
-        <Button size="lg" onClick={handlePredict} disabled={loading || sessionComplete || !heatNumber.trim()}>
-          {loading ? "Estimating cycle time…" : "Predict cycle time"}
-        </Button>
-        {!heatNumber.trim() && !sessionComplete ? (
-          <p className="text-sm text-warning">Enter a heat number first — then press predict.</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Result is minutes of furnace time. Defaults already look like a real heat.
-          </p>
-        )}
-      </div>
-      {error ? <PageAlert tone="error">{error}</PageAlert> : null}
-
-      {result && !sessionComplete ? (
-        <motion.div
-          key={result.predicted_ttt + String(result.ci_lower_95)}
-          className="min-w-0 space-y-6"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
-          <motion.div variants={fadeUp}>
-            <PredictionCompleteDashboard
-              result={result}
-              historicalSimilarityPct={explain?.historical_similarity_pct}
-              active={active}
-              compact
+            <RecipeForm
+              recipe={recipe}
+              onChange={update}
+              charge={charge}
+              onReplaceRecipe={setRecipe}
             />
-          </motion.div>
+            <ValidationBanner messages={apiWarnings} />
+          </div>
 
-          {(explain?.similar_heats?.length ?? 0) > 0 ? (
-            <motion.div variants={fadeUp}>
-              <details className="rounded-lg border border-border/60 bg-muted/10 p-4">
-                <summary className="cursor-pointer text-sm font-medium">
-                  Similar past heats (optional — for metallurgists)
-                </summary>
-                <div className="mt-4">
-                  <SimilarHistoricalHeatCard
-                    heats={explain?.similar_heats ?? []}
-                    predictedTtt={result.predicted_ttt}
-                    currentRecipe={recipe}
-                    optimizer={active?.optimizer ?? null}
-                    neighborBenchmark={explain?.neighbor_benchmark}
-                    neighborCalibratedTtt={result.neighbor_calibrated_ttt}
-                    showExploreLink={false}
+          <div className="min-w-0 space-y-4 xl:sticky xl:top-20">
+            {loading ? <PredictionShimmer /> : null}
+            {error ? <PageAlert tone="error">{error}</PageAlert> : null}
+
+            {result && !sessionComplete ? (
+              <motion.div
+                key={result.predicted_ttt + String(result.ci_lower_95)}
+                className="min-w-0 space-y-4"
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+              >
+                <motion.div variants={fadeUp}>
+                  <PredictionCompleteDashboard
+                    result={result}
+                    historicalSimilarityPct={explain?.historical_similarity_pct}
+                    active={active}
+                    compact
                   />
-                </div>
-              </details>
-            </motion.div>
-          ) : null}
+                </motion.div>
 
-          <motion.div variants={fadeUp} className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end sm:items-center">
-            <p className="text-sm text-muted-foreground">Next: see if a better charge mix can shorten the cycle.</p>
-            <Button asChild size="lg">
-              <Link href="/eaf/optimizer">Continue to Optimizer →</Link>
-            </Button>
-          </motion.div>
-        </motion.div>
-      ) : null}
+                {(explain?.similar_heats?.length ?? 0) > 0 ? (
+                  <motion.div variants={fadeUp}>
+                    <details className="rounded-lg border border-border/60 bg-muted/10 p-3">
+                      <summary className="cursor-pointer text-sm font-medium">
+                        Similar past heats (optional)
+                      </summary>
+                      <div className="mt-3">
+                        <SimilarHistoricalHeatCard
+                          heats={explain?.similar_heats ?? []}
+                          predictedTtt={result.predicted_ttt}
+                          currentRecipe={recipe}
+                          optimizer={active?.optimizer ?? null}
+                          neighborBenchmark={explain?.neighbor_benchmark}
+                          neighborCalibratedTtt={result.neighbor_calibrated_ttt}
+                          showExploreLink={false}
+                        />
+                      </div>
+                    </details>
+                  </motion.div>
+                ) : null}
+
+                <motion.div
+                  variants={fadeUp}
+                  className="flex flex-col gap-2 rounded-lg border border-primary/25 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Next: ask for a safer / faster charge mix.
+                  </p>
+                  <Button asChild size="lg" className="w-full sm:w-auto">
+                    <Link href="/eaf/optimizer">Continue to Optimize →</Link>
+                  </Button>
+                </motion.div>
+              </motion.div>
+            ) : !loading && !sessionComplete ? (
+              <SectionCard tone="panel" title="Result area">
+                <p className="text-sm text-muted-foreground">
+                  After you press <span className="font-medium text-foreground">Predict cycle time</span>, the
+                  minute estimate, confidence, and similar-heat check appear here.
+                </p>
+              </SectionCard>
+            ) : null}
+          </div>
+        </div>
+
+        <OperatorStickyActionBar>
+          <Button
+            size="lg"
+            onClick={handlePredict}
+            disabled={loading || sessionComplete || !heatNumber.trim()}
+          >
+            {loading ? "Estimating cycle time…" : "Predict cycle time"}
+          </Button>
+          {!heatNumber.trim() && !sessionComplete ? (
+            <p className="text-sm text-warning">Enter a heat number first.</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Result is minutes of furnace time · human decides next steps
+            </p>
+          )}
+        </OperatorStickyActionBar>
+      </OperatorWorkSurface>
     </PageContainer>
   );
 }

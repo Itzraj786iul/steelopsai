@@ -71,8 +71,9 @@ export function RecommendationAcceptancePanel({ disabled }: RecommendationAccept
 
   return (
     <SectionCard
-      title="Operator Recommendation Review"
-      description="Choose Accept, Modify, or Reject. Modify/Reject need a short reason before the decision is locked."
+      tone="emphasis"
+      title="Your decision"
+      description="Accept, Modify, or Reject. Modify/Reject need a short reason before the decision locks."
     >
       {status && locked ? (
         <div className={cn("mb-4 flex flex-wrap items-center gap-2 rounded-lg border p-3", INDUSTRIAL_STATUS[statusKey].className)}>

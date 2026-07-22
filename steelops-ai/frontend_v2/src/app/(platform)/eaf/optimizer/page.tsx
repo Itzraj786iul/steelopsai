@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
+import {
+  OperatorContextBar,
+  OperatorHeroMetric,
+  OperatorWorkSurface,
+} from "@/features/eaf/components/operator-work-surface";
 import { OptimizerChangeCards } from "@/features/eaf/components/optimizer-change-cards";
 import { RecommendationAcceptancePanel } from "@/features/eaf/components/recommendation-acceptance-panel";
 import { RecommendationAlternativesPanel } from "@/features/eaf/components/recommendation-alternatives-panel";
@@ -82,8 +87,10 @@ export default function EafOptimizerPage() {
 
   return (
     <PageContainer
+      density="operator"
+      eyebrow="Step 2 of 4 · Operator flow"
       title="Optimize the charge"
-      description="Ask the model for a safer, faster mix — then Accept, Modify, or Reject before recording the real result."
+      description="Get a safer mix suggestion, then Accept / Modify / Reject before recording the real result."
       actions={
         isResearchUi ? (
           <div className="flex flex-wrap gap-2">
@@ -96,116 +103,131 @@ export default function EafOptimizerPage() {
         ) : undefined
       }
     >
-      {!active?.prediction ? <EmptyHeatState /> : null}
-      <HeatWorkflowStrip active={active} currentPage="optimize" />
-      <PageExplainer {...PAGE_EXPLAINERS.optimizer} />
-      <OptimizerDisclaimer />
+      <OperatorWorkSurface>
+        {!active?.prediction ? <EmptyHeatState /> : null}
+        <HeatWorkflowStrip active={active} currentPage="optimize" />
+        <PageExplainer {...PAGE_EXPLAINERS.optimizer} />
+        <OptimizerDisclaimer />
 
-      <SectionCard
-        title="This heat (from Prediction)"
-        description="No need to re-type the recipe — we reuse the batch you just predicted."
-      >
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <Badge variant="outline">Heat {active?.heatNumber || "—"}</Badge>
-          <Badge variant="outline">Shift {recipe.Shift}</Badge>
-          <span className="font-mono text-muted-foreground">Charge {charge.toFixed(1)} t</span>
-          <span className="text-muted-foreground">
-            Predicted cycle:{" "}
-            <span className="font-mono font-medium text-foreground">
-              {active?.prediction?.predicted_ttt.toFixed(1) ?? "—"} min
-            </span>
-          </span>
-        </div>
-        <Button className="mt-4" onClick={runOptimization} disabled={loading || !active?.prediction}>
-          {loading ? "Finding a better mix…" : "Suggest a better mix"}
-        </Button>
-        {error ? <PageAlert tone="error" className="mt-4">{error}</PageAlert> : null}
-      </SectionCard>
+        <OperatorContextBar
+          items={[
+            { label: "Heat", value: active?.heatNumber || "—" },
+            { label: "Shift", value: recipe.Shift },
+            { label: "Charge", value: `${charge.toFixed(1)} t` },
+            {
+              label: "Predicted",
+              value: `${active?.prediction?.predicted_ttt.toFixed(1) ?? "—"} min`,
+            },
+          ]}
+          actions={
+            <Button onClick={runOptimization} disabled={loading || !active?.prediction} size="lg">
+              {loading ? "Finding a better mix…" : "Suggest a better mix"}
+            </Button>
+          }
+        />
+        {error ? <PageAlert tone="error">{error}</PageAlert> : null}
 
-      {effectiveMode === "compare" && prodResult && v2Result ? (
-        <SectionCard title="Optimizer comparison">
-          <KpiStrip
-            columns={3}
-            items={[
-              { label: "Current", value: `${prodResult.current_ttt.toFixed(2)} min` },
-              { label: "Production suggestion", value: `${prodResult.optimized_ttt.toFixed(2)} min`, highlight: true },
-              { label: "Research V2", value: `${v2Result.optimized_ttt.toFixed(2)} min` },
-            ]}
-          />
-        </SectionCard>
-      ) : null}
+        {effectiveMode === "compare" && prodResult && v2Result ? (
+          <SectionCard tone="quiet" title="Optimizer comparison">
+            <KpiStrip
+              columns={3}
+              items={[
+                { label: "Current", value: `${prodResult.current_ttt.toFixed(2)} min` },
+                { label: "Production suggestion", value: `${prodResult.optimized_ttt.toFixed(2)} min`, highlight: true },
+                { label: "Research V2", value: `${v2Result.optimized_ttt.toFixed(2)} min` },
+              ]}
+            />
+          </SectionCard>
+        ) : null}
 
-      {effectiveMode !== "research" && prodResult ? (
-        <div className="space-y-6">
-          <KpiStrip
-            columns={3}
-            items={[
-              { label: "Current cycle", value: `${prodResult.current_ttt.toFixed(1)} min` },
-              { label: "Suggested cycle", value: `${prodResult.optimized_ttt.toFixed(1)} min`, highlight: true },
-              { label: "Minutes you might save", value: `${prodResult.improvement_min.toFixed(1)} min` },
-            ]}
-          />
+        {effectiveMode !== "research" && prodResult ? (
+          <div className="space-y-4">
+            <OperatorHeroMetric
+              accent="primary"
+              eyebrow="Suggested cycle time"
+              value={prodResult.optimized_ttt.toFixed(1)}
+              unit="min"
+              hint={
+                <>
+                  Current estimate{" "}
+                  <span className="font-mono text-foreground">{prodResult.current_ttt.toFixed(1)} min</span>
+                  {" · "}
+                  Possible save{" "}
+                  <span className="font-mono font-semibold text-success">
+                    {prodResult.improvement_min.toFixed(1)} min
+                  </span>
+                  {" · "}
+                  advice only — never auto-control
+                </>
+              }
+              side={
+                <Badge variant="outline" className="border-success/40 bg-success/10">
+                  {prodResult.physics_compliant ? "Physics OK" : "Check physics"}
+                </Badge>
+              }
+            />
 
-          <TttComparisonBars
-            historicalActual={
-              explain?.similar_heats?.length
-                ? [...explain.similar_heats].sort(
-                    (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
-                  )[0]?.actual_ttt
-                : null
-            }
-            predicted={prodResult.current_ttt}
-            optimized={prodResult.optimized_ttt}
-          />
+            <TttComparisonBars
+              historicalActual={
+                explain?.similar_heats?.length
+                  ? [...explain.similar_heats].sort(
+                      (a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.similarity_pct - a.similarity_pct
+                    )[0]?.actual_ttt
+                  : null
+              }
+              predicted={prodResult.current_ttt}
+              optimized={prodResult.optimized_ttt}
+            />
 
-          <OptimizerChangeCards
-            rows={explain?.validated_recommendations ?? prodResult.comparison}
-            physicsCompliant={prodResult.physics_compliant}
-          />
+            <OptimizerChangeCards
+              rows={explain?.validated_recommendations ?? prodResult.comparison}
+              physicsCompliant={prodResult.physics_compliant}
+            />
 
-          <RecommendationAcceptancePanel />
+            <RecommendationAcceptancePanel />
 
-          <details
-            className="rounded-lg border border-border/60 bg-muted/10 p-4"
-            open={showDetails}
-            onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
-          >
-            <summary className="cursor-pointer text-sm font-medium">Engineering details (optional)</summary>
-            <div className="mt-4 space-y-6">
-              <FullRecommendationExplanation
-                explanation={
-                  explain?.recommendation_narrative
-                    ? { narrative_lines: explain.recommendation_narrative }
-                    : undefined
-                }
-              />
-              <RecommendationValidationTable rows={explain?.validated_recommendations ?? prodResult.comparison} />
-              <RecommendationAlternativesPanel alternatives={explain?.top5_alternatives ?? []} />
-              <SimilarHistoricalHeatCard
-                heats={explain?.similar_heats ?? []}
-                predictedTtt={prodResult.current_ttt}
-                currentRecipe={recipe}
-                optimizer={prodResult}
-                neighborBenchmark={explain?.neighbor_benchmark}
-                showExploreLink={allowResearch}
-              />
-            </div>
-          </details>
-        </div>
-      ) : null}
+            <details
+              className="rounded-lg border border-border/60 bg-muted/10 p-3"
+              open={showDetails}
+              onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
+            >
+              <summary className="cursor-pointer text-sm font-medium">Engineering details (optional)</summary>
+              <div className="mt-4 space-y-4">
+                <FullRecommendationExplanation
+                  explanation={
+                    explain?.recommendation_narrative
+                      ? { narrative_lines: explain.recommendation_narrative }
+                      : undefined
+                  }
+                />
+                <RecommendationValidationTable rows={explain?.validated_recommendations ?? prodResult.comparison} />
+                <RecommendationAlternativesPanel alternatives={explain?.top5_alternatives ?? []} />
+                <SimilarHistoricalHeatCard
+                  heats={explain?.similar_heats ?? []}
+                  predictedTtt={prodResult.current_ttt}
+                  currentRecipe={recipe}
+                  optimizer={prodResult}
+                  neighborBenchmark={explain?.neighbor_benchmark}
+                  showExploreLink={allowResearch}
+                />
+              </div>
+            </details>
+          </div>
+        ) : null}
 
-      {effectiveMode === "research" && v2Result ? (
-        <div className="space-y-6">
-          <Badge className="border-warning/40 bg-warning/10 text-foreground">Lab / research mode</Badge>
-          <FullRecommendationExplanation explanation={v2Best?.explanation} />
-          <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
-          <OptimizerChangeCards
-            rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
-            physicsCompliant={v2Result.physics_compliant}
-            title="Recommended burden changes"
-          />
-        </div>
-      ) : null}
+        {effectiveMode === "research" && v2Result ? (
+          <div className="space-y-4">
+            <Badge className="border-warning/40 bg-warning/10 text-foreground">Lab / research mode</Badge>
+            <FullRecommendationExplanation explanation={v2Best?.explanation} />
+            <RecommendationAlternativesPanel alternatives={v2Result.recommendations} />
+            <OptimizerChangeCards
+              rows={buildV2Comparison(v2Result.current_recipe, v2Result.optimized_recipe)}
+              physicsCompliant={v2Result.physics_compliant}
+              title="Recommended burden changes"
+            />
+          </div>
+        ) : null}
+      </OperatorWorkSurface>
     </PageContainer>
   );
 }

@@ -32,18 +32,18 @@ function formatValue(value: number, unit: string): string {
 export function OptimizerChangeCards({
   rows,
   physicsCompliant,
-  title = "Recommended Burden Changes",
+  title = "What to change on this heat",
 }: OptimizerChangeCardsProps) {
   if (!rows?.length) {
     return (
-      <SectionCard title={title}>
+      <SectionCard tone="quiet" title={title}>
         <p className="text-sm text-muted-foreground">No recipe adjustments recommended.</p>
       </SectionCard>
     );
   }
 
   return (
-    <SectionCard title={title} description="Industrial change summary with engineering rationale">
+    <SectionCard tone="quiet" title={title} description="Plain burden changes with a short reason for each">
       <div className="space-y-4">
         {rows.map((row) => {
           const unit = variableUnit(row.variable);

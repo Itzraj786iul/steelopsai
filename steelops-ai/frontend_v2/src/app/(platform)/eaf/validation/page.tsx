@@ -15,6 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyHeatState } from "@/features/eaf/components/empty-heat-state";
 import { HeatWorkflowStrip } from "@/features/eaf/components/heat-workflow-strip";
+import {
+  OperatorContextBar,
+  OperatorStickyActionBar,
+  OperatorWorkSurface,
+} from "@/features/eaf/components/operator-work-surface";
 import { RecommendationAcceptanceBadge } from "@/features/eaf/components/recommendation-acceptance-panel";
 import { TttComparisonBars } from "@/features/eaf/components/prediction-visuals";
 import { eafApi } from "@/lib/api/eaf";
@@ -65,7 +70,6 @@ export default function EafValidationPage() {
       ? "Production optimizer"
       : "—";
 
-  /** Allow typing heat # only when Prediction left it blank. */
   const heatNumberMissing = !(active?.heatNumber?.trim() || form.heat_number.trim());
   const heatNumberEditable = !active?.heatNumber?.trim();
 
@@ -137,179 +141,162 @@ export default function EafValidationPage() {
 
   return (
     <PageContainer
+      density="operator"
+      eyebrow="Step 3 of 4 · Operator flow"
       title="Record the real result"
       description={
         <>
-          After the furnace finishes, enter the actual <TermTip term={TTT} /> so the plant can compare prediction vs reality.
+          After tap, enter actual <TermTip term={TTT} /> so the plant can compare prediction vs reality.
         </>
       }
       actions={
         missingDecision ? (
           <Button asChild variant="outline" size="sm">
-            <Link href="/eaf/optimizer">Lock decision on Optimizer</Link>
+            <Link href="/eaf/optimizer">Lock decision on Optimize</Link>
           </Button>
         ) : (
           <RecommendationAcceptanceBadge />
         )
       }
     >
-      {!active?.prediction ? <EmptyHeatState /> : null}
-      <HeatWorkflowStrip active={active} currentPage="validate" />
-      <PageExplainer {...PAGE_EXPLAINERS.validation} />
+      <OperatorWorkSurface>
+        {!active?.prediction ? <EmptyHeatState /> : null}
+        <HeatWorkflowStrip active={active} currentPage="validate" />
+        <PageExplainer {...PAGE_EXPLAINERS.validation} />
 
-      {missingDecision ? (
-        <PageAlert tone="warning" title="Decision not locked">
-          Accept, Modify, or Reject the recommendation on Optimizer before saving validation.
-        </PageAlert>
-      ) : null}
+        {missingDecision ? (
+          <PageAlert tone="warning" title="Decision not locked">
+            Accept, Modify, or Reject the recommendation on Optimize before saving validation.
+          </PageAlert>
+        ) : null}
 
-      {active?.prediction ? (
-        <TttComparisonBars
-          historicalActual={histActual ?? null}
-          predicted={active.prediction.predicted_ttt}
-          optimized={active.optimizer?.optimized_ttt ?? null}
+        <OperatorContextBar
+          items={[
+            { label: "Heat", value: form.heat_number || "—" },
+            { label: "Predicted", value: form.predicted_ttt ? `${form.predicted_ttt} min` : "—" },
+            { label: "Decision", value: recommendationAppliedLabel },
+            { label: "Optimizer", value: optimizerUsedLabel },
+          ]}
         />
-      ) : null}
 
-      {active?.recommendationAcceptance === "Modified" && active.modifiedRecipe ? (
-        <SectionCard title="What you changed">
-          <p className="text-sm text-muted-foreground">{active.recommendationNotes || "—"}</p>
-        </SectionCard>
-      ) : null}
+        {active?.prediction ? (
+          <TttComparisonBars
+            historicalActual={histActual ?? null}
+            predicted={active.prediction.predicted_ttt}
+            optimized={active.optimizer?.optimized_ttt ?? null}
+          />
+        ) : null}
 
-      <SectionCard
-        title="Save production result"
-        description={
-          heatNumberEditable
-            ? "Heat number was missing earlier — enter it here, then the actual cycle time in minutes."
-            : "Heat number and prediction are already filled — you mainly enter the actual cycle time from the floor."
-        }
-      >
-        {!active?.prediction ? (
-          <p className="text-sm text-muted-foreground">Predict a heat first.</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label className="leading-snug">
-                <span className="block text-sm font-medium">
-                  Heat number
-                  {heatNumberEditable ? <span className="text-destructive"> *</span> : null}
-                </span>
-                <span className="text-[11px] font-normal text-muted-foreground">
-                  {heatNumberEditable ? "Required — enter plant batch ID" : "From Prediction — read only"}
-                </span>
-              </Label>
-              {heatNumberEditable ? (
-                <>
+        {active?.recommendationAcceptance === "Modified" && active.modifiedRecipe ? (
+          <SectionCard tone="panel" title="What you changed">
+            <p className="text-sm text-muted-foreground">{active.recommendationNotes || "—"}</p>
+          </SectionCard>
+        ) : null}
+
+        <SectionCard
+          tone="emphasis"
+          title="Close this heat"
+          description="The one number you must enter is actual cycle time from the floor."
+        >
+          {!active?.prediction ? (
+            <p className="text-sm text-muted-foreground">Predict a heat first.</p>
+          ) : (
+            <div className="space-y-5">
+              <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+                <Label htmlFor="actual-ttt" className="leading-snug">
+                  <span className="block text-sm font-semibold">
+                    Actual cycle time (min) <span className="text-destructive">*</span>
+                  </span>
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    Stopwatch / MES after tap · typical ~50–80 min
+                  </span>
+                </Label>
+                <Input
+                  id="actual-ttt"
+                  className="operator-primary-input mt-2 max-w-xs"
+                  value={form.actual_ttt}
+                  onChange={(e) => setForm((f) => ({ ...f, actual_ttt: e.target.value }))}
+                  placeholder="e.g. 62.5"
+                  inputMode="decimal"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="leading-snug">
+                    <span className="block text-sm font-medium">
+                      Heat number
+                      {heatNumberEditable ? <span className="text-destructive"> *</span> : null}
+                    </span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {heatNumberEditable ? "Required — enter plant batch ID" : "From Predict — read only"}
+                    </span>
+                  </Label>
+                  {heatNumberEditable ? (
+                    <Input
+                      className="mt-1"
+                      value={form.heat_number}
+                      onChange={(e) => onHeatNumberChange(e.target.value)}
+                      placeholder="e.g. 4618213"
+                    />
+                  ) : (
+                    <Input className="mt-1" value={form.heat_number} readOnly disabled />
+                  )}
+                </div>
+                <div>
+                  <Label className="leading-snug">
+                    <span className="block">Predicted cycle time (min)</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">From the model — read only</span>
+                  </Label>
+                  <Input className="mt-1" value={form.predicted_ttt} readOnly disabled />
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="leading-snug">
+                    <span className="block">Floor comments (optional)</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      Delays, scrap waits, lab repeats — anything the sheet missed
+                    </span>
+                  </Label>
                   <Input
                     className="mt-1"
-                    value={form.heat_number}
-                    onChange={(e) => onHeatNumberChange(e.target.value)}
-                    placeholder="e.g. 4618213"
+                    value={form.operator_comments}
+                    onChange={(e) => setForm((f) => ({ ...f, operator_comments: e.target.value }))}
+                    placeholder="Optional notes for the next shift"
                   />
-                  <p className="mt-1 text-xs text-warning">
-                    Required — not set during Prediction. Enter it to enable Save.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Input className="mt-1" value={form.heat_number} readOnly disabled />
-                  <p className="mt-1 text-xs text-muted-foreground">From Prediction — not re-entered here</p>
-                </>
-              )}
+                </div>
+              </div>
             </div>
-            <div>
-              <Label className="leading-snug">
-                <span className="block">Predicted cycle time (min)</span>
-                <span className="text-[11px] font-normal text-muted-foreground">From the model — read only</span>
-              </Label>
-              <Input className="mt-1" value={form.predicted_ttt} readOnly disabled />
-            </div>
-            <Field
-              label="Actual cycle time (min)"
-              hint="Shop-floor stopwatch / MES value after tap. Typical heats: ~50–80 min."
-              value={form.actual_ttt}
-              onChange={(v) => setForm((f) => ({ ...f, actual_ttt: v }))}
-              placeholder="e.g. 62.5"
-              required
-            />
-            <div>
-              <Label className="leading-snug">
-                <span className="block text-sm font-medium">Recommendation decision</span>
-                <span className="text-[11px] font-normal text-muted-foreground">Locked on Optimize</span>
-              </Label>
-              <Input className="mt-1" value={recommendationAppliedLabel} readOnly disabled />
-            </div>
-            <div>
-              <Label className="leading-snug">
-                <span className="block text-sm font-medium">Which optimizer ran</span>
-                <span className="text-[11px] font-normal text-muted-foreground">Production or research path</span>
-              </Label>
-              <Input className="mt-1" value={optimizerUsedLabel} readOnly disabled />
-            </div>
-            <div className="md:col-span-2">
-              <Field
-                label="Floor comments (optional)"
-                value={form.operator_comments}
-                onChange={(v) => setForm((f) => ({ ...f, operator_comments: v }))}
-              />
-            </div>
-          </div>
-        )}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button onClick={submit} disabled={!canSave}>
+          )}
+
+          {!canSave && active?.prediction ? (
+            <p className="mt-3 text-sm text-warning">
+              {missingDecision
+                ? "Lock Accept / Modify / Reject on Optimize before saving."
+                : heatNumberMissing
+                  ? "Enter heat number to enable Save."
+                  : !form.actual_ttt.trim()
+                    ? "Enter actual cycle time (minutes) to enable Save."
+                    : null}
+            </p>
+          ) : null}
+          {error ? <PageAlert tone="error" className="mt-4">{error}</PageAlert> : null}
+        </SectionCard>
+
+        <OperatorStickyActionBar>
+          <Button size="lg" onClick={submit} disabled={!canSave}>
             {saving ? "Saving…" : "Save & open heat report"}
           </Button>
           {savedOk ? (
             <span className="inline-flex items-center gap-1 text-sm text-success">
               <CheckCircle2 className="h-4 w-4" aria-hidden />
-              Saved — redirecting…
+              Saved — opening report…
             </span>
-          ) : null}
-        </div>
-        {!canSave && active?.prediction ? (
-          <p className="mt-3 text-sm text-warning">
-            {missingDecision
-              ? "Lock Accept / Modify / Reject on Optimizer before saving."
-              : heatNumberMissing
-                ? "Enter heat number to enable Save."
-                : !form.actual_ttt.trim()
-                  ? "Enter actual cycle time (minutes) to enable Save."
-                  : null}
-          </p>
-        ) : null}
-        {error ? <PageAlert tone="error" className="mt-4">{error}</PageAlert> : null}
-      </SectionCard>
+          ) : (
+            <p className="text-sm text-muted-foreground">Closes the heat loop and opens Step 4.</p>
+          )}
+        </OperatorStickyActionBar>
+      </OperatorWorkSurface>
     </PageContainer>
   );
 }
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  required,
-  hint,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <Label className="leading-snug">
-        <span className="block">
-          {label}
-          {required ? <span className="text-destructive"> *</span> : null}
-        </span>
-        {hint ? <span className="text-[11px] font-normal text-muted-foreground">{hint}</span> : null}
-      </Label>
-      <Input className="mt-1" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
-  );
-}
-

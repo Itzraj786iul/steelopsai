@@ -139,21 +139,24 @@ export function ReportsView() {
 
   return (
     <PageContainer
-      title="Reports"
-      description="Operator summary for this heat first — exports and daily packs are secondary"
+      density="operator"
+      eyebrow="Step 4 of 4 · Operator flow"
+      title="Heat report"
+      description="Review this heat package, export if needed, then start the next heat."
     >
+      <div className="operator-flow space-y-4 sm:space-y-5">
       <div className="print:hidden">
-        <HeatWorkflowStrip active={active} currentPage="reports" className="mb-6" />
-        <PageExplainer {...PAGE_EXPLAINERS.reports} className="mb-6" />
+        <HeatWorkflowStrip active={active} currentPage="reports" />
+        <PageExplainer {...PAGE_EXPLAINERS.reports} className="mt-4" />
       </div>
 
       {completed ? (
-        <div className={`mb-6 rounded-lg border p-4 print:hidden ${INDUSTRIAL_STATUS.validated.className}`}>
+        <div className={`rounded-lg border p-4 print:hidden ${INDUSTRIAL_STATUS.validated.className}`}>
           <div className="flex flex-wrap items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
             <div className="min-w-0 flex-1 space-y-2">
               <p className="font-semibold">
-                Heat {completedHeat || "session"} validated — full report below
+                Heat {completedHeat || "session"} closed — report ready
               </p>
               <p className="text-sm opacity-90">
                 Review charts and tables, print/export the package, then start the next heat.
@@ -179,7 +182,7 @@ export function ReportsView() {
         </div>
       ) : null}
 
-      {!active?.prediction && !completed ? <EmptyHeatState className="mb-6 print:hidden" /> : null}
+      {!active?.prediction && !completed ? <EmptyHeatState className="print:hidden" /> : null}
 
       {active?.prediction ? (
         <>
@@ -194,7 +197,7 @@ export function ReportsView() {
         </>
       ) : null}
 
-      <details className="mt-8 print:hidden rounded-xl border border-border/60 bg-muted/10 p-4">
+      <details className="print:hidden rounded-lg border border-border/60 bg-muted/10 p-3">
         <summary className="cursor-pointer text-sm font-medium">Daily production exports (optional)</summary>
         <div className="mt-4 space-y-3">
           {daily ? (
@@ -231,7 +234,7 @@ export function ReportsView() {
       </details>
 
       {sessionHistory.length && active?.prediction ? (
-        <details className="mt-4 print:hidden rounded-xl border border-border/60 bg-muted/10 p-4">
+        <details className="print:hidden rounded-lg border border-border/60 bg-muted/10 p-3">
           <summary className="cursor-pointer text-sm font-medium">Browser session history</summary>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
@@ -257,6 +260,7 @@ export function ReportsView() {
           </div>
         </details>
       ) : null}
+      </div>
     </PageContainer>
   );
 }

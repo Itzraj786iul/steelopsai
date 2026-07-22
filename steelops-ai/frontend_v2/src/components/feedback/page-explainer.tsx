@@ -10,17 +10,17 @@ interface PageExplainerProps {
   body: string;
   steps?: readonly string[];
   className?: string;
-  /** Start expanded for first-time visitors on key pages */
+  /** Prefer collapsed on floor pages so the work surface stays first. */
   defaultOpen?: boolean;
 }
 
-/** Collapsible plain-language intro — metallurgists can collapse; visitors get the story. */
+/** Collapsible plain-language intro — collapsed by default so operators see the task first. */
 export function PageExplainer({
   title,
   body,
   steps,
   className,
-  defaultOpen = true,
+  defaultOpen = false,
 }: PageExplainerProps) {
   const [open, setOpen] = useState(defaultOpen);
 

@@ -87,6 +87,8 @@ export default function EafWhatIfPage() {
   if (!activeRecipe) {
     return (
       <PageContainer
+        density="operator"
+        eyebrow="Operator tools"
         title="What-if explorer"
         description="Try alternate charge mixes after you have a predicted heat."
       >
@@ -99,14 +101,17 @@ export default function EafWhatIfPage() {
 
   return (
     <PageContainer
+      density="operator"
+      eyebrow="Operator tools"
       title="What-if explorer"
-      description="Move a few sliders to see how cycle time (minutes) might change. Everyday names first; plant codes stay visible."
+      description="Move a few sliders to see how cycle time might change — then apply to Optimize if useful."
     >
+      <div className="operator-flow space-y-4 sm:space-y-5">
       <PageExplainer {...PAGE_EXPLAINERS.whatif} />
-      <SectionCard title="Estimated cycle time" description="Minutes for this working copy — not saved until you apply">
+      <SectionCard tone="emphasis" title="Estimated cycle time" description="Working copy only — not saved until you apply">
         <p className="font-mono text-4xl font-bold text-prediction">{pred?.toFixed(1) ?? "—"} min</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => run(recipe)} disabled={loading}>
+          <Button size="lg" onClick={() => run(recipe)} disabled={loading}>
             {loading ? "Running…" : "Recalculate cycle time"}
           </Button>
           <Button variant="outline" onClick={resetToCurrent}>
@@ -119,10 +124,10 @@ export default function EafWhatIfPage() {
         {error ? <PageAlert tone="error" className="mt-3">{error}</PageAlert> : null}
         {loading ? <ChartSkeleton className="mt-4" /> : null}
       </SectionCard>
-      <SectionCard title="Adjust inputs" description="Drag sliders — ranges show what is usual at the plant">
-        <div className="grid gap-6 sm:grid-cols-2">
+      <SectionCard tone="quiet" title="Adjust inputs" description="Drag sliders — ranges show what is usual at the plant">
+        <div className="grid gap-4 sm:grid-cols-2">
           {SLIDERS.map(({ key, min, max, step }) => (
-            <div key={key} className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-3">
+            <div key={key} className="space-y-2 rounded-md border border-border/50 bg-muted/10 p-3">
               <Label className="leading-snug">
                 <span className="block text-sm font-semibold">{formatVariableLabel(key)}</span>
                 <span className="text-[11px] font-normal text-muted-foreground">
@@ -142,7 +147,7 @@ export default function EafWhatIfPage() {
           ))}
         </div>
       </SectionCard>
-      <SectionCard title="What moves cycle time most?" description="After recalculate — bigger bars mean bigger impact">
+      <SectionCard tone="panel" title="What moves cycle time most?" description="After recalculate — bigger bars mean bigger impact">
         <div className="h-80">
           {chartData.length ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -162,6 +167,7 @@ export default function EafWhatIfPage() {
           )}
         </div>
       </SectionCard>
+      </div>
     </PageContainer>
   );
 }

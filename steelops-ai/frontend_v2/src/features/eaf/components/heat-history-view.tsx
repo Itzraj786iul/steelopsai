@@ -174,8 +174,10 @@ export function HeatHistoryView() {
 
   return (
     <PageContainer
+      density="operator"
+      eyebrow="Operator flow · history"
       title="Heat History"
-      description="Saved production heats from Predict — they stay in the database after you close the browser"
+      description="Saved production heats from Predict — they stay after you close the browser."
     >
       <PageExplainer {...PAGE_EXPLAINERS.heatHistory} />
 
