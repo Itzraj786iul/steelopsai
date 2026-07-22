@@ -128,11 +128,9 @@ function burdenTotals(parts: Partial<Record<BurdenKey, number | null | undefined
 function StackedBurdenBar({
   label,
   parts,
-  delay = 0,
 }: {
   label: string;
   parts: Partial<Record<BurdenKey, number | null | undefined>>;
-  delay?: number;
 }) {
   const { values, total } = burdenTotals(parts);
   return (
@@ -214,13 +212,12 @@ export function BurdenMixCompare({
       </div>
 
       <div className="space-y-3">
-        <StackedBurdenBar label="Current input" parts={currentParts} delay={0.05} />
+        <StackedBurdenBar label="Current input" parts={currentParts} />
         <StackedBurdenBar
           label={hasHist ? "Historical similar" : "Historical similar (recipe unavailable — re-predict)"}
           parts={histParts}
-          delay={0.15}
         />
-        {hasOpt ? <StackedBurdenBar label="Optimized recipe" parts={optParts} delay={0.28} /> : null}
+        {hasOpt ? <StackedBurdenBar label="Optimized recipe" parts={optParts} /> : null}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
